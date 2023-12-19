@@ -1,6 +1,6 @@
 
 rm(list=ls())
-devtools::load_all()
+#devtools::load_all()
 
 
 
@@ -38,7 +38,7 @@ u<- list(u1= list(
 
 
 
-sim_all()
+rbook <- sim_all()
 
 
 

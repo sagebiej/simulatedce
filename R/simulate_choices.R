@@ -14,8 +14,8 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
 
   by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
     # //! cur_data_all may get deprecated in favor of pick
-    # pick(everything()) %>%
-    cur_data_all() |>
+    dplyr::pick(everything()) |>
+    #cur_data_all() |>
       dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
   }
 
@@ -35,7 +35,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
 
   cat("\n dataset final_set exists: ",exists("final_set"), "\n")
 
-  if(exists("final_set")) data = left_join(data,final_set, by = "ID")
+  if(exists("final_set")) data = dplyr::left_join(data,final_set, by = "ID")
 
   cat("\n decisiongroups exists: " ,exists("decisiongroups"))
 
@@ -62,14 +62,14 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
   subsets<- split(data,data$group)
 
   subsets <-  purrr::map2(.x = seq_along(u),.y = subsets,
-                   ~ mutate(.y,map_dfc(u[[.x]],by_formula)))
+                   ~ dplyr::mutate(.y,purrr::map_dfc(u[[.x]],by_formula)))
 
-  data <-bind_rows(subsets)
+  data <-dplyr::bind_rows(subsets)
 
   data<- data %>%
     dplyr::rename_with(~ stringr::str_replace(.,pattern = "\\.","_"), tidyr::everything()) %>%
-    mutate(across(.cols=n,.fns = ~ rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
-           across(starts_with("V_"), .names = "{'U'}_{n}") + across(starts_with("e_")) ) %>% ungroup() %>%
+    dplyr::mutate(dplyr::across(.cols=n,.fns = ~ evd::rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
+           dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_")) ) %>% dplyr::ungroup() %>%
     dplyr::mutate(CHOICE=max.col(.[,grep("U_",names(.))])
     )   %>%
     as.data.frame()
@@ -80,7 +80,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
   cat("\n data has been made \n")
 
   cat("\n First few observations \n ")
-  print(head(data))
+  print(utils::head(data))
   cat("\n \n ")
   return(data)
 

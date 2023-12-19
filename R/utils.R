@@ -9,6 +9,16 @@ plot_multi_histogram <- function(df, feature, label_column) { #function to creat
 
 
 
+#' Title Downloads and extracts external data to be used in the simulation
+#'
+#' @param url the URL from where the external data can be downloaded. The external data has be wrapped in a zip file
+#' @param dest_folder The folder where the data should be stored
+#' @param zip_name Only needs to be changed if the zip file is differently named as the last part of the URL
+#'
+#' @return nothing, stores the data on the local system
+#' @export
+#'
+#' @examples
 download_and_extract_zip <- function(url, dest_folder = ".", zip_name = NULL) {
   # If zip_name is not provided, extract it from the URL
   if (is.null(zip_name)) {

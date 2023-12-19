@@ -10,13 +10,16 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.2
 Imports: 
-    dplyr,
+    dplyr (>= 1.1.4),
+    evd,
     formula.tools,
     mixl,
     psych,
     purrr,
     readr,
+    reshape,
     rmarkdown,
+    stats,
     stringr,
     tibble,
     tictoc,
