@@ -13,6 +13,8 @@ Imports:
     dplyr (>= 1.1.4),
     evd,
     formula.tools,
+    ggplot2,
+    magrittr,
     mixl,
     psych,
     purrr,

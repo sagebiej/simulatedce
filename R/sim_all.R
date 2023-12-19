@@ -1,15 +1,20 @@
-#' Title
+#' Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
 #'
-#' @return
+#' @return a list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
 #'
 #' @examples
+#'
+#'  designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
+#'  resps =240  # number of respondents
+#'  nosim=2 # number of simulations to run (about 500 is minimum)
+#'
 sim_all <- function(){
 
-  require("stringr")
+
 
   designfile<-list.files(designpath,full.names = T)
-  designname <- str_remove_all(list.files(designpath,full.names = F),
+  designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
                                "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
 
   if (!exists("destype")) destype="ngene"
@@ -27,25 +32,24 @@ sim_all <- function(){
 
 
 
-  powa <- map(all_designs, ~ .x$power)
+  powa <- purrr::map(all_designs, ~ .x$power)
 
 
 
 
   summaryall <- as.data.frame(purrr::map(all_designs, ~.x$summary)) %>%
     dplyr::select(!ends_with("vars")) %>%
-    relocate(ends_with(c(".n", "mean","sd", "min" ,"max", "range" , "se" )))
+    dplyr::relocate(ends_with(c(".n", "mean","sd", "min" ,"max", "range" , "se" )))
 
-  coefall <- map(all_designs, ~ .x$coefs)
+  coefall <- purrr::map(all_designs, ~ .x$coefs)
 
   pat<-paste0("(",paste(designname,collapse = "|"),").") # needed to identify pattern to be replaced
 
   s<-as.data.frame(coefall) %>%
     dplyr::select(!matches("pval|run")) %>%
-    rename_with(~ sub("est_b", "", .x), everything()) %>%
-    #  rename_with(~ sub("est_asc_", "asc", .x), everything()) %>%
-    rename_with( ~ paste0(.,"_",stringr::str_extract(.,pat )), everything() ) %>%   # rename attributes for reshape part 1
-    rename_with( ~ stringr::str_replace(.,pattern = pat,replacement=""), everything() )  %>%
+    dplyr::rename_with(~ sub("est_b", "", .x), dplyr::everything()) %>%
+    dplyr::rename_with( ~ paste0(.,"_",stringr::str_extract(.,pat )), dplyr::everything() ) %>%   # rename attributes for reshape part 1
+    dplyr::rename_with( ~ stringr::str_replace(.,pattern = pat,replacement=""), everything() )  %>%
     reshape(varying =1:ncol(.), sep = "_"  , direction = "long" ,timevar = "design", idvar = "run" )
 
 

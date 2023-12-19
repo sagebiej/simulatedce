@@ -2,10 +2,20 @@
 % Please edit documentation in R/sim_all.R
 \name{sim_all}
 \alias{sim_all}
-\title{Title}
+\title{Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder}
 \usage{
 sim_all()
 }
+\value{
+a list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
+}
 \description{
-Title
+Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
+}
+\examples{
+
+ designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
+ resps =240  # number of respondents
+ nosim=2 # number of simulations to run (about 500 is minimum)
+
 }

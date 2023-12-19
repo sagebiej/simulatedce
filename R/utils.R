@@ -1,10 +1,13 @@
-plot_multi_histogram <- function(df, feature, label_column) { #function to create nice multi histograms, taken somewhere from the web
-  plt <- ggplot(df, aes(x=eval(parse(text=feature)), fill=eval(parse(text=label_column)))) +
-    #geom_histogram(alpha=0.7, position="identity", aes(y = ..density..), color="black") +
-    geom_density(alpha=0.5) +
-    geom_vline(aes(xintercept=mean(eval(parse(text=feature)))), color="black", linetype="dashed", linewidth=1) +  ## this makes a vertical line of the mean
-    labs(x=feature, y = "Density")
-  plt + guides(fill=guide_legend(title=label_column))
+plot_multi_histogram <- function(df, feature, label_column, hist=FALSE) { #function to create nice multi histograms, taken somewhere from the web
+  plt <- ggplot2::ggplot(df, ggplot2::aes(x=eval(parse(text=feature)), fill=eval(parse(text=label_column)))) +
+    ggplot2::geom_density(alpha=0.5) +
+    ggplot2::geom_vline(ggplot2::aes(xintercept=mean(eval(parse(text=feature)))), color="black", linetype="dashed", linewidth=1) +  ## this makes a vertical line of the mean
+    ggplot2::labs(x=feature, y = "Density") +
+    ggplot2::guides(fill=guide_legend(title=label_column))
+  if (hist==TRUE) plt + ggplot2::geom_histogram(alpha=0.7, position="identity", ggplot2::aes(y = ..density..), color="black")
+
+  return(plt)
+
 }
 
 

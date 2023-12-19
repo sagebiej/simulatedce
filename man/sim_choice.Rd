@@ -14,7 +14,20 @@ sim_choice(
 )
 }
 \arguments{
-\item{destype}{}
+\item{designfile}{path to a file containing a design.}
+
+\item{no_sim}{Number of runs i.e. how often do you want the simulation to be repeated}
+
+\item{respondents}{Number of respondents. How many respondents do you want to simulate in each run.}
+
+\item{mnl_U}{a list containing utility functions as formulas}
+
+\item{utils}{The first element of the utility function list}
+
+\item{destype}{Specify which type of design you use. Either ngene or spdesign}
+}
+\value{
+a list with all information on the run
 }
 \description{
 Title

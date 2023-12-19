@@ -1,33 +1,23 @@
 #' Title
 #'
-#' @param designfile
-#' @param no_sim
-#' @param respondents
-#' @param mnl_U
-#' @param utils
-#' @param destype
+#' @param designfile path to a file containing a design.
+#' @param no_sim Number of runs i.e. how often do you want the simulation to be repeated
+#' @param respondents Number of respondents. How many respondents do you want to simulate in each run.
+#' @param mnl_U a list containing utility functions as formulas
+#' @param utils The first element of the utility function list
+#' @param destype Specify which type of design you use. Either ngene or spdesign
 #'
-#' @return
+#' @return a list with all information on the run
 #' @export
 #'
 #' @examples
+#'
 sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype) {
 
-
-  require("tictoc")
-  require("readr")
-  require("psych")
-  require("dplyr")
-  require("evd")
-  require("tidyr")
-  require("kableExtra")
   require("gridExtra")
-  require("stringr")
-  require("mixl")
-  require("furrr")
-  require("purrr")
+
   require("ggplot2")
-  require("formula.tools")
+
   require("rlang")
 
 
@@ -47,7 +37,7 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
   }
 
   mnl_U <-paste(map_chr(utils,as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-    str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
+    stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
 
   cat("mixl \n")
   cat(mnl_U)
@@ -71,10 +61,10 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
   replications <- respondents/nblocks
 
   datadet<- design %>%
-    arrange(Block,Choice.situation) %>%
-    slice(rep(row_number(), replications)) %>%    ## replicate design according to number of replications
-    mutate(ID = rep(1:respondents, each=setpp)) %>%  # create Respondent ID.
-    relocate(ID,`Choice.situation`) %>%
+    dplyr::arrange(Block,Choice.situation) %>%
+    dplyr::slice(rep(dplyr::row_number(), replications)) %>%    ## replicate design according to number of replications
+    dplyr::mutate(ID = rep(1:respondents, each=setpp)) %>%  # create Respondent ID.
+    dplyr::relocate(ID,`Choice.situation`) %>%
     as.data.frame()
 
   database <- simulate_choices(data=datadet, utility = utils, setspp = setpp)
@@ -93,10 +83,10 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
 
 
 
-  coefs<-map(1:length(output),~summary(output[[.]])[["coefTable"]][c(1,8)]  %>%
+  coefs<-purrr::map(1:length(output),~summary(output[[.]])[["coefTable"]][c(1,8)]  %>%
                tibble::rownames_to_column() %>%
-               pivot_wider(names_from = rowname, values_from = c(est, rob_pval0)) ) %>%
-    bind_rows(.id = "run")
+               tidyr::pivot_wider(names_from = rowname, values_from = c(est, rob_pval0)) ) %>%
+    dplyr::bind_rows(.id = "run")
 
   output[["summary"]] <-psych::describe(coefs[,-1], fast = TRUE)
 
@@ -110,7 +100,7 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
   output[["metainfo"]] <- c(Path = designfile, NoSim = no_sim, NoResp =respondents)
 
 
-  print(kable(output[["summary"]],digits = 2, format = "rst"))
+  print(kableExtra::kable(output[["summary"]],digits = 2, format = "rst"))
 
 
   print(output[["power"]])
