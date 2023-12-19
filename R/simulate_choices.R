@@ -1,0 +1,87 @@
+#' Simulate choices based on a dataframe with a design
+#'
+#' @param data a dataframe that includes a design repeated for the number of observations
+#' @param utility a list with the utility functions, one utility function for each alternatives
+#' @param setspp an integeger, the number of choice sets per person
+#'
+#' @return a dataframe that includes simulated choices and a design
+#' @export
+#'
+#' @examples \dontrun{simulate_choices(datadet, utils,setspp)}
+simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part in dataset that needs to be repeated in each run
+
+
+
+  by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
+    # //! cur_data_all may get deprecated in favor of pick
+    # pick(everything()) %>%
+    cur_data_all() |>
+      dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
+  }
+
+  cat(" \n does sou_gis exist: ", exists("sou_gis"), "\n")
+
+  if (exists("sou_gis") && is.function(sou_gis)) {
+    sou_gis()
+
+    cat("\n source of gis has been done \n")
+  }
+
+
+  if(!exists("manipulations")) manipulations=list() ## If no user input on further data manipulations
+
+  n=seq_along(1:length(utility))    # number of utility functions
+
+
+  cat("\n dataset final_set exists: ",exists("final_set"), "\n")
+
+  if(exists("final_set")) data = left_join(data,final_set, by = "ID")
+
+  cat("\n decisiongroups exists: " ,exists("decisiongroups"))
+
+  if(exists("decisiongroups"))  {     ### create a new variable to classify decision groups.
+
+    data = dplyr::mutate(data,group = as.numeric(cut(row_number(),
+                                              breaks = decisiongroups * n(),
+                                              labels = seq_along(decisiongroups[-length(decisiongroups)]),
+                                              include.lowest = TRUE)))
+
+    print(table(data$group))
+  } else {
+
+    data$group=1
+  }
+
+
+  data<- data %>%
+    dplyr::group_by(ID) %>%
+    dplyr::mutate(!!! manipulations)
+
+
+
+  subsets<- split(data,data$group)
+
+  subsets <-  purrr::map2(.x = seq_along(u),.y = subsets,
+                   ~ mutate(.y,map_dfc(u[[.x]],by_formula)))
+
+  data <-bind_rows(subsets)
+
+  data<- data %>%
+    dplyr::rename_with(~ stringr::str_replace(.,pattern = "\\.","_"), tidyr::everything()) %>%
+    mutate(across(.cols=n,.fns = ~ rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
+           across(starts_with("V_"), .names = "{'U'}_{n}") + across(starts_with("e_")) ) %>% ungroup() %>%
+    dplyr::mutate(CHOICE=max.col(.[,grep("U_",names(.))])
+    )   %>%
+    as.data.frame()
+
+
+
+
+  cat("\n data has been made \n")
+
+  cat("\n First few observations \n ")
+  print(head(data))
+  cat("\n \n ")
+  return(data)
+
+}
