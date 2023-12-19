@@ -10,8 +10,16 @@
 #' @return a dataframe
 #' @export
 #'
-#' @examples \dontrun{readdesign("Projects/test/Designs/firstdesign.ngd", "ngene")}
+#' @examples library(simulateDCE)
+#'           mydesign <-readdesign(
+#'           system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"),
+#'            "ngene")
 #'
+#'            print(mydesign)
+#'
+
+
+
 readdesign <- function(design = designfile, designtype = destype) {
   design <- switch(designtype,
     "ngene" = readr::read_delim(design,
@@ -24,7 +32,7 @@ readdesign <- function(design = designfile, designtype = destype) {
       dplyr::filter(!is.na(Choice.situation)),
     "spdesign" = as.data.frame(readRDS(design)) |>
       dplyr::mutate(Choice.situation = 1:dplyr::n()) |>
-      dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), everything()),
+      dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()),
     stop("Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
   )
 }
