@@ -32,3 +32,8 @@ a list with all information on the run
 \description{
 Title
 }
+\examples{
+\dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
+ mnl_U,utils=u[[1]] ,destype="ngene")}
+
+}

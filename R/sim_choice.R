@@ -1,3 +1,11 @@
+
+
+
+
+
+
+
+
 #' Title
 #'
 #' @param designfile path to a file containing a design.
@@ -10,16 +18,20 @@
 #' @return a list with all information on the run
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
+#'  mnl_U,utils=u[[1]] ,destype="ngene")}
 #'
 sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype) {
 
-  require("gridExtra")
-
-  require("ggplot2")
 
   require("rlang")
 
+## Function that transforms user written utiliy for simulation into utility function for mixl.
+  transform_util <- function() {
+    mnl_U <-paste(purrr::map_chr(utils,as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
+
+  }
 
   estimate_sim <- function(run=1) {         #start loop
 
@@ -36,23 +48,27 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
 
   }
 
-  mnl_U <-paste(map_chr(utils,as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-    stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
-
-  cat("mixl \n")
-  cat(mnl_U)
-
-  cat("\n Simulation \n")
-
-  print(u)
 
 
-  designs_all <- list()
+mnl_U <- transform_util()
 
 
-  design<- readdesign(design = designfile)
+ cat("Utility function used in simulation, ie the true utility: \n\n")
 
-  if (!exists("design$Block")) design$Block=1
+     print(u)
+
+
+  cat("Utility function used for Logit estimation with mixl: \n\n")
+  print(mnl_U)
+
+
+
+  designs_all <- list()   ## Empty list where to store all designs later on
+
+
+  design<- readdesign(design = designfile)    # Read in the design file
+
+  if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
 
   nsets<-nrow(design)
   nblocks<-max(design$Block)
@@ -69,6 +85,9 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
 
   database <- simulate_choices(data=datadet, utility = utils, setspp = setpp)
 
+
+# specify model for mixl estimation
+
   model_spec <- mixl::specify_model(mnl_U, database, disable_multicore=F)
 
   est=setNames(rep(0,length(model_spec$beta_names)), model_spec$beta_names)
@@ -78,7 +97,7 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
     database, model_spec$num_utility_functions)
 
 
-  output<- 1:no_sim %>% map(estimate_sim)
+  output<- 1:no_sim %>% purrr::map(estimate_sim)
 
 
 

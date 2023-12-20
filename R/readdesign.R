@@ -28,11 +28,12 @@ readdesign <- function(design = designfile, designtype = destype) {
       trim_ws = TRUE,
       col_select = c(-Design, -tidyr::starts_with("...")),
       name_repair = "universal", show_col_types = FALSE
-    ) |>
+    ) %>%
       dplyr::filter(!is.na(Choice.situation)),
-    "spdesign" = as.data.frame(readRDS(design)) |>
-      dplyr::mutate(Choice.situation = 1:dplyr::n()) |>
-      dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()),
+    "spdesign" = as.data.frame(readRDS(design)) %>%
+      dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%
+      dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()) %>%
+      dplyr::rename(Block=block),
     stop("Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
   )
 }
