@@ -14,7 +14,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
 
   by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
     # //! cur_data_all may get deprecated in favor of pick
-    dplyr::pick(everything()) |>
+    dplyr::pick(dplyr::everything()) |>
     #cur_data_all() |>
       dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
   }
@@ -41,7 +41,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
 
   if(exists("decisiongroups"))  {     ### create a new variable to classify decision groups.
 
-    data = dplyr::mutate(data,group = as.numeric(cut(row_number(),
+    data = dplyr::mutate(data,group = as.numeric(cut(dplyr::row_number(),
                                               breaks = decisiongroups * n(),
                                               labels = seq_along(decisiongroups[-length(decisiongroups)]),
                                               include.lowest = TRUE)))

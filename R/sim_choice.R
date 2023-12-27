@@ -24,7 +24,6 @@
 sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype) {
 
 
-  require("rlang")
 
 ## Function that transforms user written utiliy for simulation into utility function for mixl.
   transform_util <- function() {
@@ -90,7 +89,7 @@ mnl_U <- transform_util()
 
   model_spec <- mixl::specify_model(mnl_U, database, disable_multicore=F)
 
-  est=setNames(rep(0,length(model_spec$beta_names)), model_spec$beta_names)
+  est=stats::setNames(rep(0,length(model_spec$beta_names)), model_spec$beta_names)
 
 
   availabilities <- mixl::generate_default_availabilities(
@@ -111,7 +110,7 @@ mnl_U <- transform_util()
 
   output[["coefs"]] <-coefs
 
-  pvals <- output[["coefs"]] %>% dplyr::select(starts_with("rob_pval0"))
+  pvals <- output[["coefs"]] %>% dplyr::select(dplyr::starts_with("rob_pval0"))
 
   output[["power"]] <- 100*table(apply(pvals,1,  function(x) all(x<0.05)))/nrow(pvals)
 

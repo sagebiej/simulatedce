@@ -23,7 +23,7 @@ sim_all <- function(){
 
   all_designs<- purrr::map(designfile, sim_choice,
                            no_sim= nosim,respondents = resps, mnl_U = mnl_U, destype=destype) %>%  ## iterate simulation over all designs
-    setNames(designname)
+    stats::setNames(designname)
 
 
   time <- tictoc::toc()
@@ -38,19 +38,19 @@ sim_all <- function(){
 
 
   summaryall <- as.data.frame(purrr::map(all_designs, ~.x$summary)) %>%
-    dplyr::select(!ends_with("vars")) %>%
-    dplyr::relocate(ends_with(c(".n", "mean","sd", "min" ,"max", "range" , "se" )))
+    dplyr::select(!dplyr::ends_with("vars")) %>%
+    dplyr::relocate(dplyr::ends_with(c(".n", "mean","sd", "min" ,"max", "range" , "se" )))
 
   coefall <- purrr::map(all_designs, ~ .x$coefs)
 
   pat<-paste0("(",paste(designname,collapse = "|"),").") # needed to identify pattern to be replaced
 
   s<-as.data.frame(coefall) %>%
-    dplyr::select(!matches("pval|run")) %>%
+    dplyr::select(!dplyr::matches("pval|run")) %>%
     dplyr::rename_with(~ sub("est_b", "", .x), dplyr::everything()) %>%
     dplyr::rename_with( ~ paste0(.,"_",stringr::str_extract(.,pat )), dplyr::everything() ) %>%   # rename attributes for reshape part 1
-    dplyr::rename_with( ~ stringr::str_replace(.,pattern = pat,replacement=""), everything() )  %>%
-    reshape(varying =1:ncol(.), sep = "_"  , direction = "long" ,timevar = "design", idvar = "run" )
+    dplyr::rename_with( ~ stringr::str_replace(.,pattern = pat,replacement=""), dplyr::everything() )  %>%
+    stats::reshape(varying =1:ncol(.), sep = "_"  , direction = "long" ,timevar = "design", idvar = "run" )
 
 
   p=list()
