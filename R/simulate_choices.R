@@ -42,7 +42,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part 
   if(exists("decisiongroups"))  {     ### create a new variable to classify decision groups.
 
     data = dplyr::mutate(data,group = as.numeric(cut(dplyr::row_number(),
-                                              breaks = decisiongroups * n(),
+                                              breaks = decisiongroups * dplyr::n(),
                                               labels = seq_along(decisiongroups[-length(decisiongroups)]),
                                               include.lowest = TRUE)))
 
