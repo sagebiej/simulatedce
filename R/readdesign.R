@@ -22,13 +22,13 @@
 
 readdesign <- function(design = designfile, designtype = destype) {
   design <- switch(designtype,
-    "ngene" = readr::read_delim(design,
+    "ngene" = suppressWarnings(readr::read_delim(design,
       delim = "\t",
       escape_double = FALSE,
       trim_ws = TRUE,
       col_select = c(-Design, -tidyr::starts_with("...")),
-      name_repair = "universal", show_col_types = FALSE
-    ) %>%
+      name_repair = "universal", show_col_types = FALSE ,guess_max = Inf
+    )) %>%
       dplyr::filter(!is.na(Choice.situation)),
     "spdesign" = as.data.frame(readRDS(design)) %>%
       dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%

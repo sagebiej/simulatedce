@@ -12,8 +12,7 @@ test_that("file does not exist", {
 })
 
 test_that("all is correct, but gives a warning", {
-  expect_warning(readdesign(design = design_path, designtype = "ngene"),
-                 "One or more parsing issues, call ")
+  expect_no_error(readdesign(design = design_path, designtype = "ngene"))
 })
 
 
