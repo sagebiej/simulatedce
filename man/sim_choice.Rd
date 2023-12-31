@@ -10,7 +10,7 @@ sim_choice(
   respondents = 330,
   mnl_U,
   utils = u[[1]],
-  destype
+  destype = destype
 )
 }
 \arguments{

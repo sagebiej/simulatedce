@@ -1,5 +1,10 @@
 #' Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
 #'
+#' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
+#' @param resps Number of respondents you want  to simulate
+#' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
+#' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
+#'
 #' @return a list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
 #'
@@ -9,15 +14,14 @@
 #'  resps =240  # number of respondents
 #'  nosim=2 # number of simulations to run (about 500 is minimum)
 #'
-sim_all <- function(){
+sim_all <- function(nosim=2, resps, destype="ngene", designpath){
 
 
-
+#browser()
   designfile<-list.files(designpath,full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
                                "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
 
-  if (!exists("destype")) destype="ngene"
 
   tictoc::tic()
 

@@ -21,16 +21,18 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,utils=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype) {
+sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype=destype) {
 
 
 
-## Function that transforms user written utiliy for simulation into utility function for mixl.
+####  Function that transforms user written utility for simulation into utility function for mixl.
   transform_util <- function() {
     mnl_U <-paste(purrr::map_chr(utils,as.character,keep.source.attr = TRUE),collapse = "",";") %>%
       stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
 
   }
+
+#### Function to simulate and estimate
 
   estimate_sim <- function(run=1) {         #start loop
 
@@ -49,8 +51,13 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
 
 
 
+# transform utility function to mixl format
 mnl_U <- transform_util()
 
+# Empty list where to store all designs later on
+designs_all <- list()
+
+#### Print some messages ####
 
  cat("Utility function used in simulation, ie the true utility: \n\n")
 
@@ -62,16 +69,20 @@ mnl_U <- transform_util()
 
 
 
-  designs_all <- list()   ## Empty list where to store all designs later on
 
 
-  design<- readdesign(design = designfile)    # Read in the design file
+
+#### Read in the design file and set core variables ####
+
+
+
+  design<- readdesign(design = designfile, designtype = destype)
 
   if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
 
   nsets<-nrow(design)
   nblocks<-max(design$Block)
-  setpp <- nsets/nblocks      # Choice Sets per respondent; in this 'no blocks' design everyone sees all 24 sets
+  setpp <- nsets/nblocks      # Choice Sets per respondent
 
   replications <- respondents/nblocks
 

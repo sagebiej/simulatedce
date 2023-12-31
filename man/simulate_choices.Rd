@@ -4,14 +4,16 @@
 \alias{simulate_choices}
 \title{Simulate choices based on a dataframe with a design}
 \usage{
-simulate_choices(data = datadet, utility = utils, setspp)
+simulate_choices(data = datadet, utility = utils, setspp, destype)
 }
 \arguments{
 \item{data}{a dataframe that includes a design repeated for the number of observations}
 
 \item{utility}{a list with the utility functions, one utility function for each alternatives}
 
-\item{setspp}{an integeger, the number of choice sets per person}
+\item{setspp}{an integer, the number of choice sets per person}
+
+\item{destype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
 }
 \value{
 a dataframe that includes simulated choices and a design

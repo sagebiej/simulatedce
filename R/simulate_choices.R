@@ -2,13 +2,13 @@
 #'
 #' @param data a dataframe that includes a design repeated for the number of observations
 #' @param utility a list with the utility functions, one utility function for each alternatives
-#' @param setspp an integeger, the number of choice sets per person
-#'
+#' @param setspp an integer, the number of choice sets per person
+#' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
 #' @return a dataframe that includes simulated choices and a design
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, utils,setspp)}
-simulate_choices <- function(data=datadet, utility =utils, setspp) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #the part in dataset that needs to be repeated in each run
 
 
 

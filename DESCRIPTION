@@ -3,7 +3,7 @@ Title: Simulate data for discrete choice experiments
 Version: 0.0.1.0000
 Authors@R: 
     person("Julian", "Sagebiel", , "julian.sagebiel@idiv.de", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0002-0253-6875"))
 Description: A package that supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other.
 License: MIT + file LICENSE
 Encoding: UTF-8

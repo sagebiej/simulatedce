@@ -38,7 +38,8 @@ u<- list(u1= list(
 
 
 
-rbook <- sim_all()
+rbook <- sim_all(nosim = nosim, resps=resps, destype = destype,
+                 designpath = designpath)
 
 
 
