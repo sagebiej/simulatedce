@@ -3,7 +3,7 @@ rm(list=ls())
 devtools::load_all()
 
 
-
+set.seed(3393)
 
 designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 

@@ -6,7 +6,7 @@ designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 
 notes <- "No Heuristics"
 
-resps =240  # number of respondents
+resps =40  # number of respondents
 nosim=2 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
@@ -47,3 +47,60 @@ test_that("no value provided for  utility", {
                        designpath = designpath),
                "must be provided and must be a list containing ")
 })
+
+
+test_that("wrong designtype", {
+  expect_error(sim_all(nosim = nosim, resps=resps, destype = "ng",
+                       designpath = designpath, u=ul),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+})
+
+
+test_that("folder does not exist", {
+  expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+                       designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul)
+    ,
+               "The folder where your designs are stored does not exist.")
+})
+
+
+
+
+test_that("seed setting makes code reproducible", {
+  set.seed(3333)
+  bsq=0.00
+  bredkite=-0.05
+  bdistance=0.50
+  bcost=-0.05
+  bfarm2=0.25
+  bfarm3=0.50
+  bheight2=0.25
+  bheight3=0.50
+  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+
+  set.seed(3333)
+  bsq=0.00
+  bredkite=-0.05
+  bdistance=0.50
+  bcost=-0.05
+  bfarm2=0.25
+  bfarm3=0.50
+  bheight2=0.25
+  bheight3=0.50
+  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+
+  expect_identical(result1[["summaryall"]], result2[["summaryall"]])
+})
+
+
+
+
+test_that("No seed setting makes code results different", {
+
+  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+
+
+  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+
+  expect_failure(expect_identical(result1[["summaryall"]], result2[["summaryall"]]))
+})
+

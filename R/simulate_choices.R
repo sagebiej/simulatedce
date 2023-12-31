@@ -8,7 +8,7 @@
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, utils,setspp)}
-simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, destype) {  #the part in dataset that needs to be repeated in each run
 
 
 
@@ -19,6 +19,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #
       dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
   }
 
+#  Here one can add additional case-specific data
   cat(" \n does sou_gis exist: ", exists("sou_gis"), "\n")
 
   if (exists("sou_gis") && is.function(sou_gis)) {

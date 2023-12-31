@@ -27,6 +27,11 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
     stop(" 'resps' must be provided and must be an integer indicating  the number of respondents per run.")
   }
 
+  if (!dir.exists(designpath)) {
+    stop(" The folder where your designs are stored does not exist. \n Check if designpath is correctly specified")
+  }
+
+
 
   designfile<-list.files(designpath,full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath,full.names = F),

@@ -11,7 +11,7 @@ test_that("file does not exist", {
                "does not exist in current working directory")
 })
 
-test_that("all is correct, but gives a warning", {
+test_that("all is correct", {
   expect_no_error(readdesign(design = design_path, designtype = "ngene"))
 })
 
