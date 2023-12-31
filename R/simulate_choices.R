@@ -30,7 +30,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #
 
   if(!exists("manipulations")) manipulations=list() ## If no user input on further data manipulations
 
-  n=seq_along(1:length(utility))    # number of utility functions
+  n=seq_along(1:length(utility[[1]]))    # number of utility functions
 
 
   cat("\n dataset final_set exists: ",exists("final_set"), "\n")
@@ -57,7 +57,7 @@ simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!! manipulations)
 
-browser()
+
 
   subsets<- split(data,data$group)
 
