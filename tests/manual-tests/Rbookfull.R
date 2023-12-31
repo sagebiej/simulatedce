@@ -29,7 +29,7 @@ destype <- "spdesign"
 
 
 #place your utility functions here
-u<- list(u1= list(
+ul<- list(u1= list(
   v1 =V.1 ~  bsq * alt1.sq,
   v2 =V.2 ~  bfarm2 * alt2.farm2 + bfarm3 * alt2.farm3 + bheight2 * alt2.height2 + bheight3 * alt2.height3 +  bredkite * alt2.redkite + bdistance * alt2.distance + bcost * alt2.cost,
   v3 =V.3 ~  bfarm2 * alt3.farm2 + bfarm3 * alt3.farm3 + bheight2 * alt3.height2 + bheight3 * alt3.height3 +  bredkite * alt3.redkite + bdistance * alt3.distance + bcost * alt3.cost
@@ -39,7 +39,7 @@ u<- list(u1= list(
 
 
 rbook <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                 designpath = designpath)
+                 designpath = designpath, u=ul)
 
 
 

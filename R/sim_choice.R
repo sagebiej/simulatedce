@@ -11,7 +11,6 @@
 #' @param designfile path to a file containing a design.
 #' @param no_sim Number of runs i.e. how often do you want the simulation to be repeated
 #' @param respondents Number of respondents. How many respondents do you want to simulate in each run.
-#' @param mnl_U a list containing utility functions as formulas
 #' @param utils The first element of the utility function list
 #' @param destype Specify which type of design you use. Either ngene or spdesign
 #'
@@ -21,18 +20,18 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,utils=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]] ,destype=destype) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,utils=u ,destype=destype) {
 
 
 
 ####  Function that transforms user written utility for simulation into utility function for mixl.
   transform_util <- function() {
-    mnl_U <-paste(purrr::map_chr(utils,as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+    mnl_U <-paste(purrr::map_chr(utils[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
       stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
 
   }
 
-#### Function to simulate and estimate
+#### Function to simulate and estimate ####
 
   estimate_sim <- function(run=1) {         #start loop
 
@@ -50,7 +49,6 @@ sim_choice <- function(designfile, no_sim=10, respondents=330, mnl_U,utils=u[[1]
   }
 
 
-
 # transform utility function to mixl format
 mnl_U <- transform_util()
 
@@ -61,7 +59,7 @@ designs_all <- list()
 
  cat("Utility function used in simulation, ie the true utility: \n\n")
 
-     print(u)
+     print(utils)
 
 
   cat("Utility function used for Logit estimation with mixl: \n\n")

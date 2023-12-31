@@ -14,10 +14,13 @@
 #'  resps =240  # number of respondents
 #'  nosim=2 # number of simulations to run (about 500 is minimum)
 #'
-sim_all <- function(nosim=2, resps, destype="ngene", designpath){
+sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
+
+  if (missing(u) || !is.list(u)) {
+    stop("The 'u' must be provided and must be a list containing at least one list element.")
+  }
 
 
-#browser()
   designfile<-list.files(designpath,full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
                                "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
@@ -26,7 +29,7 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath){
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps, mnl_U = mnl_U, destype=destype) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, utils=u) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

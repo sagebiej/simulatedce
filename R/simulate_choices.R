@@ -57,12 +57,12 @@ simulate_choices <- function(data=datadet, utility =utils, setspp, destype) {  #
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!! manipulations)
 
-
+browser()
 
   subsets<- split(data,data$group)
 
-  subsets <-  purrr::map2(.x = seq_along(u),.y = subsets,
-                   ~ dplyr::mutate(.y,purrr::map_dfc(u[[.x]],by_formula)))
+  subsets <-  purrr::map2(.x = seq_along(utility),.y = subsets,
+                   ~ dplyr::mutate(.y,purrr::map_dfc(utility[[.x]],by_formula)))
 
   data <-dplyr::bind_rows(subsets)
 
