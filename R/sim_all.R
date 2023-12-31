@@ -1,11 +1,12 @@
 #' Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
 #'
 #' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
-#' @param resps Number of respondents you want  to simulate
+#' @param resps Number of respondents you want to simulate
 #' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
+#' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list.
 #'
-#' @return a list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
+#' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
 #'
 #' @examples
@@ -16,8 +17,14 @@
 #'
 sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
 
-  if (missing(u) || !is.list(u)) {
-    stop("The 'u' must be provided and must be a list containing at least one list element.")
+
+
+  if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))){
+    stop(" 'u' must be provided and must be a list containing at least one list element.")
+  }
+
+  if (missing(resps) ||  !(is.integer(resps) || (is.numeric(resps) && identical(trunc(resps), resps)))) {
+    stop(" 'resps' must be provided and must be an integer indicating  the number of respondents per run.")
   }
 
 

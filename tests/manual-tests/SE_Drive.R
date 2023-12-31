@@ -38,7 +38,7 @@ manipulations = list(alt1.x2=     expr(alt1.x2/10),
 
 
 #place your utility functions here
-u<-list( u1 =
+ul<-list( u1 =
 
            list(
              v1 =V.1~  bpreis * alt1.x1 + blade*alt1.x2 + bwarte*alt1.x3   ,
@@ -54,4 +54,5 @@ u<-list( u1 =
 
 destype="ngene"
 
-sedrive <- sim_all()
+sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
+                   designpath = designpath, u=ul)

@@ -8,8 +8,7 @@ sim_choice(
   designfile,
   no_sim = 10,
   respondents = 330,
-  mnl_U,
-  utils = u[[1]],
+  utils,
   destype = destype
 )
 }
@@ -19,8 +18,6 @@ sim_choice(
 \item{no_sim}{Number of runs i.e. how often do you want the simulation to be repeated}
 
 \item{respondents}{Number of respondents. How many respondents do you want to simulate in each run.}
-
-\item{mnl_U}{a list containing utility functions as formulas}
 
 \item{utils}{The first element of the utility function list}
 

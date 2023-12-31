@@ -1,9 +1,4 @@
 
-rm(list=ls())
-devtools::load_all()
-
-
-
 
 designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 
@@ -38,8 +33,17 @@ ul<- list(u1= list(
 
 
 
-rbook <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                 designpath = designpath, u= ul)
 
 
 
+test_that("  u is not a list", {
+  expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+                       designpath = designpath, u=data.frame(u=" alp")),
+               "must be provided and must be a list containing ")
+})
+
+test_that("no value provided for  utility", {
+  expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+                       designpath = designpath),
+               "must be provided and must be a list containing ")
+})
