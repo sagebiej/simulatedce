@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_all.R
 \name{sim_all}
 \alias{sim_all}
-\title{Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder}
+\title{Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder}
 \usage{
 sim_all(nosim = 2, resps, destype = "ngene", designpath, u)
 }
@@ -21,7 +21,7 @@ sim_all(nosim = 2, resps, destype = "ngene", designpath, u)
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 }
 \description{
-Title Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
+Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
 }
 \examples{
 
