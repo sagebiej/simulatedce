@@ -6,7 +6,6 @@ devtools::load_all()
 set.seed(3393)
 
 designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
-
 #notes <- "This design consists of different heuristics. One group did not attend the methan attribute, another group only decided based on the payment"
 
 notes <- "No Heuristics"
@@ -38,7 +37,7 @@ ul<- list(u1= list(
 
 
 
-rbook <- sim_all(nosim = nosim, resps=resps, destype = destype,
+rbook <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
                  designpath = designpath, u= ul)
 
 

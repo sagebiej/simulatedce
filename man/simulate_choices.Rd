@@ -22,5 +22,5 @@ a dataframe that includes simulated choices and a design
 Simulate choices based on a dataframe with a design
 }
 \examples{
-\dontrun{simulate_choices(datadet, utils,setspp)}
+\dontrun{simulate_choices(datadet, ut,setspp)}
 }

@@ -41,7 +41,7 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, utils=u) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, ut=u) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

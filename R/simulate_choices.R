@@ -7,7 +7,7 @@
 #' @return a dataframe that includes simulated choices and a design
 #' @export
 #'
-#' @examples \dontrun{simulate_choices(datadet, utils,setspp)}
+#' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
 simulate_choices <- function(data, utility, setspp, destype) {  #the part in dataset that needs to be repeated in each run
 
 
