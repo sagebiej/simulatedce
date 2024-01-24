@@ -20,7 +20,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients) {
 
 
 
@@ -38,12 +38,12 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
 
     cat("This is Run number ", run)
 
-    database <- simulate_choices(datadet, utility = ut, setspp=setpp )
+    database <- simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients)
 
 
     cat("This is the utility functions \n" , mnl_U)
 
-    model<-mixl::estimate(model_spec,start_values = est, availabilities = availabilities, data= database,)
+    model<-mixl::estimate(model_spec,start_values = est, availabilities = availabilities, data= database)
 
     return(model)
 
@@ -92,7 +92,7 @@ designs_all <- list()
     dplyr::relocate(ID,`Choice.situation`) %>%
     as.data.frame()
 
-  database <- simulate_choices(data=datadet, utility = ut, setspp = setpp)
+  database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients)
 
 
 # specify model for mixl estimation

@@ -15,7 +15,7 @@
 #'  resps =240  # number of respondents
 #'  nosim=2 # number of simulations to run (about 500 is minimum)
 #'
-sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
+sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
 
 
 
@@ -41,7 +41,7 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u){
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, ut=u) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

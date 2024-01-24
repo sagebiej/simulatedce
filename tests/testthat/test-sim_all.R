@@ -19,6 +19,14 @@ bfarm3=0.50
 bheight2=0.25
 bheight3=0.50
 
+bcoeff <-list(bsq=0.00,
+              bredkite=-0.05,
+              bdistance=0.50,
+              bcost=-0.05,
+              bfarm2=0.25,
+              bfarm3=0.50,
+              bheight2=0.25,
+              bheight3=0.50)
 
 destype <- "spdesign"
 
@@ -67,26 +75,26 @@ test_that("folder does not exist", {
 
 test_that("seed setting makes code reproducible", {
   set.seed(3333)
-  bsq=0.00
-  bredkite=-0.05
-  bdistance=0.50
-  bcost=-0.05
-  bfarm2=0.25
-  bfarm3=0.50
-  bheight2=0.25
-  bheight3=0.50
-  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+  bcoeff <-list(bsq=0.00,
+    bredkite=-0.05,
+    bdistance=0.50,
+    bcost=-0.05,
+    bfarm2=0.25,
+    bfarm3=0.50,
+    bheight2=0.25,
+    bheight3=0.50)
+  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
 
   set.seed(3333)
-  bsq=0.00
-  bredkite=-0.05
-  bdistance=0.50
-  bcost=-0.05
-  bfarm2=0.25
-  bfarm3=0.50
-  bheight2=0.25
-  bheight3=0.50
-  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+  bcoeff <-list(bsq=0.00,
+          bredkite=-0.05,
+          bdistance=0.50,
+          bcost=-0.05,
+          bfarm2=0.25,
+          bfarm3=0.50,
+          bheight2=0.25,
+          bheight3=0.50)
+  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
 
   expect_identical(result1[["summaryall"]], result2[["summaryall"]])
 })
@@ -96,10 +104,10 @@ test_that("seed setting makes code reproducible", {
 
 test_that("No seed setting makes code results different", {
 
-  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
 
 
-  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul)
+  result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
 
   expect_failure(expect_identical(result1[["summaryall"]], result2[["summaryall"]]))
 })

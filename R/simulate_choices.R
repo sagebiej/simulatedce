@@ -8,7 +8,16 @@
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
-simulate_choices <- function(data, utility, setspp, destype) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, destype, bcoefficients) {  #the part in dataset that needs to be repeated in each run
+  ### unpack the bcoeff list
+  bsq <- bcoefficients$bsq
+  bredkite <- bcoefficients$bredkite
+  bdistance <- bcoefficients$bdistance
+  bcost <- bcoefficients$bcost
+  bfarm2 <- bcoefficients$bfarm2
+  bfarm3 <- bcoefficients$bfarm3
+  bheight2 <- bcoefficients$bheight2
+  bheight3 <- bcoefficients$bheight3
 
 
 
