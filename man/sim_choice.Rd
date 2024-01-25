@@ -4,7 +4,14 @@
 \alias{sim_choice}
 \title{Title}
 \usage{
-sim_choice(designfile, no_sim = 10, respondents = 330, ut, destype = destype)
+sim_choice(
+  designfile,
+  no_sim = 10,
+  respondents = 330,
+  ut,
+  destype = destype,
+  bcoefficients
+)
 }
 \arguments{
 \item{designfile}{path to a file containing a design.}

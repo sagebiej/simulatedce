@@ -4,7 +4,7 @@
 \alias{simulate_choices}
 \title{Simulate choices based on a dataframe with a design}
 \usage{
-simulate_choices(data, utility, setspp, destype)
+simulate_choices(data, utility, setspp, destype, bcoefficients)
 }
 \arguments{
 \item{data}{a dataframe that includes a design repeated for the number of observations}
