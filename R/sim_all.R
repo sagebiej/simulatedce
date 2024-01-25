@@ -1,5 +1,5 @@
 #' Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
-#'
+#' update
 #' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
 #' @param resps Number of respondents you want to simulate
 #' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
