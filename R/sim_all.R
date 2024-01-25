@@ -5,6 +5,7 @@
 #' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
 #' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list.
+#' @param bcoefficients List of coefficients for the utility function. List content/length can vary based on application, but item names should be in namespace: {bsq, bredkite, bdistance, bcost, bfarm2, bfarm3, bheight2, bheight3}
 #'
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
@@ -14,6 +15,15 @@
 #'  designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 #'  resps =240  # number of respondents
 #'  nosim=2 # number of simulations to run (about 500 is minimum)
+#'
+#'  bcoeff <-list(bsq=0.00, # hypothesized beta coefficients for individual terms of the utility function
+#'      bredkite=-0.05,
+#'      bdistance=0.50,
+#'      bcost=-0.05,
+#'      bfarm2=0.25,
+#'      bfarm3=0.50,
+#'      bheight2=0.25,
+#'      bheight3=0.50)
 #'
 sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
 
