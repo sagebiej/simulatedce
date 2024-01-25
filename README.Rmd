@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The goal of simulateDCE is to make it easy to simulate choice experiment datasets using designs from NGENE or `spdesign`. You have to store the design file in a subfolder and need to specify certain parameters and the utility functions for the data generating process. The package is useful for
+The goal of simulateDCE is to make it easy to simulate choice experiment datasets using designs from NGENE or `spdesign`. You have to store the design file in a subfolder and need to specify certain parameters and the utility functions for the data generating process. The package is useful for:
 
 1.  Test different designs in terms of statistical power, efficiency and unbiasedness
 
@@ -66,16 +66,17 @@ nosim= 2 # number of simulations to run (about 500 is minimum)
 
 
 
-# bpreis = -0.036
-# blade  = -0.034
-# bwarte = -0.049
+# bcoeff <- list(
+#   bpreis = -0.036,
+#   blade  = -0.034,
+#   bwarte = -0.049)
 
 
 decisiongroups=c(0,0.7,1)
 
 # wrong parameters
 
-#
+# place b coefficients into an r list:
 bcoeff  = list(
   bpreis = -0.01,
   blade = -0.07,
