@@ -10,14 +10,6 @@ resps =40  # number of respondents
 nosim=2 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
-bsq=0.00
-bredkite=-0.05
-bdistance=0.50
-bcost=-0.05
-bfarm2=0.25
-bfarm3=0.50
-bheight2=0.25
-bheight3=0.50
 
 bcoeff <-list(bsq=0.00,
               bredkite=-0.05,
