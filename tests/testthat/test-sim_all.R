@@ -124,10 +124,10 @@ test_that("Utility functions are valid", {
 test_that("Design path must be a valid directory", {
   # Test case: designpath is not a character string
   expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 123, u = ul, bcoeff = bcoeff))
-  
+
   # Test case: designpath does not exist
   expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = '/nonexistent/path', u = ul, bcoeff = bcoeff))
-  
+
   # Test case: designpath is not a directory
   expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 'path/to/a/file.txt', u = ul, bcoeff = bcoeff))
 })
@@ -135,13 +135,13 @@ test_that("Design path must be a valid directory", {
 test_that("Resps must be an integer", {
   # Test case: resps is missing
   expect_error(sim_all(nosim = nosim, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
-  
+
   # Test case: resps is not an integer
   expect_error(sim_all(nosim = nosim, resps = "abc", destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
-  
+
   # Test case: resps is a numeric but not an integer
   expect_error(sim_all(nosim = nosim, resps = 1.5, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
-  
+
 })
 
 test_that("Function exists in simulateDCE", {
@@ -149,10 +149,10 @@ test_that("Function exists in simulateDCE", {
 })
 
 test_that("Simulation results are reasonable", {
-  
+
   result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
-  
+
   expect_gt(result1$est_bsq, -1)
   expect_lt(result1$est_bsq, 1)
-  
+
 })

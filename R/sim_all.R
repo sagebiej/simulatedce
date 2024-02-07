@@ -28,7 +28,7 @@
 sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
 
   #################################################
-  ########## Input Validation Tests ###############
+  ########## Input Validation Test ###############
   #################################################
 
   ########### validate the utility function ########
@@ -41,17 +41,17 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
   if (missing(bcoeff)) {
     stop("Argument 'bcoeff' is required.")
   }
-  
+
   # Check if bcoeff is a list
   if (!is.list(bcoeff)) {
     stop("Argument 'bcoeff' must be a list.")
   }
-  
+
   # Check if values in bcoeff are numeric
   if (!all(sapply(bcoeff, is.numeric))) {
     stop("Values in 'bcoeff' must be numeric.")
   }
-  
+
   #### check that all the coefficients in utility function have a cooresponding value in bcoeff ####
     # Extract coefficients from utility function starting with "b"
   coeff_names_ul <- unique(unlist(lapply(u, function(u) {
@@ -64,7 +64,7 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
     })))
     return(coef_names)
   })))
-  
+
   # Check if all utility function coefficients starting with "b" are covered in bcoeff list
   missing_coeffs <- coeff_names_ul[!(coeff_names_ul %in% names(bcoeff))]
   if (length(missing_coeffs) > 0) {
@@ -78,11 +78,11 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
   if (!dir.exists(designpath)) {
     stop(" The folder where your designs are stored does not exist. \n Check if designpath is correctly specified")
   }
-  
+
   #################################################
   ########## End Validation Tests #################
   #################################################
-  
+
   designfile<-list.files(designpath,full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
                                "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
