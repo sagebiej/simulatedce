@@ -10,14 +10,6 @@ resps =40  # number of respondents
 nosim=2 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
-bsq=0.00
-bredkite=-0.05
-bdistance=0.50
-bcost=-0.05
-bfarm2=0.25
-bfarm3=0.50
-bheight2=0.25
-bheight3=0.50
 
 bcoeff <-list(bsq=0.00,
               bredkite=-0.05,
@@ -39,39 +31,31 @@ ul<- list(u1= list(
 )
 )
 
-
-
-
-
-
-test_that("  u is not a list", {
+test_that("u is not a list of lists", {
   expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
-                       designpath = designpath, u=data.frame(u=" alp")),
-               "must be provided and must be a list containing ")
+                       designpath = designpath, u=data.frame(u=" alp"), bcoeff = bcoeff),
+               "must be provided and must be a list containing at least one list")
 })
 
 test_that("no value provided for  utility", {
   expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
-                       designpath = designpath),
-               "must be provided and must be a list containing ")
+                       designpath = designpath, bcoeff = bcoeff),
+               "must be provided and must be a list containing at least one list")
 })
 
 
 test_that("wrong designtype", {
   expect_error(sim_all(nosim = nosim, resps=resps, destype = "ng",
-                       designpath = designpath, u=ul),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+                       designpath = designpath, u=ul, bcoeff = bcoeff),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
 })
 
 
 test_that("folder does not exist", {
   expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
-                       designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul)
+                       designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul, bcoeff = bcoeff)
     ,
                "The folder where your designs are stored does not exist.")
 })
-
-
-
 
 test_that("seed setting makes code reproducible", {
   set.seed(3333)
@@ -99,9 +83,6 @@ test_that("seed setting makes code reproducible", {
   expect_identical(result1[["summaryall"]], result2[["summaryall"]])
 })
 
-
-
-
 test_that("No seed setting makes code results different", {
 
   result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
@@ -112,3 +93,66 @@ test_that("No seed setting makes code results different", {
   expect_failure(expect_identical(result1[["summaryall"]], result2[["summaryall"]]))
 })
 
+
+########### Additional Tests ##############
+test_that("bcoeff is provided", {
+    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+                         designpath = designpath, u = ul))
+})
+
+test_that("bcoeff contains valid values", {
+  expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+                       designpath = designpath, u = ul, bcoeff = list(bsq = "invalid")))
+})
+
+test_that("bcoeff is a list", {
+  expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+                       designpath = designpath, u = ul, bcoeff = "not a list")
+  )
+})
+
+test_that("B coefficients in the utility functions dont match those in the bcoeff list", {
+  expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+                       designpath = designpath, u = ul, bcoeff <- list(bWRONG = 0.00)))
+})
+
+test_that("Utility functions are valid", {
+  expect_no_error(eval(ul$u1$v1))
+  expect_no_error(eval(ul$u1$v2))
+})
+
+test_that("Design path must be a valid directory", {
+  # Test case: designpath is not a character string
+  expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 123, u = ul, bcoeff = bcoeff))
+
+  # Test case: designpath does not exist
+  expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = '/nonexistent/path', u = ul, bcoeff = bcoeff))
+
+  # Test case: designpath is not a directory
+  expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 'path/to/a/file.txt', u = ul, bcoeff = bcoeff))
+})
+
+test_that("Resps must be an integer", {
+  # Test case: resps is missing
+  expect_error(sim_all(nosim = nosim, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+
+  # Test case: resps is not an integer
+  expect_error(sim_all(nosim = nosim, resps = "abc", destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+
+  # Test case: resps is a numeric but not an integer
+  expect_error(sim_all(nosim = nosim, resps = 1.5, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+
+})
+
+test_that("Function exists in simulateDCE", {
+  expect_true("sim_all" %in% ls("package:simulateDCE"))
+})
+
+test_that("Simulation results are reasonable", {
+
+  result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+
+  expect_gt(result1$est_bsq, -1)
+  expect_lt(result1$est_bsq, 1)
+
+})

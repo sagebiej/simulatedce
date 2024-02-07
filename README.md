@@ -10,7 +10,7 @@ The goal of simulateDCE is to make it easy to simulate choice experiment
 datasets using designs from NGENE or `spdesign`. You have to store the
 design file in a subfolder and need to specify certain parameters and
 the utility functions for the data generating process. The package is
-useful for
+useful for:
 
 1.  Test different designs in terms of statistical power, efficiency and
     unbiasedness
@@ -36,6 +36,7 @@ need to install the `remotes` package first. The current version is
 alpha and there is no version on cran:
 
 ``` r
+
 install.packages("remotes")
 remotes::install_gitlab(repo = "dj44vuri/simulateDCE" , host = "https://git.idiv.de")
 ```
@@ -46,15 +47,11 @@ This is a basic example for a simulation:
 
 ``` r
 
+
 rm(list=ls())
 library(simulateDCE)
 library(rlang)
 library(formula.tools)
-#> 
-#> Attaching package: 'formula.tools'
-#> The following object is masked from 'package:rlang':
-#> 
-#>     env
 
 
 library(rlang)
@@ -69,19 +66,21 @@ nosim= 2 # number of simulations to run (about 500 is minimum)
 
 
 
-# bpreis = -0.036
-# blade  = -0.034
-# bwarte = -0.049
+# bcoeff <- list(
+#   bpreis = -0.036,
+#   blade  = -0.034,
+#   bwarte = -0.049)
 
 
 decisiongroups=c(0,0.7,1)
 
 # wrong parameters
 
-#
-bpreis = -0.01
-blade = -0.07
-bwarte = 0.02
+# place b coefficients into an r list:
+bcoeff  = list(
+  bpreis = -0.01,
+  blade = -0.07,
+  bwarte = 0.02)
 
 manipulations = list(alt1.x2=     expr(alt1.x2/10),
                      alt1.x3=     expr(alt1.x3/10),
@@ -108,7 +107,7 @@ ul<-list( u1 =
 destype="ngene"
 
 sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul)
+                   designpath = designpath, u=ul, bcoeff = bcoeff)
 #> Utility function used in simulation, ie the true utility: 
 #> 
 #> $u1
@@ -145,20 +144,20 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                7      80     2.5    10.0      60    20.0      10     1
-#> 2  1               19      20     2.5     5.0      60     2.5       0     1
-#> 3  1               30      20    10.0     5.0      80     5.0      10     1
-#> 4  1               32      40    20.0     2.5      80     2.5       0     1
-#> 5  1               39      40    20.0     0.0      80    10.0      10     1
-#> 6  1               48      60     5.0     2.5      20     5.0      10     1
-#>   group    V_1    V_2         e_1         e_2       U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.800 -0.28937157  2.15097352 -1.064372  0.3509735      2
-#> 2     1 -0.275 -0.775 -0.96139278 -0.20476786 -1.236393 -0.9797679      2
-#> 3     1 -0.800 -0.950 -1.22764761 -0.06043672 -2.027648 -1.0104367      2
-#> 4     1 -1.750 -0.975 -0.01653508  0.83311025 -1.766535 -0.1418897      2
-#> 5     1 -1.800 -1.300  0.55064443 -0.20286674 -1.249356 -1.5028667      1
-#> 6     1 -0.900 -0.350 -0.31623091  0.72473769 -1.216231  0.3747377      2
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1        e_2        U_1        U_2
+#> 1  1                7      80     2.5    10.0      60    20.0      10     1     1 -0.775 -1.800 -0.15343271  3.6612318 -0.9284327  1.8612318
+#> 2  1               19      20     2.5     5.0      60     2.5       0     1     1 -0.275 -0.775  0.47936686 -0.8086989  0.2043669 -1.5836989
+#> 3  1               30      20    10.0     5.0      80     5.0      10     1     1 -0.800 -0.950  0.12634298  1.2300690 -0.6736570  0.2800690
+#> 4  1               32      40    20.0     2.5      80     2.5       0     1     1 -1.750 -0.975  2.08710825 -0.1882935  0.3371082 -1.1632935
+#> 5  1               39      40    20.0     0.0      80    10.0      10     1     1 -1.800 -1.300  1.05540385  3.1339326 -0.7445961  1.8339326
+#> 6  1               48      60     5.0     2.5      20     5.0      10     1     1 -0.900 -0.350  0.07255885 -0.1156742 -0.8274412 -0.4656742
+#>   CHOICE
+#> 1      2
+#> 2      1
+#> 3      2
+#> 4      1
+#> 5      2
+#> 6      2
 #> 
 #>  
 #>  This is Run number  1 
@@ -173,36 +172,36 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                7      80     2.5    10.0      60    20.0      10     1
-#> 2  1               19      20     2.5     5.0      60     2.5       0     1
-#> 3  1               30      20    10.0     5.0      80     5.0      10     1
-#> 4  1               32      40    20.0     2.5      80     2.5       0     1
-#> 5  1               39      40    20.0     0.0      80    10.0      10     1
-#> 6  1               48      60     5.0     2.5      20     5.0      10     1
-#>   group    V_1    V_2        e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.800  0.4008023  4.3514331 -0.3741977  2.5514331      2
-#> 2     1 -0.275 -0.775 -0.1892883 -0.7606078 -0.4642883 -1.5356078      1
-#> 3     1 -0.800 -0.950  1.2266380 -0.2061132  0.4266380 -1.1561132      1
-#> 4     1 -1.750 -0.975  1.5461599 -0.9432939 -0.2038401 -1.9182939      1
-#> 5     1 -1.800 -1.300 -0.9309889  1.7478688 -2.7309889  0.4478688      2
-#> 6     1 -0.900 -0.350  1.3557092  1.1181441  0.4557092  0.7681441      2
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2        e_1       e_2       U_1        U_2
+#> 1  1                7      80     2.5    10.0      60    20.0      10     1     1 -0.775 -1.800 -1.2775839 1.5689946 -2.052584 -0.2310054
+#> 2  1               19      20     2.5     5.0      60     2.5       0     1     1 -0.275 -0.775  0.5934850 0.5453996  0.318485 -0.2296004
+#> 3  1               30      20    10.0     5.0      80     5.0      10     1     1 -0.800 -0.950 -0.5127855 1.7551185 -1.312785  0.8051185
+#> 4  1               32      40    20.0     2.5      80     2.5       0     1     1 -1.750 -0.975  3.4643234 1.3685812  1.714323  0.3935812
+#> 5  1               39      40    20.0     0.0      80    10.0      10     1     1 -1.800 -1.300 -0.5128262 0.3011019 -2.312826 -0.9988981
+#> 6  1               48      60     5.0     2.5      20     5.0      10     1     1 -0.900 -0.350  4.3343477 1.2265189  3.434348  0.8765189
+#>   CHOICE
+#> 1      2
+#> 2      1
+#> 3      2
+#> 4      1
+#> 5      2
+#> 6      1
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
-#> bpreis  blade bwarte 
-#>    140  -1110    320 
+#>  bpreis   blade  bwarte 
+#> -1060.0  -812.5   520.0 
 #> initial  value 998.131940 
-#> iter   2 value 987.542841
-#> iter   3 value 976.359534
-#> iter   4 value 976.315710
-#> iter   5 value 971.176423
-#> iter   6 value 971.173751
-#> iter   6 value 971.173748
-#> iter   6 value 971.173748
-#> final  value 971.173748 
+#> iter   2 value 994.260781
+#> iter   3 value 974.092906
+#> iter   4 value 973.856287
+#> iter   5 value 970.270450
+#> iter   6 value 970.262794
+#> iter   6 value 970.262788
+#> iter   6 value 970.262788
+#> final  value 970.262788 
 #> converged
 #> This is Run number  2 
 #>  does sou_gis exist:  FALSE 
@@ -216,36 +215,191 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                7      80     2.5    10.0      60    20.0      10     1
-#> 2  1               19      20     2.5     5.0      60     2.5       0     1
-#> 3  1               30      20    10.0     5.0      80     5.0      10     1
-#> 4  1               32      40    20.0     2.5      80     2.5       0     1
-#> 5  1               39      40    20.0     0.0      80    10.0      10     1
-#> 6  1               48      60     5.0     2.5      20     5.0      10     1
-#>   group    V_1    V_2        e_1         e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.800 0.93025769  2.47570731  0.1552577  0.6757073      2
-#> 2     1 -0.275 -0.775 1.60707885 -0.35547058  1.3320789 -1.1304706      1
-#> 3     1 -0.800 -0.950 1.27471866 -0.07559595  0.4747187 -1.0255960      1
-#> 4     1 -1.750 -0.975 0.39775368 -0.33144802 -1.3522463 -1.3064480      2
-#> 5     1 -1.800 -1.300 1.28873901  1.16104216 -0.5112610 -0.1389578      2
-#> 6     1 -0.900 -0.350 0.05237432  0.77241297 -0.8476257  0.4224130      2
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1        e_2        U_1        U_2
+#> 1  1                7      80     2.5    10.0      60    20.0      10     1     1 -0.775 -1.800  0.34553136 -0.8375727 -0.4294686 -2.6375727
+#> 2  1               19      20     2.5     5.0      60     2.5       0     1     1 -0.275 -0.775 -1.32361481  0.3195766 -1.5986148 -0.4554234
+#> 3  1               30      20    10.0     5.0      80     5.0      10     1     1 -0.800 -0.950  0.08515524 -0.6090259 -0.7148448 -1.5590259
+#> 4  1               32      40    20.0     2.5      80     2.5       0     1     1 -1.750 -0.975 -0.18021132  2.3073397 -1.9302113  1.3323397
+#> 5  1               39      40    20.0     0.0      80    10.0      10     1     1 -1.800 -1.300 -0.55591900  3.4630292 -2.3559190  2.1630292
+#> 6  1               48      60     5.0     2.5      20     5.0      10     1     1 -0.900 -0.350 -0.29734711  3.0420404 -1.1973471  2.6920404
+#>   CHOICE
+#> 1      1
+#> 2      2
+#> 3      1
+#> 4      2
+#> 5      2
+#> 6      2
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
-#> bpreis  blade bwarte 
-#>   -520   -925    320 
+#>  bpreis   blade  bwarte 
+#>   440.0 -1087.5   447.5 
 #> initial  value 998.131940 
-#> iter   2 value 989.267873
-#> iter   3 value 979.462597
-#> iter   4 value 979.399625
-#> iter   5 value 974.067680
-#> iter   6 value 974.065735
-#> iter   6 value 974.065733
-#> iter   6 value 974.065733
-#> final  value 974.065733 
+#> iter   2 value 995.094499
+#> iter   3 value 974.488144
+#> iter   4 value 974.227531
+#> iter   5 value 971.482008
+#> iter   6 value 971.477251
+#> iter   6 value 971.477249
+#> iter   6 value 971.477249
+#> final  value 971.477249 
+#> converged
+#> 
+#> 
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> \                 vars    n   mean    sd    min    max  range    se
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> est_bpreis           1    2  -0.01  0.00  -0.01   0.00   0.00  0.00
+#> est_blade            2    2  -0.04  0.00  -0.04  -0.04   0.00  0.00
+#> est_bwarte           3    2   0.03  0.00   0.03   0.03   0.00  0.00
+#> rob_pval0_bpreis     4    2   0.01  0.01   0.00   0.02   0.02  0.01
+#> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
+#> rob_pval0_bwarte     6    2   0.01  0.00   0.01   0.01   0.00  0.00
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> 
+#> TRUE 
+#>  100 
+#> Utility function used in simulation, ie the true utility: 
+#> 
+#> $u1
+#> $u1$v1
+#> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
+#> 
+#> $u1$v2
+#> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
+#> 
+#> 
+#> $u2
+#> $u2$v1
+#> V.1 ~ bpreis * alt1.x1
+#> 
+#> $u2$v2
+#> V.2 ~ bpreis * alt2.x1
+#> 
+#> 
+#> Utility function used for Logit estimation with mixl: 
+#> 
+#> [1] "U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;"
+#> New names:
+#> • `Choice situation` -> `Choice.situation`
+#> • `` -> `...10`
+#>  
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1        e_2        U_1        U_2
+#> 1  1               12      60     2.5     0.0      20    20.0      10     1     1 -0.775 -1.400  0.63130736 -1.4347994 -0.1436926 -2.8347994
+#> 2  1               16      20    10.0     5.0      40     5.0       0     1     1 -0.800 -0.750  5.09739937  0.4118885  4.2973994 -0.3381115
+#> 3  1               17      20    20.0     0.0      80    10.0      10     1     1 -1.600 -1.300  0.22397799  0.4666321 -1.3760220 -0.8333679
+#> 4  1               25      60     5.0    10.0      20    20.0       5     1     1 -0.750 -1.500 -0.05146482  2.2007592 -0.8014648  0.7007592
+#> 5  1               29      20     5.0    10.0      80     5.0       0     1     1 -0.350 -1.150  1.57620781  4.9154679  1.2262078  3.7654679
+#> 6  1               32      40    10.0     2.5      80     2.5       5     1     1 -1.050 -0.875 -0.47930823  0.7058788 -1.5293082 -0.1691212
+#>   CHOICE
+#> 1      1
+#> 2      1
+#> 3      2
+#> 4      2
+#> 5      2
+#> 6      2
+#> 
+#>  
+#>  This is Run number  1 
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2       e_1        e_2         U_1         U_2
+#> 1  1               12      60     2.5     0.0      20    20.0      10     1     1 -0.775 -1.400 0.3494617  0.1551114 -0.42553827 -1.24488857
+#> 2  1               16      20    10.0     5.0      40     5.0       0     1     1 -0.800 -0.750 1.5845207  0.5556039  0.78452066 -0.19439613
+#> 3  1               17      20    20.0     0.0      80    10.0      10     1     1 -1.600 -1.300 4.1993459 -0.1612424  2.59934589 -1.46124241
+#> 4  1               25      60     5.0    10.0      20    20.0       5     1     1 -0.750 -1.500 0.6527215  1.3949219 -0.09727852 -0.10507806
+#> 5  1               29      20     5.0    10.0      80     5.0       0     1     1 -0.350 -1.150 2.6927356 -1.3232777  2.34273564 -2.47327770
+#> 6  1               32      40    10.0     2.5      80     2.5       5     1     1 -1.050 -0.875 0.3758168  0.8556930 -0.67418318 -0.01930696
+#>   CHOICE
+#> 1      1
+#> 2      1
+#> 3      1
+#> 4      1
+#> 5      1
+#> 6      2
+#> 
+#>  
+#>  This is the utility functions 
+#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
+#> Initial gradient value:
+#>  bpreis   blade  bwarte 
+#> -2340.0  -857.5   510.0 
+#> initial  value 998.131940 
+#> iter   2 value 989.566757
+#> iter   3 value 968.906950
+#> iter   4 value 968.775516
+#> iter   5 value 959.377427
+#> iter   6 value 959.364632
+#> iter   7 value 959.364588
+#> iter   7 value 959.364588
+#> iter   7 value 959.364588
+#> final  value 959.364588 
+#> converged
+#> This is Run number  2 
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2        e_1           e_2        U_1
+#> 1  1               12      60     2.5     0.0      20    20.0      10     1     1 -0.775 -1.400 -0.5067469 -4.908678e-05 -1.2817469
+#> 2  1               16      20    10.0     5.0      40     5.0       0     1     1 -0.800 -0.750  2.1209149  5.835693e-01  1.3209149
+#> 3  1               17      20    20.0     0.0      80    10.0      10     1     1 -1.600 -1.300 -0.3310010  7.106139e-01 -1.9310010
+#> 4  1               25      60     5.0    10.0      20    20.0       5     1     1 -0.750 -1.500  1.0469501  3.053872e-01  0.2969501
+#> 5  1               29      20     5.0    10.0      80     5.0       0     1     1 -0.350 -1.150  1.2182730 -6.215119e-01  0.8682730
+#> 6  1               32      40    10.0     2.5      80     2.5       5     1     1 -1.050 -0.875 -0.3318808  5.251218e+00 -1.3818808
+#>          U_2 CHOICE
+#> 1 -1.4000491      1
+#> 2 -0.1664307      1
+#> 3 -0.5893861      2
+#> 4 -1.1946128      1
+#> 5 -1.7715119      1
+#> 6  4.3762180      2
+#> 
+#>  
+#>  This is the utility functions 
+#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
+#> Initial gradient value:
+#>  bpreis   blade  bwarte 
+#> -2120.0  -842.5   582.5 
+#> initial  value 998.131940 
+#> iter   2 value 990.498814
+#> iter   3 value 970.036278
+#> iter   4 value 970.031934
+#> iter   5 value 961.943463
+#> iter   6 value 961.698866
+#> iter   7 value 961.698562
+#> iter   7 value 961.698561
+#> iter   7 value 961.698561
+#> final  value 961.698561 
 #> converged
 #> 
 #> 
@@ -253,11 +407,165 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #> \                 vars    n   mean    sd    min    max  range    se
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
-#> est_blade            2    2  -0.05  0.00  -0.05  -0.04   0.00  0.00
-#> est_bwarte           3    2   0.01  0.00   0.01   0.01   0.00  0.00
+#> est_blade            2    2  -0.05  0.00  -0.05  -0.05   0.00  0.00
+#> est_bwarte           3    2   0.02  0.01   0.01   0.02   0.01  0.00
 #> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
 #> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_bwarte     6    2   0.34  0.02   0.33   0.36   0.03  0.01
+#> rob_pval0_bwarte     6    2   0.16  0.19   0.03   0.30   0.27  0.13
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> 
+#> FALSE  TRUE 
+#>    50    50 
+#> Utility function used in simulation, ie the true utility: 
+#> 
+#> $u1
+#> $u1$v1
+#> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
+#> 
+#> $u1$v2
+#> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
+#> 
+#> 
+#> $u2
+#> $u2$v1
+#> V.1 ~ bpreis * alt1.x1
+#> 
+#> $u2$v2
+#> V.2 ~ bpreis * alt2.x1
+#> 
+#> 
+#> Utility function used for Logit estimation with mixl: 
+#> 
+#> [1] "U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;"
+#> New names:
+#> • `Choice situation` -> `Choice.situation`
+#> • `` -> `...10`
+#>  
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1         e_2        U_1
+#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1     1 -1.150 -0.350  1.88045081  0.33059180  0.7304508
+#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1     1 -0.675 -1.500 -0.08733163 -0.07195918 -0.7623316
+#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1     1 -0.925 -1.600 -0.31269859  3.95512677 -1.2376986
+#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1     1 -0.875 -0.850  0.20206751 -0.87018279 -0.6729325
+#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1     1 -0.550 -0.900 -0.25607132 -1.21928402 -0.8060713
+#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1     1 -1.550 -0.725  1.39833272 -0.08165078 -0.1516673
+#>          U_2 CHOICE
+#> 1 -0.0194082      1
+#> 2 -1.5719592      1
+#> 3  2.3551268      2
+#> 4 -1.7201828      1
+#> 5 -2.1192840      1
+#> 6 -0.8066508      1
+#> 
+#>  
+#>  This is Run number  1 
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2        e_1        e_2         U_1
+#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1     1 -1.150 -0.350 -0.0940785 -0.8728874 -1.24407850
+#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1     1 -0.675 -1.500 -0.6796651 -1.1297414 -1.35466507
+#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1     1 -0.925 -1.600  1.7899847  0.6372528  0.86498471
+#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1     1 -0.875 -0.850  0.9429192  0.7744473  0.06791921
+#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1     1 -0.550 -0.900  0.1003092  2.5583115 -0.44969083
+#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1     1 -1.550 -0.725 -0.3851894  0.9776369 -1.93518939
+#>           U_2 CHOICE
+#> 1 -1.22288745      2
+#> 2 -2.62974141      1
+#> 3 -0.96274717      1
+#> 4 -0.07555271      1
+#> 5  1.65831145      2
+#> 6  0.25263691      2
+#> 
+#>  
+#>  This is the utility functions 
+#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
+#> Initial gradient value:
+#>  bpreis   blade  bwarte 
+#> -2300.0  -967.5   417.5 
+#> initial  value 998.131940 
+#> iter   2 value 989.783897
+#> iter   3 value 967.441065
+#> iter   4 value 966.807343
+#> iter   5 value 957.535574
+#> iter   6 value 957.518843
+#> iter   7 value 957.518805
+#> iter   7 value 957.518805
+#> iter   7 value 957.518805
+#> final  value 957.518805 
+#> converged
+#> This is Run number  2 
+#>  does sou_gis exist:  FALSE 
+#> 
+#>  dataset final_set exists:  FALSE 
+#> 
+#>  decisiongroups exists:  TRUE
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been made 
+#> 
+#>  First few observations 
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1        e_2        U_1
+#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1     1 -1.150 -0.350  0.39615659 0.74248610 -0.7538434
+#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1     1 -0.675 -1.500 -0.17578286 0.04260786 -0.8507829
+#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1     1 -0.925 -1.600  0.44905385 0.79514566 -0.4759461
+#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1     1 -0.875 -0.850  0.27140789 4.63953174 -0.6035921
+#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1     1 -0.550 -0.900 -0.03370054 0.84622952 -0.5837005
+#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1     1 -1.550 -0.725 -0.47233862 1.05805421 -2.0223386
+#>           U_2 CHOICE
+#> 1  0.39248610      2
+#> 2 -1.45739214      1
+#> 3 -0.80485434      1
+#> 4  3.78953174      2
+#> 5 -0.05377048      2
+#> 6  0.33305421      2
+#> 
+#>  
+#>  This is the utility functions 
+#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
+#> Initial gradient value:
+#>  bpreis   blade  bwarte 
+#> -1600.0  -857.5   402.5 
+#> initial  value 998.131940 
+#> iter   2 value 993.094191
+#> iter   3 value 975.977284
+#> iter   4 value 975.860148
+#> iter   5 value 971.032264
+#> iter   6 value 971.027871
+#> iter   6 value 971.027867
+#> iter   6 value 971.027867
+#> final  value 971.027867 
+#> converged
+#> 
+#> 
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> \                 vars    n   mean    sd    min    max  range    se
+#> ================  ====  ===  =====  ====  =====  =====  =====  ====
+#> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
+#> est_blade            2    2  -0.05  0.01  -0.05  -0.04   0.01  0.01
+#> est_bwarte           3    2   0.00  0.01   0.00   0.01   0.01  0.00
+#> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
+#> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
+#> rob_pval0_bwarte     6    2   0.68  0.20   0.54   0.82   0.28  0.14
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> 
 #> FALSE 
@@ -298,20 +606,20 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60     2.5     0.0      20    20.0      10     1
-#> 2  1               16      20    10.0     5.0      40     5.0       0     1
-#> 3  1               17      20    20.0     0.0      80    10.0      10     1
-#> 4  1               25      60     5.0    10.0      20    20.0       5     1
-#> 5  1               29      20     5.0    10.0      80     5.0       0     1
-#> 6  1               32      40    10.0     2.5      80     2.5       5     1
-#>   group    V_1    V_2        e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.400  0.5000790 -1.2708067 -0.2749210 -2.6708067      1
-#> 2     1 -0.800 -0.750 -1.9947176 -0.6174753 -2.7947176 -1.3674753      2
-#> 3     1 -1.600 -1.300  0.6003003  1.1010281 -0.9996997 -0.1989719      2
-#> 4     1 -0.750 -1.500 -1.2502306  2.4331480 -2.0002306  0.9331480      2
-#> 5     1 -0.350 -1.150  0.1058614  1.8360816 -0.2441386  0.6860816      2
-#> 6     1 -1.050 -0.875  1.8917336  0.7028783  0.8417336 -0.1721217      1
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2        e_1        e_2         U_1        U_2
+#> 1  1                9      80     5.0       0      60    20.0    10.0     1     1 -1.150 -1.800  0.8053210 -0.7760447 -0.34467900 -2.5760447
+#> 2  1               12      60     2.5      10      40    20.0     0.0     1     1 -0.575 -1.800  2.4581484 -0.5422855  1.88314842 -2.3422855
+#> 3  1               13      20    20.0      10      80     2.5     0.0     1     1 -1.400 -0.975  0.4806134 -1.7030310 -0.91938664 -2.6780310
+#> 4  1               70      80     5.0      10      20    20.0     2.5     1     1 -0.950 -1.550 -0.8558539  1.9784273 -1.80585392  0.4284273
+#> 5  1               71      60    20.0      10      80    10.0     0.0     1     1 -1.800 -1.500  1.4200481  0.8856199 -0.37995187 -0.6143801
+#> 6  1               73      60    10.0       0      40    20.0    10.0     1     1 -1.300 -1.600  1.3592506 -0.1823192  0.05925063 -1.7823192
+#>   CHOICE
+#> 1      1
+#> 2      1
+#> 3      1
+#> 4      2
+#> 5      1
+#> 6      1
 #> 
 #>  
 #>  This is Run number  1 
@@ -326,36 +634,37 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60     2.5     0.0      20    20.0      10     1
-#> 2  1               16      20    10.0     5.0      40     5.0       0     1
-#> 3  1               17      20    20.0     0.0      80    10.0      10     1
-#> 4  1               25      60     5.0    10.0      20    20.0       5     1
-#> 5  1               29      20     5.0    10.0      80     5.0       0     1
-#> 6  1               32      40    10.0     2.5      80     2.5       5     1
-#>   group    V_1    V_2       e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.400 2.6464470  1.8930848  1.8714470  0.4930848      1
-#> 2     1 -0.800 -0.750 0.6943881 -0.0951414 -0.1056119 -0.8451414      1
-#> 3     1 -1.600 -1.300 3.0441699  2.6667389  1.4441699  1.3667389      1
-#> 4     1 -0.750 -1.500 1.1984493  1.9151346  0.4484493  0.4151346      1
-#> 5     1 -0.350 -1.150 3.5252196 -0.8557313  3.1752196 -2.0057313      1
-#> 6     1 -1.050 -0.875 0.5099513 -0.4707311 -0.5400487 -1.3457311      1
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2        e_1       e_2         U_1        U_2
+#> 1  1                9      80     5.0       0      60    20.0    10.0     1     1 -1.150 -1.800  1.1057596 0.8176933 -0.04424039 -0.9823067
+#> 2  1               12      60     2.5      10      40    20.0     0.0     1     1 -0.575 -1.800  1.4664332 0.2855647  0.89143319 -1.5144353
+#> 3  1               13      20    20.0      10      80     2.5     0.0     1     1 -1.400 -0.975 -0.2567456 2.0307365 -1.65674558  1.0557365
+#> 4  1               70      80     5.0      10      20    20.0     2.5     1     1 -0.950 -1.550  1.7936733 0.2273817  0.84367334 -1.3226183
+#> 5  1               71      60    20.0      10      80    10.0     0.0     1     1 -1.800 -1.500 -0.5080847 1.8371868 -2.30808468  0.3371868
+#> 6  1               73      60    10.0       0      40    20.0    10.0     1     1 -1.300 -1.600  0.2315646 0.5250324 -1.06843538 -1.0749676
+#>   CHOICE
+#> 1      1
+#> 2      1
+#> 3      2
+#> 4      1
+#> 5      2
+#> 6      1
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
 #>  bpreis   blade  bwarte 
-#> -1440.0 -1057.5   510.0 
+#> -2720.0 -3230.0  1477.5 
 #> initial  value 998.131940 
-#> iter   2 value 992.072549
-#> iter   3 value 964.484472
-#> iter   4 value 964.438157
-#> iter   5 value 960.231915
-#> iter   6 value 960.220989
-#> iter   6 value 960.220975
-#> iter   6 value 960.220975
-#> final  value 960.220975 
+#> iter   2 value 961.903346
+#> iter   3 value 923.013503
+#> iter   4 value 921.553693
+#> iter   5 value 899.826852
+#> iter   6 value 899.416093
+#> iter   7 value 899.408733
+#> iter   7 value 899.408728
+#> iter   7 value 899.408728
+#> final  value 899.408728 
 #> converged
 #> This is Run number  2 
 #>  does sou_gis exist:  FALSE 
@@ -369,37 +678,37 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60     2.5     0.0      20    20.0      10     1
-#> 2  1               16      20    10.0     5.0      40     5.0       0     1
-#> 3  1               17      20    20.0     0.0      80    10.0      10     1
-#> 4  1               25      60     5.0    10.0      20    20.0       5     1
-#> 5  1               29      20     5.0    10.0      80     5.0       0     1
-#> 6  1               32      40    10.0     2.5      80     2.5       5     1
-#>   group    V_1    V_2        e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.400 -0.8673571  0.5735753 -1.6423571 -0.8264247      2
-#> 2     1 -0.800 -0.750  0.1338568  2.1243864 -0.6661432  1.3743864      2
-#> 3     1 -1.600 -1.300  1.3074577 -0.1769248 -0.2925423 -1.4769248      1
-#> 4     1 -0.750 -1.500  1.7452195 -0.7334989  0.9952195 -2.2334989      1
-#> 5     1 -0.350 -1.150  3.2417667  0.8099365  2.8917667 -0.3400635      1
-#> 6     1 -1.050 -0.875 -0.8125169 -0.6517018 -1.8625169 -1.5267018      2
+#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block group    V_1    V_2         e_1       e_2        U_1        U_2
+#> 1  1                9      80     5.0       0      60    20.0    10.0     1     1 -1.150 -1.800 -0.55606335 0.4418297 -1.7060633 -1.3581703
+#> 2  1               12      60     2.5      10      40    20.0     0.0     1     1 -0.575 -1.800 -0.70525965 0.3030154 -1.2802596 -1.4969846
+#> 3  1               13      20    20.0      10      80     2.5     0.0     1     1 -1.400 -0.975  0.76358526 1.1547805 -0.6364147  0.1797805
+#> 4  1               70      80     5.0      10      20    20.0     2.5     1     1 -0.950 -1.550 -0.50057341 1.6569802 -1.4505734  0.1069802
+#> 5  1               71      60    20.0      10      80    10.0     0.0     1     1 -1.800 -1.500  0.95196390 4.6640005 -0.8480361  3.1640005
+#> 6  1               73      60    10.0       0      40    20.0    10.0     1     1 -1.300 -1.600 -0.07807331 0.9519585 -1.3780733 -0.6480415
+#>   CHOICE
+#> 1      2
+#> 2      1
+#> 3      2
+#> 4      2
+#> 5      2
+#> 6      2
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
 #>  bpreis   blade  bwarte 
-#>  -640.0 -1295.0   362.5 
+#> -1480.0 -3742.5   752.5 
 #> initial  value 998.131940 
-#> iter   2 value 981.273463
-#> iter   3 value 964.055548
-#> iter   4 value 963.472083
-#> iter   5 value 957.462611
-#> iter   6 value 957.449595
-#> iter   7 value 957.449577
-#> iter   7 value 957.449577
-#> iter   7 value 957.449577
-#> final  value 957.449577 
+#> iter   2 value 931.326512
+#> iter   3 value 904.389362
+#> iter   4 value 902.747564
+#> iter   5 value 895.585146
+#> iter   6 value 895.212841
+#> iter   7 value 895.208094
+#> iter   7 value 895.208091
+#> iter   7 value 895.208091
+#> final  value 895.208091 
 #> converged
 #> 
 #> 
@@ -407,320 +716,11 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #> \                 vars    n   mean    sd    min    max  range    se
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
-#> est_blade            2    2  -0.05  0.00  -0.06  -0.05   0.01  0.00
-#> est_bwarte           3    2   0.01  0.01   0.00   0.01   0.01  0.01
+#> est_blade            2    2  -0.05  0.01  -0.05  -0.04   0.01  0.01
+#> est_bwarte           3    2   0.01  0.03   0.00   0.03   0.04  0.02
 #> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
 #> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_bwarte     6    2   0.53  0.52   0.16   0.90   0.74  0.37
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> 
-#> FALSE 
-#>   100 
-#> Utility function used in simulation, ie the true utility: 
-#> 
-#> $u1
-#> $u1$v1
-#> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
-#> 
-#> $u1$v2
-#> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
-#> 
-#> 
-#> $u2
-#> $u2$v1
-#> V.1 ~ bpreis * alt1.x1
-#> 
-#> $u2$v2
-#> V.2 ~ bpreis * alt2.x1
-#> 
-#> 
-#> Utility function used for Logit estimation with mixl: 
-#> 
-#> [1] "U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;"
-#> New names:
-#> • `Choice situation` -> `Choice.situation`
-#> • `` -> `...10`
-#>  
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1
-#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1
-#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1
-#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1
-#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1
-#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1
-#>   group    V_1    V_2         e_1          e_2         U_1        U_2 CHOICE
-#> 1     1 -1.150 -0.350 1.018356215 -0.622267218 -0.13164379 -0.9722672      1
-#> 2     1 -0.675 -1.500 2.065375543  0.448415040  1.39037554 -1.0515850      1
-#> 3     1 -0.925 -1.600 0.068572712  0.001884789 -0.85642729 -1.5981152      1
-#> 4     1 -0.875 -0.850 4.451064209 -0.131594375  3.57606421 -0.9815944      1
-#> 5     1 -0.550 -0.900 0.001325549  1.769899979 -0.54867445  0.8699000      2
-#> 6     1 -1.550 -0.725 1.585052229 -0.559602808  0.03505223 -1.2846028      1
-#> 
-#>  
-#>  This is Run number  1 
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1
-#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1
-#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1
-#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1
-#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1
-#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1
-#>   group    V_1    V_2         e_1        e_2         U_1        U_2 CHOICE
-#> 1     1 -1.150 -0.350 -0.08786308 -0.5863325 -1.23786308 -0.9363325      2
-#> 2     1 -0.675 -1.500  0.06248520  1.0111311 -0.61251480 -0.4888689      2
-#> 3     1 -0.925 -1.600  0.95443352 -0.3946771  0.02943352 -1.9946771      1
-#> 4     1 -0.875 -0.850 -0.76545318  1.6682085 -1.64045318  0.8182085      2
-#> 5     1 -0.550 -0.900  1.13173817 -0.3986287  0.58173817 -1.2986287      1
-#> 6     1 -1.550 -0.725  3.42387572  1.2824413  1.87387572  0.5574413      1
-#> 
-#>  
-#>  This is the utility functions 
-#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
-#> Initial gradient value:
-#>  bpreis   blade  bwarte 
-#>  -960.0 -1017.5   245.0 
-#> initial  value 998.131940 
-#> iter   2 value 994.181427
-#> iter   3 value 972.722564
-#> iter   4 value 971.807620
-#> iter   5 value 969.894601
-#> iter   6 value 969.892112
-#> iter   6 value 969.892111
-#> iter   6 value 969.892111
-#> final  value 969.892111 
-#> converged
-#> This is Run number  2 
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                3      80     5.0     0.0      20     5.0    10.0     1
-#> 2  1                5      60     2.5     5.0      20    20.0     5.0     1
-#> 3  1               10      80     2.5     2.5      20    20.0     0.0     1
-#> 4  1               34      80     2.5     5.0      60     5.0     5.0     1
-#> 5  1               37      40     5.0    10.0      60     5.0     2.5     1
-#> 6  1               39      20    20.0     2.5      60     2.5     2.5     1
-#>   group    V_1    V_2        e_1         e_2        U_1        U_2 CHOICE
-#> 1     1 -1.150 -0.350  0.6747222  0.25151850 -0.4752778 -0.0984815      2
-#> 2     1 -0.675 -1.500  1.8163839 -0.09688587  1.1413839 -1.5968859      1
-#> 3     1 -0.925 -1.600 -0.8974158  3.69592175 -1.8224158  2.0959217      2
-#> 4     1 -0.875 -0.850 -0.5523539  3.18018561 -1.4273539  2.3301856      2
-#> 5     1 -0.550 -0.900 -1.0057814  0.20974090 -1.5557814 -0.6902591      2
-#> 6     1 -1.550 -0.725  0.9409876  0.52310305 -0.6090124 -0.2018970      2
-#> 
-#>  
-#>  This is the utility functions 
-#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
-#> Initial gradient value:
-#>  bpreis   blade  bwarte 
-#> -2920.0  -597.5   467.5 
-#> initial  value 998.131940 
-#> iter   2 value 988.559582
-#> iter   3 value 984.350429
-#> iter   4 value 984.238420
-#> iter   5 value 967.198497
-#> iter   6 value 967.168244
-#> iter   7 value 967.168103
-#> iter   7 value 967.168103
-#> iter   7 value 967.168103
-#> final  value 967.168103 
-#> converged
-#> 
-#> 
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> \                 vars    n   mean    sd    min    max  range    se
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
-#> est_blade            2    2  -0.04  0.01  -0.05  -0.04   0.01  0.00
-#> est_bwarte           3    2   0.00  0.01  -0.01   0.01   0.01  0.01
-#> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_bwarte     6    2   0.52  0.11   0.44   0.59   0.15  0.07
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> 
-#> FALSE 
-#>   100 
-#> Utility function used in simulation, ie the true utility: 
-#> 
-#> $u1
-#> $u1$v1
-#> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
-#> 
-#> $u1$v2
-#> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
-#> 
-#> 
-#> $u2
-#> $u2$v1
-#> V.1 ~ bpreis * alt1.x1
-#> 
-#> $u2$v2
-#> V.2 ~ bpreis * alt2.x1
-#> 
-#> 
-#> Utility function used for Logit estimation with mixl: 
-#> 
-#> [1] "U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;"
-#> New names:
-#> • `Choice situation` -> `Choice.situation`
-#> • `` -> `...10`
-#>  
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                9      80     5.0       0      60    20.0    10.0     1
-#> 2  1               12      60     2.5      10      40    20.0     0.0     1
-#> 3  1               13      20    20.0      10      80     2.5     0.0     1
-#> 4  1               70      80     5.0      10      20    20.0     2.5     1
-#> 5  1               71      60    20.0      10      80    10.0     0.0     1
-#> 6  1               73      60    10.0       0      40    20.0    10.0     1
-#>   group    V_1    V_2          e_1        e_2        U_1         U_2 CHOICE
-#> 1     1 -1.150 -1.800  0.458928485  2.0701754 -0.6910715  0.27017541      2
-#> 2     1 -0.575 -1.800  0.253655240 -0.6611997 -0.3213448 -2.46119970      1
-#> 3     1 -1.400 -0.975 -0.102031250  0.2036489 -1.5020312 -0.77135113      2
-#> 4     1 -0.950 -1.550 -0.559421410  0.8864091 -1.5094214 -0.66359093      2
-#> 5     1 -1.800 -1.500  5.674505169  1.5661040  3.8745052  0.06610405      1
-#> 6     1 -1.300 -1.600 -0.002309409  1.5711319 -1.3023094 -0.02886812      2
-#> 
-#>  
-#>  This is Run number  1 
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                9      80     5.0       0      60    20.0    10.0     1
-#> 2  1               12      60     2.5      10      40    20.0     0.0     1
-#> 3  1               13      20    20.0      10      80     2.5     0.0     1
-#> 4  1               70      80     5.0      10      20    20.0     2.5     1
-#> 5  1               71      60    20.0      10      80    10.0     0.0     1
-#> 6  1               73      60    10.0       0      40    20.0    10.0     1
-#>   group    V_1    V_2         e_1         e_2       U_1        U_2 CHOICE
-#> 1     1 -1.150 -1.800 -0.01463130 -0.22509832 -1.164631 -2.0250983      1
-#> 2     1 -0.575 -1.800  2.36022782 -0.36376052  1.785228 -2.1637605      1
-#> 3     1 -1.400 -0.975  1.59659499 -0.13121663  0.196595 -1.1062166      1
-#> 4     1 -0.950 -1.550 -1.33824416  1.40724463 -2.288244 -0.1427554      2
-#> 5     1 -1.800 -1.500  0.49308644  1.66211472 -1.306914  0.1621147      2
-#> 6     1 -1.300 -1.600  0.04407743  0.04227857 -1.255923 -1.5577214      1
-#> 
-#>  
-#>  This is the utility functions 
-#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
-#> Initial gradient value:
-#>  bpreis   blade  bwarte 
-#> -2640.0 -3282.5  1152.5 
-#> initial  value 998.131940 
-#> iter   2 value 963.302525
-#> iter   3 value 925.984100
-#> iter   4 value 925.959587
-#> iter   5 value 905.721674
-#> iter   6 value 905.488066
-#> iter   7 value 905.484178
-#> iter   7 value 905.484176
-#> iter   7 value 905.484176
-#> final  value 905.484176 
-#> converged
-#> This is Run number  2 
-#>  does sou_gis exist:  FALSE 
-#> 
-#>  dataset final_set exists:  FALSE 
-#> 
-#>  decisiongroups exists:  TRUE
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been made 
-#> 
-#>  First few observations 
-#>    ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                9      80     5.0       0      60    20.0    10.0     1
-#> 2  1               12      60     2.5      10      40    20.0     0.0     1
-#> 3  1               13      20    20.0      10      80     2.5     0.0     1
-#> 4  1               70      80     5.0      10      20    20.0     2.5     1
-#> 5  1               71      60    20.0      10      80    10.0     0.0     1
-#> 6  1               73      60    10.0       0      40    20.0    10.0     1
-#>   group    V_1    V_2        e_1         e_2        U_1        U_2 CHOICE
-#> 1     1 -1.150 -1.800  3.0041977  0.38322958  1.8541977 -1.4167704      1
-#> 2     1 -0.575 -1.800  3.0101002  0.72197923  2.4351002 -1.0780208      1
-#> 3     1 -1.400 -0.975  1.1260977  0.06998784 -0.2739023 -0.9050122      1
-#> 4     1 -0.950 -1.550  1.9511131  0.39768983  1.0011131 -1.1523102      1
-#> 5     1 -1.800 -1.500 -0.4686622 -0.83175553 -2.2686622 -2.3317555      1
-#> 6     1 -1.300 -1.600  1.5102954  0.98561984  0.2102954 -0.6143802      1
-#> 
-#>  
-#>  This is the utility functions 
-#>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
-#> Initial gradient value:
-#>  bpreis   blade  bwarte 
-#> -2840.0 -2792.5   980.0 
-#> initial  value 998.131940 
-#> iter   2 value 970.451816
-#> iter   3 value 943.596118
-#> iter   4 value 943.593445
-#> iter   5 value 937.085850
-#> iter   6 value 927.191585
-#> iter   7 value 927.129298
-#> iter   8 value 927.128981
-#> iter   8 value 927.128980
-#> final  value 927.128980 
-#> converged
-#> 
-#> 
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> \                 vars    n   mean    sd    min    max  range    se
-#> ================  ====  ===  =====  ====  =====  =====  =====  ====
-#> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
-#> est_blade            2    2  -0.04  0.00  -0.05  -0.04   0.01  0.00
-#> est_bwarte           3    2   0.01  0.00   0.01   0.02   0.00  0.00
-#> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_bwarte     6    2   0.05  0.06   0.01   0.09   0.08  0.04
+#> rob_pval0_bwarte     6    2   0.28  0.40   0.00   0.57   0.57  0.28
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> 
 #> FALSE  TRUE 
@@ -760,20 +760,20 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3
-#> 1  1                1     1      80      20     2.5    20.0      10       5
-#> 2  1                2     1      60      40     5.0    10.0       5      10
-#> 3  1                3     1      60      20    20.0    20.0       0      10
-#> 4  1                4     1      20      80    20.0     2.5       0      10
-#> 5  1                5     1      40      80    10.0     5.0      10       5
-#> 6  1                6     1      60      80     5.0     2.5       0       0
-#>   group    V_1    V_2       e_1        e_2        U_1          U_2 CHOICE
-#> 1     1 -0.775 -1.500 0.1987193 -1.0900058 -0.5762807 -2.590005753      1
-#> 2     1 -0.850 -0.900 0.2937177  1.3988380 -0.5562823  0.498837973      2
-#> 3     1 -2.000 -1.400 1.2142542  0.5244772 -0.7857458 -0.875522760      1
-#> 4     1 -1.600 -0.775 2.2587676  0.2695545  0.6587676 -0.505445461      1
-#> 5     1 -0.900 -1.050 0.7958478  1.0485339 -0.1041522 -0.001466141      2
-#> 6     1 -0.950 -0.975 0.3019734 -0.4699530 -0.6480266 -1.444953045      1
+#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3 group    V_1    V_2         e_1       e_2        U_1         U_2
+#> 1  1                1     1      80      20     2.5    20.0      10       5     1 -0.775 -1.500  0.12234341 0.6503776 -0.6526566 -0.84962241
+#> 2  1                2     1      60      40     5.0    10.0       5      10     1 -0.850 -0.900 -0.43360819 0.6615210 -1.2836082 -0.23847900
+#> 3  1                3     1      60      20    20.0    20.0       0      10     1 -2.000 -1.400 -0.31286639 5.7827787 -2.3128664  4.38277870
+#> 4  1                4     1      20      80    20.0     2.5       0      10     1 -1.600 -0.775 -0.15949911 0.6857678 -1.7594991 -0.08923219
+#> 5  1                5     1      40      80    10.0     5.0      10       5     1 -0.900 -1.050 -0.05237788 1.5859039 -0.9523779  0.53590389
+#> 6  1                6     1      60      80     5.0     2.5       0       0     1 -0.950 -0.975  2.34036634 0.2393918  1.3903663 -0.73560816
+#>   CHOICE
+#> 1      1
+#> 2      2
+#> 3      2
+#> 4      2
+#> 5      2
+#> 6      1
 #> 
 #>  
 #>  This is Run number  1 
@@ -788,36 +788,36 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3
-#> 1  1                1     1      80      20     2.5    20.0      10       5
-#> 2  1                2     1      60      40     5.0    10.0       5      10
-#> 3  1                3     1      60      20    20.0    20.0       0      10
-#> 4  1                4     1      20      80    20.0     2.5       0      10
-#> 5  1                5     1      40      80    10.0     5.0      10       5
-#> 6  1                6     1      60      80     5.0     2.5       0       0
-#>   group    V_1    V_2        e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.500 -0.3472514  2.3168155 -1.1222514  0.8168155      2
-#> 2     1 -0.850 -0.900  0.2943507 -1.7082525 -0.5556493 -2.6082525      1
-#> 3     1 -2.000 -1.400  0.4742717  1.1619537 -1.5257283 -0.2380463      2
-#> 4     1 -1.600 -0.775  0.5628095  2.7090502 -1.0371905  1.9340502      2
-#> 5     1 -0.900 -1.050 -0.2128470 -1.3149155 -1.1128470 -2.3649155      1
-#> 6     1 -0.950 -0.975  1.6192730  0.3695527  0.6692730 -0.6054473      1
+#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3 group    V_1    V_2         e_1        e_2          U_1
+#> 1  1                1     1      80      20     2.5    20.0      10       5     1 -0.775 -1.500  1.74395858  1.6507121  0.968958575
+#> 2  1                2     1      60      40     5.0    10.0       5      10     1 -0.850 -0.900  1.10763894  0.9337414  0.257638936
+#> 3  1                3     1      60      20    20.0    20.0       0      10     1 -2.000 -1.400 -1.23519031 -0.7089281 -3.235190315
+#> 4  1                4     1      20      80    20.0     2.5       0      10     1 -1.600 -0.775 -0.06854059  2.1896932 -1.668540589
+#> 5  1                5     1      40      80    10.0     5.0      10       5     1 -0.900 -1.050  0.90927543  0.3884170  0.009275432
+#> 6  1                6     1      60      80     5.0     2.5       0       0     1 -0.950 -0.975  0.57272851  0.4992305 -0.377271490
+#>           U_2 CHOICE
+#> 1  0.15071215      1
+#> 2  0.03374141      1
+#> 3 -2.10892809      2
+#> 4  1.41469320      2
+#> 5 -0.66158301      1
+#> 6 -0.47576952      1
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#> -620.0 -877.5  407.5 
+#>   -880   -830    405 
 #> initial  value 998.131940 
-#> iter   2 value 991.196029
-#> iter   3 value 975.595269
-#> iter   4 value 975.571052
-#> iter   5 value 971.582698
-#> iter   6 value 971.577726
-#> iter   6 value 971.577720
-#> iter   6 value 971.577720
-#> final  value 971.577720 
+#> iter   2 value 994.862696
+#> iter   3 value 973.696602
+#> iter   4 value 973.644209
+#> iter   5 value 971.118222
+#> iter   6 value 971.113908
+#> iter   6 value 971.113906
+#> iter   6 value 971.113906
+#> final  value 971.113906 
 #> converged
 #> This is Run number  2 
 #>  does sou_gis exist:  FALSE 
@@ -831,36 +831,36 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #>  data has been made 
 #> 
 #>  First few observations 
-#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3
-#> 1  1                1     1      80      20     2.5    20.0      10       5
-#> 2  1                2     1      60      40     5.0    10.0       5      10
-#> 3  1                3     1      60      20    20.0    20.0       0      10
-#> 4  1                4     1      20      80    20.0     2.5       0      10
-#> 5  1                5     1      40      80    10.0     5.0      10       5
-#> 6  1                6     1      60      80     5.0     2.5       0       0
-#>   group    V_1    V_2       e_1        e_2        U_1        U_2 CHOICE
-#> 1     1 -0.775 -1.500 0.5287428  1.2994989 -0.2462572 -0.2005011      2
-#> 2     1 -0.850 -0.900 3.2064378  0.4735037  2.3564378 -0.4264963      1
-#> 3     1 -2.000 -1.400 1.2595242  0.1146570 -0.7404758 -1.2853430      1
-#> 4     1 -1.600 -0.775 4.2748306 -0.7146858  2.6748306 -1.4896858      1
-#> 5     1 -0.900 -1.050 0.1088246  2.2911218 -0.7911754  1.2411218      2
-#> 6     1 -0.950 -0.975 1.1654639  1.3627596  0.2154639  0.3877596      2
+#>    ID Choice_situation Block alt1_x1 alt2_x1 alt1_x2 alt2_x2 alt1_x3 alt2_x3 group    V_1    V_2        e_1        e_2       U_1        U_2
+#> 1  1                1     1      80      20     2.5    20.0      10       5     1 -0.775 -1.500 -1.1552146  1.6918663 -1.930215  0.1918663
+#> 2  1                2     1      60      40     5.0    10.0       5      10     1 -0.850 -0.900  3.5255143  2.5874719  2.675514  1.6874719
+#> 3  1                3     1      60      20    20.0    20.0       0      10     1 -2.000 -1.400 -0.1288440  3.2280170 -2.128844  1.8280170
+#> 4  1                4     1      20      80    20.0     2.5       0      10     1 -1.600 -0.775 -0.3072974 -0.3710956 -1.907297 -1.1460956
+#> 5  1                5     1      40      80    10.0     5.0      10       5     1 -0.900 -1.050 -0.6042191 -0.1952303 -1.504219 -1.2452303
+#> 6  1                6     1      60      80     5.0     2.5       0       0     1 -0.950 -0.975 -0.6233011 -0.2803958 -1.573301 -1.2553958
+#>   CHOICE
+#> 1      2
+#> 2      1
+#> 3      2
+#> 4      2
+#> 5      2
+#> 6      2
 #> 
 #>  
 #>  This is the utility functions 
 #>  U_1 = @bpreis *$alt1_x1 + @blade *$alt1_x2 + @bwarte *$alt1_x3 ;U_2 = @bpreis *$alt2_x1 + @blade *$alt2_x2 + @bwarte *$alt2_x3 ;Initial function value: -998.1319 
 #> Initial gradient value:
 #>  bpreis   blade  bwarte 
-#>  -580.0 -1077.5   495.0 
+#> -1060.0  -832.5   460.0 
 #> initial  value 998.131940 
-#> iter   2 value 984.134259
-#> iter   3 value 967.898748
-#> iter   4 value 967.884812
-#> iter   5 value 960.128712
-#> iter   6 value 960.126933
-#> iter   6 value 960.126928
-#> iter   6 value 960.126928
-#> final  value 960.126928 
+#> iter   2 value 994.307556
+#> iter   3 value 972.255010
+#> iter   4 value 972.242499
+#> iter   5 value 968.104609
+#> iter   6 value 968.103010
+#> iter   6 value 968.103008
+#> iter   6 value 968.103008
+#> final  value 968.103008 
 #> converged
 #> 
 #> 
@@ -868,29 +868,29 @@ sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
 #> \                 vars    n   mean    sd    min    max  range    se
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> est_bpreis           1    2  -0.01  0.00  -0.01  -0.01   0.00  0.00
-#> est_blade            2    2  -0.05  0.01  -0.06  -0.05   0.01  0.00
-#> est_bwarte           3    2   0.02  0.00   0.02   0.02   0.01  0.00
+#> est_blade            2    2  -0.05  0.00  -0.05  -0.05   0.00  0.00
+#> est_bwarte           3    2   0.02  0.00   0.01   0.02   0.00  0.00
 #> rob_pval0_bpreis     4    2   0.00  0.00   0.00   0.00   0.00  0.00
 #> rob_pval0_blade      5    2   0.00  0.00   0.00   0.00   0.00  0.00
-#> rob_pval0_bwarte     6    2   0.11  0.04   0.08   0.13   0.05  0.03
+#> rob_pval0_bwarte     6    2   0.12  0.08   0.06   0.18   0.12  0.06
 #> ================  ====  ===  =====  ====  =====  =====  =====  ====
 #> 
 #> FALSE 
 #>   100 
-#> 32.978 sec elapsed
+#> 9.804 sec elapsed
 #> $tic
-#> elapsed 
-#>     0.8 
+#>  elapsed 
+#> 10314.36 
 #> 
 #> $toc
-#> elapsed 
-#>  33.778 
+#>  elapsed 
+#> 10324.16 
 #> 
 #> $msg
 #> logical(0)
 #> 
 #> $callback_msg
-#> [1] "32.978 sec elapsed"
+#> [1] "9.804 sec elapsed"
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" /><img src="man/figures/README-example-2.png" width="100%" /><img src="man/figures/README-example-3.png" width="100%" />

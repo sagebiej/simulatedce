@@ -2,7 +2,8 @@
 % Please edit documentation in R/sim_all.R
 \name{sim_all}
 \alias{sim_all}
-\title{Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder}
+\title{Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
+update}
 \usage{
 sim_all(nosim = 2, resps, destype = "ngene", designpath, u, bcoeff)
 }
@@ -24,6 +25,7 @@ A list, with all information on the simulation. This list an be easily processed
 }
 \description{
 Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
+update
 }
 \examples{
 

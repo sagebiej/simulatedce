@@ -9,6 +9,7 @@
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
 simulate_choices <- function(data, utility, setspp, destype, bcoefficients) {  #the part in dataset that needs to be repeated in each run
+<<<<<<< HEAD
 
 ### unpack the bcoeff list
   bsq <- bcoefficients$bsq
@@ -19,6 +20,12 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients) {  #
   bfarm3 <- bcoefficients$bfarm3
   bheight2 <- bcoefficients$bheight2
   bheight3 <- bcoefficients$bheight3
+=======
+  ### unpack the bcoeff list so variables are accessible
+  for (key in names(bcoefficients)) {
+    assign(key, bcoefficients[[key]])
+  }
+>>>>>>> 0c1de67f1d4f2236d97e706a4b99a89bdba8a0b3
 
 
 

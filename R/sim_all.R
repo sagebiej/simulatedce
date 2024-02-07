@@ -1,11 +1,11 @@
 #' Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
-#'
+#' update
 #' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
 #' @param resps Number of respondents you want to simulate
 #' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
-#' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list.
-#' @param bcoefficients List of coefficients for the utility function. List content/length can vary based on application, but item names should be in namespace: {bsq, bredkite, bdistance, bcost, bfarm2, bfarm3, bheight2, bheight3}
+#' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"
+#' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
 #'
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
@@ -27,21 +27,61 @@
 #'
 sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff){
 
+  #################################################
+  ########## Input Validation Test ###############
+  #################################################
 
-
+  ########### validate the utility function ########
   if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))){
-    stop(" 'u' must be provided and must be a list containing at least one list element.")
+    stop(" 'u' must be provided and must be a list containing at least one list element (list of lists).")
   }
 
+  ########## validate the bcoeff list ################
+  # Check if bcoeff is provided
+  if (missing(bcoeff)) {
+    stop("Argument 'bcoeff' is required.")
+  }
+
+  # Check if bcoeff is a list
+  if (!is.list(bcoeff)) {
+    stop("Argument 'bcoeff' must be a list.")
+  }
+
+  # Check if values in bcoeff are numeric
+  if (!all(sapply(bcoeff, is.numeric))) {
+    stop("Values in 'bcoeff' must be numeric.")
+  }
+
+  #### check that all the coefficients in utility function have a cooresponding value in bcoeff ####
+    # Extract coefficients from utility function starting with "b"
+  coeff_names_ul <- unique(unlist(lapply(u, function(u) {
+    formula_strings <- unlist(u)
+    coef_names <- unique(unlist(lapply(formula_strings, function(f) {
+      # Parse the formula to extract coefficient names
+      all_vars <- all.vars(as.formula(f))
+      coef_vars <- all_vars[grep("^b", all_vars)]
+      return(coef_vars)
+    })))
+    return(coef_names)
+  })))
+
+  # Check if all utility function coefficients starting with "b" are covered in bcoeff list
+  missing_coeffs <- coeff_names_ul[!(coeff_names_ul %in% names(bcoeff))]
+  if (length(missing_coeffs) > 0) {
+    stop(paste("Missing coefficients in 'bcoeff':", paste(missing_coeffs, collapse = ", "), ". Perhaps there is a typo?"))
+  }
+  ########## validate resps #####################
   if (missing(resps) ||  !(is.integer(resps) || (is.numeric(resps) && identical(trunc(resps), resps)))) {
     stop(" 'resps' must be provided and must be an integer indicating  the number of respondents per run.")
   }
-
+  ########## validate designpath ################
   if (!dir.exists(designpath)) {
     stop(" The folder where your designs are stored does not exist. \n Check if designpath is correctly specified")
   }
 
-
+  #################################################
+  ########## End Validation Tests #################
+  #################################################
 
   designfile<-list.files(designpath,full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
