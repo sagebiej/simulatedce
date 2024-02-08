@@ -52,3 +52,14 @@ destype="ngene"
 
 sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
                    designpath = designpath, u=ul, bcoeff = bcoeff)
+
+## nested results are hard coded, if the design changes this must aswell
+coeffNestedOutput <- sedrive$olddesign$coefs
+
+variable_names <- names(coeffNestedOutput)
+
+# Filter variable names that start with "est_"
+est_variables <- grep("^est_", variable_names, value = TRUE)
+
+print('hello')
+print(class(coeffNestedOutput))

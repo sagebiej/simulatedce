@@ -152,7 +152,45 @@ test_that("Simulation results are reasonable", {
 
   result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
 
-  expect_gt(result1$est_bsq, -1)
-  expect_lt(result1$est_bsq, 1)
+  ## The function below is intended to find a dataframe called $coef in the output
+  ## regardless of the output data structure which can vary
+  find_dataframe <- function(list_object, dataframe_name) {
+    # Check if the current object is a list
+    if (is.list(list_object)) {
+      # Check if the dataframe_name exists in the names of the current list object
+      if (dataframe_name %in% names(list_object)) {
+        # Check if the object corresponding to dataframe_name is a data frame
+        if (is.data.frame(list_object[[dataframe_name]])) {
+          return(list_object[[dataframe_name]])  # Return the data frame if found
+        }
+      }
+
+      # Recursively search through each element of the current list object
+      for (element in list_object) {
+        result <- find_dataframe(element, dataframe_name)
+        if (!is.null(result)) {
+          return(result)  # Return the data frame if found in any nested list
+        }
+      }
+    }
+
+    return(NULL)  # Return NULL if dataframe_name not found
+  }
+
+  # Now access the coef data frame to compare to the input
+  coeffNestedOutput <- find_dataframe(result1, "coefs")
+
+  for (variable in names(bcoeff)){
+    ### Compare singular input value (hypothesis) with the average value of all iterations. ###
+    ### This could be made more rigorous by testing each iteration or by changing the       ###
+    ### tolerance around the input value considered valid.
+    input_value <- bcoeff[[variable]]
+    mean_output_value <- mean(coeffNestedOutput[[paste0("est_", variable)]]) ## access the mean value of each iteration
+
+    ##change this depending on how rigorous you want to be
+    expect_gt(mean_output_value, input_value - 1)
+    expect_lt(mean_output_value, input_value + 1)
+  }
+
 
 })
