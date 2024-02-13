@@ -50,7 +50,7 @@ library(rlang)
 
 # Inititalize Variables
 
-sim_all is the highest level function in the package and will run simulations for all designs contained in the specified design folder. Accordingly, this is generally the function the user will want to call. To prepare for using this function, a hypothesized utility function with cooresponding beta coefficients representing the weight of each term must be declared in R like so:
+sim_all is the highest level function in the package and will run simulations for all designs contained in the specified design folder. Accordingly, this is generally the function the user will want to call. To prepare for using this function, a hypothesized utility function with corresponding beta coefficients representing the weight of each term must be declared in R like so:
 
 ```{r initialize}
 
@@ -104,7 +104,7 @@ destype="ngene"
 
 # Output
 
-The sim_all function returns a multidimensional R list containing graphs, simulated observations and a dataframe containing sumaries of estimated b coefficients. In general these will be printed to the console, but the entire results can also be assigned to an r variable.
+The sim_all function returns a multidimensional R list containing graphs, simulated observations and a dataframe containing sumaries of estimated b coefficients. In general these will be printed to the console, but the entire results can also be assigned to an r list object.
 
 ```{r output}
  sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,

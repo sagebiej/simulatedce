@@ -1,3 +1,8 @@
+
+rm(list=ls())
+devtools::load_all()
+
+
 designpath<- system.file("extdata","agora" ,package = "simulateDCE")
 
 resps =360  # number of respondents

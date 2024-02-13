@@ -18,10 +18,10 @@ nosim=1000 # number of simulations to run (about 500 is minimum)
 
 
 bcoeff<-list(
-  bx1 = -0.2,
-  bx2 = -0.2,
-  bx3 = -0.1,
-  bx4 = -0.05)
+  bx1 = -0.1,
+  bx2 = -0.1,
+  bx3 = -0.05,
+  bx4 = -0.025)
 
 
 destype <- "spdesign"
@@ -31,7 +31,7 @@ destype <- "spdesign"
 ul<- list(u1= list(
   v1 =V.1 ~  bx1 * alt1.x1 + bx2 * alt1.x2 +  bx3 * alt1.x3  +  bx4 * alt1.x4,
   v2 =V.2 ~  bx1 * alt2.x1 + bx2 * alt2.x2 +  bx3 * alt2.x3  +  bx4 * alt2.x4,
-  v3 =V.3 ~ -10
+  v3 =V.3 ~ -5
 )
 )
 
