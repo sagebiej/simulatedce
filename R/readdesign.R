@@ -33,7 +33,10 @@ readdesign <- function(design = designfile, designtype = destype) {
     "spdesign" = as.data.frame(readRDS(design)) %>%
       dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%
       dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()) %>%
-      dplyr::rename(Block=block),
+      dplyr::rename_with(~ dplyr::case_when(
+        . == "block" ~ "Block",
+        TRUE ~ .
+      ), tidyr::everything()),
     stop("Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
   )
 }
