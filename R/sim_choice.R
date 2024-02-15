@@ -85,14 +85,19 @@ designs_all <- list()
 
   replications <- respondents/nblocks
 
+  ##browser()
   datadet<- design %>%
     dplyr::arrange(Block,Choice.situation) %>%
     dplyr::slice(rep(dplyr::row_number(), replications)) %>%    ## replicate design according to number of replications
+
     dplyr::mutate(ID = rep(1:respondents, each=setpp)) %>%  # create Respondent ID.
     dplyr::relocate(ID,`Choice.situation`) %>%
     as.data.frame()
 
+
   database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients)
+
+
 
 
 # specify model for mixl estimation

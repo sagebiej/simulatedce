@@ -2,7 +2,7 @@
 rm(list=ls())
 devtools::load_all()
 
-#place your utility functions here
+
 
 
 
@@ -14,18 +14,15 @@ designpath<- system.file("extdata","CSA" ,package = "simulateDCE")
 notes <- "No Heuristics"
 
 resps =240  # number of respondents
-nosim=1000 # number of simulations to run (about 500 is minimum)
+nosim=2 # number of simulations to run (about 500 is minimum)
 
+destype <- "spdesign"
 
 bcoeff<-list(
   bx1 = -0.1,
   bx2 = -0.1,
   bx3 = -0.05,
   bx4 = -0.025)
-
-
-destype <- "spdesign"
-
 
 #place your utility functions here
 ul<- list(u1= list(
