@@ -15,7 +15,7 @@ bcoeff <- list(
   basc = -1.2,
   basc2 = -1.4,
   baction = 0.1,
-  badvisory = 0.4,
+  badvisory =0.4,
   bpartner = 0.3,
   bcomp = 0.02)
 
