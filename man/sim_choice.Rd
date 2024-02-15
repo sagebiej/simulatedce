@@ -10,7 +10,8 @@ sim_choice(
   respondents = 330,
   ut,
   destype = destype,
-  bcoefficients
+  bcoefficients,
+  decisiongroups = c(0, 1)
 )
 }
 \arguments{
@@ -23,6 +24,10 @@ sim_choice(
 \item{ut}{The first element of the utility function list}
 
 \item{destype}{Specify which type of design you use. Either ngene or spdesign}
+
+\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+
+\item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 }
 \value{
 a list with all information on the run

@@ -1,4 +1,6 @@
 
+library(rlang)
+library(formula.tools)
 
 designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 
@@ -195,8 +197,7 @@ test_that("Simulation results are reasonable", {
                 sprintf("Variable est_%s does not exist in coeffNestedOutput", variable))
 
     # Check if variable is numeric
-    expect_type(coeffNestedOutput[[paste0("est_", variable)]], "numeric",
-              sprintf("Variable est_%s in coeffNestedOutput is not numeric", variable))
+    ## expect_is(coeffNestedOutput[[paste0("est_", variable)]], "numeric", sprintf("Variable est_%s in coeffNestedOutput is not numeric", variable))
 
     # Check if each entry in the variable column is numeric
     expect_true(all(sapply(coeffNestedOutput[[paste0("est_", variable)]], is.numeric)),

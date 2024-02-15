@@ -15,7 +15,7 @@ Best Practice is to follow these steps
 1. Create vignette using usethis::use_vignette("my-vignette")
 2. After making changes, then run devtools::build_vignettes()
 3. Rebuild using devtools::install(build_vignettes = TRUE)
-4. Check that it is in the vignette environment using browseVigettes()
+4. Check that it is in the vignette environment using browseVignettes()
 
 If vignette does not appear in gitHub, it is possibly due to a file heirarchy problem where rendered files 
 appear in /doc instead of /inst/doc
@@ -40,12 +40,8 @@ This vignette demonstrates how to use the `simulateDCE` package to simulate disc
 
 ```{r setup}
 library(simulateDCE)
-
-rm(list=ls())
-devtools::load_all()
-
-
 library(rlang)
+library(formula.tools)
 ```
 
 # Inititalize Variables

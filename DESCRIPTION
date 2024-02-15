@@ -1,6 +1,6 @@
 Package: simulateDCE
 Title: Simulate data for discrete choice experiments 
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     person("Julian", "Sagebiel", , "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
@@ -20,6 +20,7 @@ Imports:
     psych,
     purrr,
     readr,
+    rlang,
     rmarkdown,
     stringr,
     tibble,

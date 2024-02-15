@@ -5,10 +5,13 @@
 #' @param setspp an integer, the number of choice sets per person
 #' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
 #' @return a dataframe that includes simulated choices and a design
+#' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
+#' @param decisiongroups A vector showing how decision groups are numerically distributed
+#'
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
-simulate_choices <- function(data, utility, setspp, destype, bcoefficients) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, destype, bcoefficients, decisiongroups = c(0,1)) {  #the part in dataset that needs to be repeated in each run
 
 
 

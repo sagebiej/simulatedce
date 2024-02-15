@@ -45,5 +45,5 @@ ul<- list(u1= list(
             v3 =V.3 ~ basc)
 )
 
-sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff)
+feedadditives <- sim_all(nosim = nosim, resps=resps, destype = destype,
+                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)

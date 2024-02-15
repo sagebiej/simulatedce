@@ -4,7 +4,14 @@
 \alias{simulate_choices}
 \title{Simulate choices based on a dataframe with a design}
 \usage{
-simulate_choices(data, utility, setspp, destype, bcoefficients)
+simulate_choices(
+  data,
+  utility,
+  setspp,
+  destype,
+  bcoefficients,
+  decisiongroups = c(0, 1)
+)
 }
 \arguments{
 \item{data}{a dataframe that includes a design repeated for the number of observations}
@@ -14,6 +21,10 @@ simulate_choices(data, utility, setspp, destype, bcoefficients)
 \item{setspp}{an integer, the number of choice sets per person}
 
 \item{destype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
+
+\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+
+\item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 }
 \value{
 a dataframe that includes simulated choices and a design

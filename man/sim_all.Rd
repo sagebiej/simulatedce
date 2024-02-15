@@ -5,7 +5,15 @@
 \title{Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
 update}
 \usage{
-sim_all(nosim = 2, resps, destype = "ngene", designpath, u, bcoeff)
+sim_all(
+  nosim = 2,
+  resps,
+  destype = "ngene",
+  designpath,
+  u,
+  bcoeff,
+  decisiongroups = c(0, 1)
+)
 }
 \arguments{
 \item{nosim}{Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.}
@@ -18,7 +26,9 @@ sim_all(nosim = 2, resps, destype = "ngene", designpath, u, bcoeff)
 
 \item{u}{A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"}
 
-\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+
+\item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
@@ -33,7 +43,8 @@ update
  resps =240  # number of respondents
  nosim=2 # number of simulations to run (about 500 is minimum)
 
- bcoeff <-list(bsq=0.00, # hypothesized beta coefficients for individual terms of the utility function
+
+ bcoeff <-list(bsq=0.00,
      bredkite=-0.05,
      bdistance=0.50,
      bcost=-0.05,

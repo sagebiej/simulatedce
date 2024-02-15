@@ -40,12 +40,8 @@ This vignette demonstrates how to use the `simulateDCE` package to simulate disc
 
 ```{r setup}
 library(simulateDCE)
-
-rm(list=ls())
-devtools::load_all()
-
-
 library(rlang)
+library(formula.tools)
 ```
 
 # Inititalize Variables
@@ -108,7 +104,7 @@ The sim_all function returns a multidimensional R list containing graphs, simula
 
 ```{r output}
  sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff)
+                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
   
 
