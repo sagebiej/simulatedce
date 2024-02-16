@@ -108,19 +108,23 @@ csa <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
 
 # Accessing the Output in R
 
-The beta cofficients for each simulation are contained in a dataframe called coeffs located within {result}->olddesign->coefs. and a summary table, which displays 
-statistics of these b coefficients across all simulations is contained in ->olddesign->summary.
+The beta cofficients for each simulation are contained in a dataframe called coeffs within within a nested list structure output. A summary table showing the beta coefficient statistics is also made within each experimental design.
 
 You can also save the results to disk using saveRDS(csa,file = "tests/manual-tests/csa.RDS")
 
 
 ```{r accessOutput}
-## nested results are hard coded, if the design changes this must aswell
-simulationCoeff <- csa$olddesign$coefs
-coeffSummary <- csa$olddesign$summary
+
+
+topLevelResults = names(csa[sapply(csa, is.list)])
+
+print(topLevelResults)
+
+##saves and prints the key results of the first expreimental design                    
+simulationCoeff <- csa[[1]]$coefs
+coeffSummary <- csa[[1]]$summary
 
 print(simulationCoeff)
 print(coeffSummary)
-
 ## saveRDS(csa,file = "tests/manual-tests/csa.RDS")
 ```
