@@ -15,7 +15,7 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
 
 
-  ### unpack the bcoeff list so variables are accessible
+### unpack the bcoeff list so variables are accessible
   for (key in names(bcoefficients)) {
     assign(key, bcoefficients[[key]])
   }
@@ -51,7 +51,7 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
   cat("\n decisiongroups exists: " ,exists("decisiongroups"))
 
-  if(exists("decisiongroups"))  {     ### create a new variable to classify decision groups.
+  if(length(decisiongroups)>2)  {     ### create a new variable to classify decision groups.
 
     data = dplyr::mutate(data,group = as.numeric(cut(dplyr::row_number(),
                                               breaks = decisiongroups * dplyr::n(),
@@ -64,20 +64,25 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
     data$group=1
   }
 
-
+## Do user entered manipulations to choice set
   data<- data %>%
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!! manipulations)
 
 
-
+## split dataframe into groups
   subsets<- split(data,data$group)
 
+
+  ## for each group calculate utility
   subsets <-  purrr::map2(.x = seq_along(utility),.y = subsets,
                    ~ dplyr::mutate(.y,purrr::map_dfc(utility[[.x]],by_formula)))
 
+  ##put data from eachgroup together again
   data <-dplyr::bind_rows(subsets)
 
+
+## add random component and calculate total utility
   data<- data %>%
     dplyr::rename_with(~ stringr::str_replace(.,pattern = "\\.","_"), tidyr::everything()) %>%
     dplyr::mutate(dplyr::across(.cols=n,.fns = ~ evd::rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
@@ -89,9 +94,9 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
 
 
-  cat("\n data has been made \n")
+  cat("\n data has been created \n")
 
-  cat("\n First few observations \n ")
+  cat("\n First few observations of the dataset \n ")
   print(utils::head(data))
   cat("\n \n ")
   return(data)
