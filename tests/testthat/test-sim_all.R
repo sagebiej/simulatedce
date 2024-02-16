@@ -5,7 +5,7 @@ library(formula.tools)
 ## all tests are wrapped in a single function to make it easier to call on different designs,
 ## which is done at the end of this script
 
-comprehensive_design_test  <- function(designpath, ul, bcoeff, nosim, resps, destype, decisiongroups=c(0,1)) {
+comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bcoeff,  decisiongroups=c(0,1)) {
     # Test cases related to sim_all function
   test_that("u is not a list of lists", {
     expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
@@ -22,40 +22,40 @@ comprehensive_design_test  <- function(designpath, ul, bcoeff, nosim, resps, des
 
   test_that("wrong designtype", {
     expect_error(sim_all(nosim = nosim, resps=resps, destype = "ng",
-                         designpath = designpath, u=ul, bcoeff = bcoeff),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+                         designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
   })
 
 
   test_that("folder does not exist", {
     expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
-                         designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul, bcoeff = bcoeff)
+                         designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
       ,
                  "The folder where your designs are stored does not exist.")
   })
 
   test_that("seed setting makes code reproducible", {
     set.seed(3333)
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     set.seed(3333)
-    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     expect_identical(result1[["summaryall"]], result2[["summaryall"]])
   })
 
   test_that("No seed setting makes code results different", {
 
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
 
-    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     expect_failure(expect_identical(result1[["summaryall"]], result2[["summaryall"]]))
   })
 
   test_that("Length of utility functions matches number of decision groups", {
     # Define test inputs
-    bcoeff = list(
+    badbcoeff = list(
       basc = 0.2,
       bcow = 0.3,
       badv = 0.3,
@@ -87,14 +87,15 @@ comprehensive_design_test  <- function(designpath, ul, bcoeff, nosim, resps, des
     baddecisiongroups <- c(0,0.3,0.6,1)
 
     # Test that the function throws an error when lengths don't match
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = badlist, bcoeff = bcoeff, decisiongroups =  baddecisiongroups), "Number of decision groups must equal number of utility functions!")
+    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = badlist, bcoeff = badbcoeff, decisiongroups =  baddecisiongroups), "Number of decision groups must equal number of utility functions!")
 
     # Define test inputs where lengths match
     gooddecisiongroups <- c(0,0.3,0.6, 0.8, 1)
 
-    # Test that the function does not throw an error when lengths match
-    expect_no_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = badlist, bcoeff = bcoeff, decisiongroups =  gooddecisiongroups))
+    # Test that the function does not throw an error when lengths match (assumed true in input)
+    expect_no_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups =  decisiongroups))
   })
+
 
   ########### Additional Tests ##############
   test_that("bcoeff is provided", {
@@ -152,34 +153,37 @@ comprehensive_design_test  <- function(designpath, ul, bcoeff, nosim, resps, des
 
   test_that("Simulation results are reasonable", {
 
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff)
+    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
-    # Now access the coef data frame to compare to the input
-    coeffNestedOutput <- find_dataframe(result1, "coefs")
+    # obtain the names of the design files (without extensions)
+    designs <- tools::file_path_sans_ext(list.files(designpath, full.names = FALSE))
 
-    for (variable in names(bcoeff)){
-      ### Compare singular input value (hypothesis) with the average value of all iterations. ###
-      ### This could be made more rigorous by testing each iteration rather than the mean or by changing the ###
-      ### tolerance around the input value considered valid.
-      input_value <- bcoeff[[variable]]
-      mean_output_value <- mean(coeffNestedOutput[[paste0("est_", variable)]]) ## access the mean value of each iteration
+    ## Now access the summary data. this is tricky because a different table is made for each design
+    ## to address this, loop through all designs and run tests on each design
+    for (design in designs) {
+      # Access the summary data frame for the current design
+      summaryTable <- result1[[design]][["summary"]]
+
+      ##nested loop looks at each row starting with est_ (estimated bcoeffs)
+      for (row_name in rownames(summaryTable)) {
+        if (startsWith(row_name, "est_")) {
+
+          betaCoeff <- sub("^est_", "", row_name) #simpkly strip prefix
+          meanBeta <- summaryTable[row_name, 'mean']
+          inputBeta <- as.integer(bcoeff[betaCoeff]) # access beta coefficient list by specific coefficient name
+
+          # Perform tests for rows starting with "est_"
+          expect_true(betaCoeff %in% names(bcoeff),
+                      sprintf("Variable est_%s does not exist in summary data frame", variable))
 
 
-
-      ##change this depending on how rigorous you want to be
-      # Check if variable exists in coeffNestedOutput
-      expect_true(paste0("est_", variable) %in% names(coeffNestedOutput),
-                  sprintf("Variable est_%s does not exist in coeffNestedOutput", variable))
-
-      # Check if variable is numeric
-      ## expect_is(coeffNestedOutput[[paste0("est_", variable)]], "numeric", sprintf("Variable est_%s in coeffNestedOutput is not numeric", variable))
-
-      # Check if each entry in the variable column is numeric
-      expect_true(all(sapply(coeffNestedOutput[[paste0("est_", variable)]], is.numeric)),
-                  sprintf("Variable est_%s in coeffNestedOutput contains non-numeric values", variable))
-      expect_gt(mean_output_value, input_value - 1)
-      expect_lt(mean_output_value, input_value + 1)
+          expect_gt(meanBeta, inputBeta - 1)
+          expect_lt(meanBeta, inputBeta + 1)
+        }
+      }
     }
+
+
   })
 }
 
@@ -218,9 +222,54 @@ ul<- list(u1= list(
 )
 )
 
-comprehensive_design_test(designpath, ul, bcoeff, nosim, resps, destype)
+comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff)
 
 ###############################
 #### From feedadditives #######
 ###############################
 
+designpath<- system.file("extdata","feedadditives" ,package = "simulateDCE")
+
+#notes <- "This design consists of different heuristics. One group did not attend the methan attribute, another group only decided based on the payment"
+
+notes <- "Three heuristics"
+
+resps =30  # number of respondents
+nosim=2 # number of simulations to run (about 500 is minimum)
+destype = "ngene"
+
+#betacoefficients should not include "-"
+bcoeff = list(
+  basc = 0.2,
+  bcow = 0.3,
+  badv = 0.3,
+  bvet = 0.3,
+  bfar = 0.3,
+  bmet = 0.3,
+  bbon = 0.3,
+  bbon2 = 1.9,
+  basc2 = 2)
+
+dgFeed=c(0,0.3,0.6,0.8,1)
+
+#place your utility functions here
+ul<- list(u1= list(
+  v1 =V.1 ~  bcow*alt1.cow + badv * alt1.adv + bvet * alt1.vet + bfar * alt1.far + bmet*alt1.met + bbon * alt1.bon,
+  v2 =V.2 ~  bcow*alt2.cow + badv * alt2.adv + bvet * alt2.vet + bfar * alt2.far + bmet*alt2.met + bbon * alt2.bon,
+  v3 =V.3 ~ basc)
+  ,
+  u2 = list(
+    v1 =V.1 ~  bcow*alt1.cow + badv * alt1.adv + bvet * alt1.vet + bfar * alt1.far + bbon * alt1.bon,
+    v2 =V.2 ~  bcow*alt2.cow + badv * alt2.adv + bvet * alt2.vet + bfar * alt2.far + bbon * alt2.bon,
+    v3 =V.3 ~ basc),
+  u3 = list(
+    v1 =V.1 ~  bbon2 * alt1.bon,
+    v2 =V.2 ~  bbon2 * alt2.bon,
+    v3 =V.3 ~ basc),
+
+  u4 = list(v1 =V.1 ~ basc2 + bcow*alt1.cow + badv * alt1.adv + bvet * alt1.vet + bfar * alt1.far + bmet*alt1.met + bbon * alt1.bon,
+            v2 =V.2 ~  bcow*alt2.cow + badv * alt2.adv + bvet * alt2.vet + bfar * alt2.far + bmet*alt2.met + bbon * alt2.bon,
+            v3 =V.3 ~ basc)
+)
+
+comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff, decisiongroups = dgFeed)

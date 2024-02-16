@@ -12,7 +12,8 @@ sim_all(
   designpath,
   u,
   bcoeff,
-  decisiongroups = c(0, 1)
+  decisiongroups = c(0, 1),
+  manipulations
 )
 }
 \arguments{
