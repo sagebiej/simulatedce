@@ -114,8 +114,6 @@ You can also save the results to disk using saveRDS(csa,file = "tests/manual-tes
 
 
 ```{r accessOutput}
-
-
 topLevelResults = names(csa[sapply(csa, is.list)])
 
 print(topLevelResults)
