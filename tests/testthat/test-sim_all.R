@@ -272,4 +272,4 @@ ul<- list(u1= list(
             v3 =V.3 ~ basc)
 )
 
-comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff, decisiongroups = dgFeed)
+## comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff, decisiongroups = dgFeed)
