@@ -13,7 +13,7 @@ sim_all(
   u,
   bcoeff,
   decisiongroups = c(0, 1),
-  manipulations
+  manipulations = list()
 )
 }
 \arguments{
@@ -30,6 +30,8 @@ sim_all(
 \item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
+
+\item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

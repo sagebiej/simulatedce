@@ -7,7 +7,7 @@
 #' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"
 #' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
-#' @param manipulations A variable to change terms of the utility functions eg shift be a factor of ten or apply selectively to different groups
+#' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #'
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
@@ -28,7 +28,7 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff, decisiongroups = c(0,1)){
+sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list()){
 
   #################################################
   ########## Input Validation Test ###############
@@ -112,7 +112,7 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff, deci
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

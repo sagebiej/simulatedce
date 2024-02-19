@@ -11,7 +11,8 @@ sim_choice(
   ut,
   destype = destype,
   bcoefficients,
-  decisiongroups = c(0, 1)
+  decisiongroups = c(0, 1),
+  manipulations = list()
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ sim_choice(
 \item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
+
+\item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
 }
 \value{
 a list with all information on the run

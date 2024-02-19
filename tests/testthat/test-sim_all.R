@@ -1,4 +1,3 @@
-
 library(rlang)
 library(formula.tools)
 

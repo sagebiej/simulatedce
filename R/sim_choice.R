@@ -15,6 +15,7 @@
 #' @param destype Specify which type of design you use. Either ngene or spdesign
 #' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
+#' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #'
 #' @return a list with all information on the run
 #' @export
@@ -22,7 +23,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1)) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list()) {
 
 
 
@@ -40,7 +41,7 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
 
     cat("This is Run number ", run)
 
-    database <- simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups)
+    database <- simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
     cat("This is the utility functions \n" , mnl_U)
@@ -99,7 +100,7 @@ designs_all <- list()
     as.data.frame()
 
 
-  database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups)
+  database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
 

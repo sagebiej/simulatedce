@@ -10,7 +10,8 @@ simulate_choices(
   setspp,
   destype,
   bcoefficients,
-  decisiongroups = c(0, 1)
+  decisiongroups = c(0, 1),
+  manipulations = list()
 )
 }
 \arguments{
@@ -20,11 +21,13 @@ simulate_choices(
 
 \item{setspp}{an integer, the number of choice sets per person}
 
-\item{destype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
+\item{destype}{Is it a design created with ngene or with spdesign. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
 
 \item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
+
+\item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
 }
 \value{
 a dataframe that includes simulated choices and a design

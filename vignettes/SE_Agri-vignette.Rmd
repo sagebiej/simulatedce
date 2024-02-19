@@ -118,7 +118,7 @@ The sim_all function returns a multidimensional R list containing graphs, simula
 
 ```{r output}
 seagri <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
-                 designpath = designpath, u= ul, bcoeff = bcoeff)
+                 designpath = designpath, u= ul, bcoeff = bcoeff, manipulations = manipulations)
 
   
 
