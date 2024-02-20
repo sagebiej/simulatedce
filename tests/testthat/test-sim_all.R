@@ -1,7 +1,7 @@
 library(rlang)
 library(formula.tools)
 
-## all tests are wrapped in a single function to make it easier to call on different designs,
+## all tests are wrapped in single function to make it easier to call on different designs,
 ## which is done at the end of this script
 
 comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bcoeff,  decisiongroups=c(0,1)) {
