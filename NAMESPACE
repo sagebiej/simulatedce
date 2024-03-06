@@ -2,6 +2,7 @@
 
 export("%>%")
 export(download_and_extract_zip)
+export(extract_b_values)
 export(readdesign)
 export(sim_all)
 export(sim_choice)
