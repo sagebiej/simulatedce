@@ -256,9 +256,9 @@ apollo_probabilities=function(apollo_beta, apollo_inputs, functionality="estimat
 # ################################################################# #
 
 ### Optional starting values search
-# apollo_beta=apollo_searchStart(apollo_beta, apollo_fixed,apollo_probabilities, apollo_inputs)
+apollo_beta=apollo_searchStart(apollo_beta, apollo_fixed,apollo_probabilities, apollo_inputs)
 
-model = apollo_estimate(apollo_beta, apollo_fixed, apollo_probabilities, apollo_inputs ,estimate_settings =list(estimationRoutine="bhhh" , hessianRoutine= "maxLik"))
+model = apollo_estimate(apollo_beta, apollo_fixed, apollo_probabilities, apollo_inputs ) #,estimate_settings =list(estimationRoutine="bhhh" , hessianRoutine= "maxLik")
 
 # ################################################################# #
 #### MODEL OUTPUTS                                               ####
