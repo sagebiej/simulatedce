@@ -15,12 +15,25 @@ test_that("all is correct", {
   expect_no_error(readdesign(design = design_path, designtype = "ngene"))
 })
 
+# test if autodetect ngd design
+
+test_that("all is correct", {
+  expect_no_error(readdesign(design = design_path))
+})
+
+
 ### Tests for spdesign
 
-design_path <- system.file("extdata","CSA", "design2.RDS" ,package = "simulateDCE")
+design_path <- system.file("extdata","CSA", "linear", "BLIbay.RDS" ,package = "simulateDCE")
 
 test_that("all is correct", {
   expect_no_error(readdesign(design = design_path, designtype = "spdesign"))
+})
+
+# Same Tests for spdesign, but detect automatically if it is spdesign
+
+test_that("all is correct", {
+  expect_no_error(readdesign(design = design_path))
 })
 
 

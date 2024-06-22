@@ -22,22 +22,22 @@
 
 readdesign <- function(design = designfile, designtype = NULL) {
 
-  # if (is.null(designtype)) {
-  #
-  #
-  #
-  #   # Check if the string ends with ".ngd"
-  #   if (grepl("\\.ngd$", designfile)) {
-  #     # Code to execute if condition is true
-  #     designtype = "ngene"
-  #     print("I guessed it is an ngene file")
-  #   } else {
-  #     # Code to execute if condition is false
-  #     designtype = "spdesign"
-  #     print("I assume it is a spdesign")
-  #   }
-  #
-  # }
+  if (is.null(designtype)) {
+
+
+
+    # Check if the string ends with ".ngd"
+    if (grepl("\\.ngd$", designfile)) {
+      # Code to execute if condition is true
+      designtype = "ngene"
+      print("I guessed it is an ngene file")
+    } else {
+      # Code to execute if condition is false
+      designtype = "spdesign"
+      print("I assume it is a spdesign")
+    }
+
+  }
 
   design <- switch(designtype,
                    "ngene" = suppressWarnings(readr::read_delim(design,
