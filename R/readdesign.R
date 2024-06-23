@@ -5,7 +5,7 @@
 #'  Creates a dataframe with the design.
 #'
 #' @param design The path to a design file
-#' @param designtype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
+#' @param designtype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.
 #'
 #' @return a dataframe
 #' @export
@@ -27,14 +27,14 @@ readdesign <- function(design = designfile, designtype = NULL) {
 
 
     # Check if the string ends with ".ngd"
-    if (grepl("\\.ngd$", designfile)) {
+    if (grepl("\\.ngd$", design)) {
       # Code to execute if condition is true
       designtype = "ngene"
-      print("I guessed it is an ngene file")
+      message("I guessed it is an ngene file")
     } else {
       # Code to execute if condition is false
       designtype = "spdesign"
-      print("I assume it is a spdesign")
+      message("I assume it is a spdesign")
     }
 
   }
@@ -66,7 +66,7 @@ readdesign <- function(design = designfile, designtype = NULL) {
 
                    }
                    ,
-                   stop("Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+                   stop("Invalid value for design. Please provide either 'ngene' or 'spdesign', or do not use the argument 'designtype'.")
   )
 
 }

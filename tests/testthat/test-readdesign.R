@@ -17,8 +17,8 @@ test_that("all is correct", {
 
 # test if autodetect ngd design
 
-test_that("all is correct", {
-  expect_no_error(readdesign(design = design_path))
+test_that("expect message of guess", {
+  expect_message(readdesign(design = design_path), "I guessed it is an ngene file")
 })
 
 
@@ -32,8 +32,8 @@ test_that("all is correct", {
 
 # Same Tests for spdesign, but detect automatically if it is spdesign
 
-test_that("all is correct", {
-  expect_no_error(readdesign(design = design_path))
+test_that("prints message for guessing", {
+  expect_message(readdesign(design = design_path), "I assume it is a spdesign")
 })
 
 

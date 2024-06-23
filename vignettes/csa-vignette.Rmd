@@ -71,7 +71,7 @@ The simulation can be ran using spdesign or NGENE design files which will be con
 
 ```{r other}
 
-designpath<- system.file("extdata","CSA" ,package = "simulateDCE")
+designpath<- system.file("extdata","CSA", "linear" ,package = "simulateDCE")
 ## can also be specified using relative path eg. designpath<- "Projects/CSA/Designs/"
 
 #notes <- "This design consists of different heuristics. One group did not attend the methan attribute, another group only decided based on the payment"

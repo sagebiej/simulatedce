@@ -4,12 +4,12 @@
 \alias{readdesign}
 \title{Creates a dataframe with the design.}
 \usage{
-readdesign(design = designfile, designtype = destype)
+readdesign(design = designfile, designtype = NULL)
 }
 \arguments{
 \item{design}{The path to a design file}
 
-\item{designtype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
+\item{designtype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
 }
 \value{
 a dataframe
