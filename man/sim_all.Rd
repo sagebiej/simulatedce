@@ -8,7 +8,7 @@ update}
 sim_all(
   nosim = 2,
   resps,
-  destype = "ngene",
+  destype = NULL,
   designpath,
   u,
   bcoeff,

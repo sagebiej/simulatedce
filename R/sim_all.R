@@ -28,7 +28,7 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list()){
+sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list()){
 
   #################################################
   ########## Input Validation Test ###############
@@ -157,6 +157,8 @@ sim_all <- function(nosim=2, resps, destype="ngene", designpath, u, bcoeff, deci
   all_designs[["graphs"]]=p
   all_designs[["powa"]]=powa
   all_designs[["time"]]=time
+  all_designs[["arguements"]] = list( "Beta values" = bcoeff, "Utility functions" = u , "Decision groups" =decisiongroups , "Manipulation of vars" = manipulations,
+                                      "Number Simulations" = nosim, "Respondents" = resps, "Designpath" = designpath)
 
 
 
