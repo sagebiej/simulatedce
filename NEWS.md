@@ -1,3 +1,5 @@
+# simulateDCE (development version)
+
 # simulateDCE 0.2.0
 
 * readdesign can now guess the designtype. This is useful when you use sim_all and have both ngene and spdesign design files in your design folder. 
