@@ -139,7 +139,10 @@ designs_all <- list()
 
 
   return(output)
-} else return(database)
+} else {
 
+  output<- 1:no_sim %>% purrr::map(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
+  return(output)
 
+}
 }
