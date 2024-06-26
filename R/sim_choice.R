@@ -141,7 +141,7 @@ designs_all <- list()
   return(output)
 } else {
 
-  output<- 1:no_sim %>% purrr::map(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
+  output<- 1:no_sim %>% purrr::map(~ simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations))
   return(output)
 
 }
