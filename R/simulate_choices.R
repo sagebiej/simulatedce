@@ -3,12 +3,11 @@
 #' @param data a dataframe that includes a design repeated for the number of observations
 #' @param utility a list with the utility functions, one utility function for each alternatives
 #' @param setspp an integer, the number of choice sets per person
-#' @param destype Is it a design created with ngene or with spdesign. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
-#' @return a dataframe that includes simulated choices and a design
+#' @inheritParams readdesign
 #' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
-#'
+#' @return a dataframe that includes simulated choices and a design
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
@@ -25,10 +24,8 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
 
   by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
-    # //! cur_data_all may get deprecated in favor of pick
-    dplyr::pick(dplyr::everything()) |>
-    #cur_data_all() |>
-      dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
+      dplyr::pick(dplyr::everything()) |>
+       dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
   }
 
 #  Here one can add additional case-specific data
@@ -50,7 +47,7 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
   if(exists("final_set")) data = dplyr::left_join(data,final_set, by = "ID")
 
-  cat("\n decisiongroups exists: " ,exists("decisiongroups"))
+  cat("\n decisiongroups exists: " ,length(decisiongroups)>2)
 
   if(length(decisiongroups)>2)  {     ### create a new variable to classify decision groups.
 

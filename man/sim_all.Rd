@@ -13,15 +13,14 @@ sim_all(
   u,
   bcoeff,
   decisiongroups = c(0, 1),
-  manipulations = list()
+  manipulations = list(),
+  estimate = TRUE
 )
 }
 \arguments{
 \item{nosim}{Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.}
 
 \item{resps}{Number of respondents you want to simulate}
-
-\item{destype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
 
 \item{designpath}{The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"}
 
@@ -32,6 +31,8 @@ sim_all(
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+
+\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

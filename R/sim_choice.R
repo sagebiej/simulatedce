@@ -1,29 +1,19 @@
-
-
-
-
-
-
-
-
-#' Title
+#' Simulate and estimate choices
 #'
 #' @param designfile path to a file containing a design.
 #' @param no_sim Number of runs i.e. how often do you want the simulation to be repeated
 #' @param respondents Number of respondents. How many respondents do you want to simulate in each run.
 #' @param ut The first element of the utility function list
-#' @param destype Specify which type of design you use. Either ngene or spdesign
-#' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
-#' @param decisiongroups A vector showing how decision groups are numerically distributed
-#' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
-#'
+#' @inheritParams readdesign
+#' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
+#' @inheritParams simulate_choices
 #' @return a list with all information on the run
 #' @export
 #'
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list()) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate = TRUE) {
 
 
 
@@ -103,6 +93,10 @@ designs_all <- list()
   database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
+### start estimation
+
+  if (estimate==TRUE) {
+
 
 
 # specify model for mixl estimation
@@ -145,6 +139,7 @@ designs_all <- list()
 
 
   return(output)
+} else return(database)
 
 
 }

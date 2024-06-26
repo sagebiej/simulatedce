@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_choice.R
 \name{sim_choice}
 \alias{sim_choice}
-\title{Title}
+\title{Simulate and estimate choices}
 \usage{
 sim_choice(
   designfile,
@@ -12,7 +12,8 @@ sim_choice(
   destype = destype,
   bcoefficients,
   decisiongroups = c(0, 1),
-  manipulations = list()
+  manipulations = list(),
+  estimate = TRUE
 )
 }
 \arguments{
@@ -24,19 +25,19 @@ sim_choice(
 
 \item{ut}{The first element of the utility function list}
 
-\item{destype}{Specify which type of design you use. Either ngene or spdesign}
-
 \item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+
+\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 }
 \value{
 a list with all information on the run
 }
 \description{
-Title
+Simulate and estimate choices
 }
 \examples{
 \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,

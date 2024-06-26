@@ -2,13 +2,12 @@
 #' update
 #' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
 #' @param resps Number of respondents you want to simulate
-#' @param destype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design
+#' @inheritParams readdesign
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
 #' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"
 #' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
-#' @param decisiongroups A vector showing how decision groups are numerically distributed
-#' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
-#'
+#' @inheritParams sim_choice
+#' @inheritParams simulate_choices
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
 #'
@@ -28,7 +27,7 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list()){
+sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE){
 
   #################################################
   ########## Input Validation Test ###############
