@@ -13,7 +13,7 @@ sim_choice(
   bcoefficients,
   decisiongroups = c(0, 1),
   manipulations = list(),
-  estimate = TRUE
+  estimate
 )
 }
 \arguments{

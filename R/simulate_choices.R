@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
-simulate_choices <- function(data, utility, setspp, destype, bcoefficients, decisiongroups = c(0,1), manipulations = list()) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, destype, bcoefficients, decisiongroups = c(0,1), manipulations = list(), estimate) {  #the part in dataset that needs to be repeated in each run
 
 
 

@@ -11,7 +11,8 @@ simulate_choices(
   destype,
   bcoefficients,
   decisiongroups = c(0, 1),
-  manipulations = list()
+  manipulations = list(),
+  estimate
 )
 }
 \arguments{

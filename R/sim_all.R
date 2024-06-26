@@ -111,13 +111,15 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 
   time <- tictoc::toc()
 
   print(time)
+
+if (estimate==TRUE) {
 
 
 
@@ -155,6 +157,8 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   all_designs[["summaryall"]] = summaryall
   all_designs[["graphs"]]=p
   all_designs[["powa"]]=powa
+
+}
   all_designs[["time"]]=time
   all_designs[["arguements"]] = list( "Beta values" = bcoeff, "Utility functions" = u , "Decision groups" =decisiongroups , "Manipulation of vars" = manipulations,
                                       "Number Simulations" = nosim, "Respondents" = resps, "Designpath" = designpath)

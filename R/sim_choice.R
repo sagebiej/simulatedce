@@ -13,7 +13,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate = TRUE) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate) {
 
 
 
@@ -95,7 +95,7 @@ designs_all <- list()
 
 ### start estimation
 
-  if (estimate==TRUE) {
+  if(estimate==TRUE) {
 
 
 
