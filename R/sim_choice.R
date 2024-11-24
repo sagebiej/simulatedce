@@ -7,13 +7,14 @@
 #' @inheritParams readdesign
 #' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
 #' @inheritParams simulate_choices
+#' @param chunks The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.
 #' @return a list with all information on the run
 #' @export
 #'
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1) {
 
 
 
@@ -109,9 +110,64 @@ designs_all <- list()
   availabilities <- mixl::generate_default_availabilities(
     database, model_spec$num_utility_functions)
 
+  if (chunks >1) {
 
-  output<- 1:no_sim %>% purrr::map(estimate_sim)
+  # Calculate the size of each chunk
+  chunk_size <- ceiling(no_sim / chunks)
 
+  # Initialize the starting point for the first chunk
+  start_point <- 1
+
+  for (i in 1:chunks) {
+    # Calculate the end point for the current chunk
+    end_point <- start_point + chunk_size - 1
+
+    # Ensure we do not go beyond the total number of simulations
+    if (end_point > no_sim) {
+      end_point <- no_sim
+    }
+
+    # Run simulations for the current chunk
+
+
+    output <- start_point:end_point %>% purrr::map(estimate_sim)
+
+
+
+      saveRDS(output,paste0("tmp_",i,".RDS"))
+      rm(output)
+
+    gc()
+
+    # Print or save the output as required
+    print(paste("Results for chunk", i, "from", start_point, "to", end_point))
+
+    # Update the start point for the next chunk
+    start_point <- end_point + 1
+
+    # Break the loop if the end point reaches or exceeds no_sim
+    if (start_point > no_sim) break
+
+}
+
+  output <- list()  # Initialize the list to store all outputs
+
+  # Assuming the files are named in sequence as 'tmp_1.RDS', 'tmp_2.RDS', ..., 'tmp_n.RDS'
+  for (i in 1:chunks) {
+    # Load each RDS file
+    file_content <- readRDS(paste0("tmp_", i, ".RDS"))
+    file.remove(paste0("tmp_", i, ".RDS"))
+
+    # Append the contents of each file to the all_outputs list
+    output <- c(output, file_content)
+  }
+
+
+  } else {
+
+    output <- 1:no_sim %>% purrr::map(estimate_sim)
+
+  }
 
 
 

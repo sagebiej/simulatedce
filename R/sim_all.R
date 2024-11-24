@@ -27,7 +27,7 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE){
+sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE, chunks=1){
 
   #################################################
   ########## Input Validation Test ###############
@@ -111,7 +111,7 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate, chunks =chunks) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

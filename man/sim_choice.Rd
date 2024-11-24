@@ -13,7 +13,8 @@ sim_choice(
   bcoefficients,
   decisiongroups = c(0, 1),
   manipulations = list(),
-  estimate
+  estimate,
+  chunks = 1
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ sim_choice(
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
 
 \item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
+
+\item{chunks}{The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.}
 }
 \value{
 a list with all information on the run
