@@ -44,6 +44,11 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
     stop("Argument 'bcoeff' is required.")
   }
 
+
+  if (no_sim < chunks) {
+    stop("You cannot have more chunks than runs. The number of chunks tells us how often we save the simulation results on disk. Maximum one per run.")
+  }
+
   # Check if bcoeff is a list
   if (!is.list(bcoeff)) {
     stop("Argument 'bcoeff' must be a list.")
