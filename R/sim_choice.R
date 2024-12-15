@@ -14,7 +14,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,ut=u[[1]] ,destype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1) {
+sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
 
 
@@ -29,7 +29,8 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
   transform_util2 <- function() {
 
     mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_"))
+      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_")) %>%
+      stringr::str_replace_all(setNames(paste0("@", names(bcoefficients)), names(bcoefficients)))
 
   }
 
