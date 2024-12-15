@@ -26,6 +26,13 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
 
   }
 
+  transform_util2 <- function() {
+
+    mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_"))
+
+  }
+
 #### Function to simulate and estimate ####
 
   estimate_sim <- function(run=1) {         #start loop
