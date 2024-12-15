@@ -45,7 +45,7 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   }
 
 
-  if (no_sim < chunks) {
+  if (nosim < chunks) {
     stop("You cannot have more chunks than runs. The number of chunks tells us how often we save the simulation results on disk. Maximum one per run.")
   }
 
