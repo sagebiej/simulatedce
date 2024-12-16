@@ -16,7 +16,7 @@ bcoeff <- list(
   basc2 = -1.4,
   baction = 0.1,
   badvisory =0.4,
-  bpartner = 0.3,
+  bpartnertest = 0.3,
   bcomp = 0.02)
 
 
@@ -34,8 +34,8 @@ bcoeff <- list(
 #place your utility functions here
 ul<-list( u1 =
            list(
-             v1=V.1 ~ basc + baction*alt1.b + badvisory * alt1.c + bpartner * alt1.d + bcomp * alt1.p , #Utility of alternative 1
-             v2=V.2 ~ basc2 + baction*alt2.b + badvisory * alt2.c + bpartner * alt2.d + bcomp * alt2.p ,  #Utility of alternative 2
+             v1=V.1 ~ basc +baction*alt1.b + badvisory * alt1.c +bpartnertest*alt1.d + bcomp* alt1.p , #Utility of alternative 1
+             v2=V.2 ~ basc2 + baction*alt2.b + badvisory * alt2.c + bpartnertest * alt2.d + bcomp * alt2.p ,  #Utility of alternative 2
              v3=V.3 ~ 0)
 )
 

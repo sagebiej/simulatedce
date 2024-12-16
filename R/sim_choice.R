@@ -8,6 +8,7 @@
 #' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
 #' @inheritParams simulate_choices
 #' @param chunks The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.
+#' @param utility_transform_type How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.
 #' @return a list with all information on the run
 #' @export
 #'
@@ -17,34 +18,14 @@
 sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
 
-
-####  Function that transforms user written utility for simulation into utility function for mixl.
-  transform_util <- function() {
-
-    mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"="$alt"))
-
-  }
-
-  transform_util2 <- function() {
-
-    mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-      stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_")) %>%
-      stringr::str_replace_all(setNames(paste0("@", names(bcoefficients)), names(bcoefficients)))
-
+  if (utility_transform_type == "simple") {
+    warning("'simple' is deprecated and will be removed in the future. Use 'exact' instead.", call. = FALSE)
   }
 
 
-  mnl_U <- switch(
-    utility_transform_type,
-    "simple" = transform_util(),
-    "exact" = transform_util2(),
-    stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
-  )
 
-  ####  Print selected utility function
-  cat("Transformed utility function (type:", utility_transform_type, "):\n")
-  print(mnl_U)
+
+
 
 #### Function to simulate and estimate ####
 
@@ -55,8 +36,6 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
     database <- simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
-    cat("This is the utility functions \n" , mnl_U)
-
     model<-mixl::estimate(model_spec,start_values = est, availabilities = availabilities, data= database)
 
     return(model)
@@ -64,8 +43,8 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
   }
 
 
-# transform utility function to mixl format
-mnl_U <- transform_util()
+
+
 
 # Empty list where to store all designs later on
 designs_all <- list()
@@ -77,8 +56,6 @@ designs_all <- list()
      print(ut)
 
 
-  cat("Utility function used for Logit estimation with mixl: \n\n")
-  print(mnl_U)
 
 
 
@@ -101,7 +78,6 @@ designs_all <- list()
 
   ## if replications is non int, assign unevenly
 
-  ##browser()
   datadet<- design %>%
     dplyr::arrange(Block,Choice.situation) %>%
     dplyr::slice(rep(dplyr::row_number(), replications)) %>%    ## replicate design according to number of replications
@@ -111,12 +87,52 @@ designs_all <- list()
     as.data.frame()
 
 
+
+
+
+
   database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
 ### start estimation
 
   if(estimate==TRUE) {
+
+
+
+    ####  Function that transforms user written utility for simulation into utility function for mixl.
+    transform_util <- function() {
+
+      mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+        stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"=" $alt"))
+
+    }
+
+    transform_util2 <- function() {
+
+      mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+        stringr::str_replace_all(setNames(paste0("@", names(bcoefficients)), paste0("\\b", names(bcoefficients), "\\b"))) %>%
+        stringr::str_replace_all(setNames(paste0("$", names(datadet)), paste0("\\b", names(datadet), "\\b"))) %>%
+        stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_"))
+
+
+    }
+
+
+
+# transform utility function to mixl format
+
+    # transform utility function to mixl format
+    mnl_U <- switch(
+      utility_transform_type,
+      "simple" = transform_util(),
+      "exact" = transform_util2(),
+      stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
+    )
+
+    ####  Print selected utility function
+    cat("Transformed utility function (type:", utility_transform_type, "):\n")
+    print(mnl_U)
 
 
 

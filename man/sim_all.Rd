@@ -15,7 +15,8 @@ sim_all(
   decisiongroups = c(0, 1),
   manipulations = list(),
   estimate = TRUE,
-  chunks = 1
+  chunks = 1,
+  utility_transform_type = "simple"
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ sim_all(
 \item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 
 \item{chunks}{The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.}
+
+\item{utility_transform_type}{How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

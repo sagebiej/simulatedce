@@ -51,4 +51,4 @@ ul<-list( u1 =
 destype="ngene"
 
 sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
+                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, utility_transform_type = "exact")
