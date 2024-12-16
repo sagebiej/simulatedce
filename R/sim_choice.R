@@ -34,6 +34,18 @@ sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destyp
 
   }
 
+
+  mnl_U <- switch(
+    utility_transform_type,
+    "simple" = transform_util(),
+    "exact" = transform_util2(),
+    stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
+  )
+
+  ####  Print selected utility function
+  cat("Transformed utility function (type:", utility_transform_type, "):\n")
+  print(mnl_U)
+
 #### Function to simulate and estimate ####
 
   estimate_sim <- function(run=1) {         #start loop
