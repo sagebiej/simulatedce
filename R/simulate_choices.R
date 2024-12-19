@@ -82,7 +82,7 @@ simulate_choices <- function(data, utility, setspp, destype, bcoefficients, deci
 
 ## add random component and calculate total utility
   data<- data %>%
-    dplyr::rename_with(~ stringr::str_replace(.,pattern = "\\.","_"), tidyr::everything()) %>%
+    dplyr::rename_with(~ stringr::str_replace_all(.,pattern = "\\.","_"), tidyr::everything()) %>%
     dplyr::mutate(dplyr::across(.cols=n,.fns = ~ evd::rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
            dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_")) ) %>% dplyr::ungroup() %>%
     dplyr::mutate(CHOICE=max.col(.[,grep("U_",names(.))])

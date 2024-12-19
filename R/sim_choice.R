@@ -108,15 +108,40 @@ designs_all <- list()
 
     }
 
-    transform_util2 <- function() {
 
-      mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-        stringr::str_replace_all(setNames(paste0("@", names(bcoefficients)), paste0("\\b", names(bcoefficients), "\\b"))) %>%
-        stringr::str_replace_all(setNames(paste0("$", names(datadet)), paste0("\\b", names(datadet), "\\b"))) %>%
-        stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" ,    "V_"="U_"))
+transform_util2 <- function() {
+  # Filter relevant database variables
+  relevant_database_vars <- setdiff(names(database), c("V_1", "V_2", "U_1", "U_2", "CHOICE"))
 
+  mnl_U <- paste(
+    purrr::map_chr(ut[[1]], as.character, keep.source.attr = TRUE),
+    collapse = "",
+    ";"
+  ) %>%
+    # Replace coefficients with exact matches
+    stringr::str_replace_all(setNames(
+      paste0("@", names(bcoefficients)),
+      paste0("(?<![._a-zA-Z0-9])", names(bcoefficients), "(?![._a-zA-Z0-9-])")
+    )) %>%
+    # General transformations
+    stringr::str_replace_all(c(
+      `priors\\["` = "",
+      `"\\]` = "",
+      `~` = "=",
+      `\\.` = "_",
+      `V_` = "U_"
+    )) %>%
+    # Replace only relevant database variables
+    stringr::str_replace_all(setNames(
+      paste0("$", relevant_database_vars),
+      paste0("(?<![._a-zA-Z0-9])", relevant_database_vars, "(?![._a-zA-Z0-9-])")
+    )) %>%
+    # Clean up duplicate symbols
+    stringr::str_replace_all(c(`@@` = "@", "\\$\\$" = "$"))
 
-    }
+  return(mnl_U)
+}
+
 
 
 
