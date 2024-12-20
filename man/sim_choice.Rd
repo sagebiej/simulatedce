@@ -9,7 +9,8 @@ sim_choice(
   no_sim = 10,
   respondents = 330,
   ut,
-  destype = destype,
+  designtype = NULL,
+  destype = NULL,
   bcoefficients,
   decisiongroups = c(0, 1),
   manipulations = list(),
@@ -26,6 +27,10 @@ sim_choice(
 \item{respondents}{Number of respondents. How many respondents do you want to simulate in each run.}
 
 \item{ut}{The first element of the utility function list}
+
+\item{designtype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
+
+\item{destype}{Deprecated. Use designtype instead.}
 
 \item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
 
@@ -47,6 +52,6 @@ Simulate and estimate choices
 }
 \examples{
 \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
- mnl_U,ut=u[[1]] ,destype="ngene")}
+ mnl_U,ut=u[[1]] ,designtype="ngene")}
 
 }

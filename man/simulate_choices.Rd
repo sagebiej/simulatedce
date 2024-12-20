@@ -8,7 +8,6 @@ simulate_choices(
   data,
   utility,
   setspp,
-  destype,
   bcoefficients,
   decisiongroups = c(0, 1),
   manipulations = list(),
@@ -27,6 +26,8 @@ simulate_choices(
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+
+\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 }
 \value{
 a dataframe that includes simulated choices and a design

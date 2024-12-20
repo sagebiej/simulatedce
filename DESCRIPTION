@@ -23,7 +23,6 @@ Imports:
     readr,
     rmarkdown,
     stats,
-    rlang,
     utils,
     stringr,
     tibble,

@@ -41,5 +41,5 @@ ul<-list( u1 =
 
 destype="ngene"
 
-agora <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff)
+agora <- sim_all(nosim = nosim, resps=resps, designtype = destype,
+                   designpath = designpath, u=ul, bcoeff = bcoeff, utility_transform_type = "exact")

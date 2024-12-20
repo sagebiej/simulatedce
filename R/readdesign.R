@@ -1,12 +1,8 @@
-
-
-
-
 #'  Creates a dataframe with the design.
 #'
 #' @param design The path to a design file
 #' @param designtype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.
-#'
+#' @param destype Deprecated. Use designtype instead.
 #' @return a dataframe
 #' @export
 #'
@@ -20,7 +16,21 @@
 
 
 
-readdesign <- function(design = designfile, designtype = NULL) {
+readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
+
+
+  # Ensure both designtype and destype are not set simultaneously
+  if (!is.null(designtype) && !is.null(destype)) {
+    stop("Both 'designtype' and 'destype' cannot be specified at the same time. Please use only 'designtype'.")
+  }
+
+  # Handle deprecated 'destype' argument
+  if (!is.null(destype)) {
+    message("'destype' is deprecated. Please use 'designtype' instead.")
+    designtype <- destype
+  }
+
+
 
   if (is.null(designtype)) {
 
@@ -66,7 +76,7 @@ readdesign <- function(design = designfile, designtype = NULL) {
 
                    }
                    ,
-                   stop("Invalid value for design. Please provide either 'ngene' or 'spdesign', or do not use the argument 'designtype'.")
+                   stop("Invalid value for design. Please provide either NULL, 'ngene' or 'spdesign', or do not use the argument 'designtype'. NULL lets us to guess the design.")
   )
 
 }

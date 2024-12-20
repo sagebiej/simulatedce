@@ -117,7 +117,7 @@ set.seed(3393)
 The sim_all function returns a multidimensional R list containing graphs, simulated observations and a dataframe containing sumaries of estimated beta coefficients. In general these will be printed to the console, but the entire results can also be assigned to an r list object.
 
 ```{r output}
-seagri <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
+seagri <- simulateDCE::sim_all(nosim = nosim, resps=resps, designtype = destype,
                  designpath = designpath, u= ul, bcoeff = bcoeff, manipulations = manipulations)
 
   

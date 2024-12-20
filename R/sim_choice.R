@@ -5,7 +5,6 @@
 #' @param respondents Number of respondents. How many respondents do you want to simulate in each run.
 #' @param ut The first element of the utility function list
 #' @inheritParams readdesign
-#' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
 #' @inheritParams simulate_choices
 #' @param chunks The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.
 #' @param utility_transform_type How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.
@@ -13,13 +12,13 @@
 #' @export
 #'
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
-#'  mnl_U,ut=u[[1]] ,destype="ngene")}
+#'  mnl_U,ut=u[[1]] ,designtype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim=10, respondents=330,ut ,destype=destype, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
+sim_choice <- function(designfile, no_sim = 10, respondents = 330,ut ,designtype = NULL, destype = NULL, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
 
   if (utility_transform_type == "simple") {
-    warning("'simple' is deprecated and will be removed in the future. Use 'exact' instead.", call. = FALSE)
+    message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.", call. = FALSE)
   }
 
 
@@ -66,7 +65,7 @@ designs_all <- list()
 
 
 
-  design<- readdesign(design = designfile, designtype = destype)
+  design<- readdesign(design = designfile, designtype = designtype, destype = destype)
 
   if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
 
@@ -110,8 +109,11 @@ designs_all <- list()
 
 
 transform_util2 <- function() {
-  # Filter relevant database variables
-  relevant_database_vars <- setdiff(names(database), c("V_1", "V_2", "U_1", "U_2", "CHOICE"))
+  # Exclude columns that match "V_<any integer>" or "U_<any integer>" pattern
+  relevant_database_vars <- setdiff(
+    names(database),
+    c(grep("^(V_|U_|e_)\\d+$", names(database), value = TRUE), "CHOICE")
+  )
 
   mnl_U <- paste(
     purrr::map_chr(ut[[1]], as.character, keep.source.attr = TRUE),
@@ -119,7 +121,7 @@ transform_util2 <- function() {
     ";"
   ) %>%
     # Replace coefficients with exact matches
-    stringr::str_replace_all(setNames(
+    stringr::str_replace_all(stats::setNames(
       paste0("@", names(bcoefficients)),
       paste0("(?<![._a-zA-Z0-9])", names(bcoefficients), "(?![._a-zA-Z0-9-])")
     )) %>%
@@ -132,7 +134,7 @@ transform_util2 <- function() {
       `V_` = "U_"
     )) %>%
     # Replace only relevant database variables
-    stringr::str_replace_all(setNames(
+    stringr::str_replace_all(stats::setNames(
       paste0("$", relevant_database_vars),
       paste0("(?<![._a-zA-Z0-9])", relevant_database_vars, "(?![._a-zA-Z0-9-])")
     )) %>%

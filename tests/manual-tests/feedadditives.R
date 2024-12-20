@@ -45,5 +45,5 @@ ul<- list(u1= list(
             v3 =V.3 ~ basc)
 )
 
-feedadditives <- sim_all(nosim = nosim, resps=resps, destype = destype,
+feedadditives <- sim_all(nosim = nosim, resps=resps, designtype = destype,
                    designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)

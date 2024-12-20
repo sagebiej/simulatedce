@@ -38,7 +38,7 @@ ul<- list(u1= list(
 
 
 
-rbook <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
+rbook <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype  = destype,
                  designpath = designpath, u= ul, bcoeff = bcoeff, chunks = 4, utility_transform_type = "exact")
 
 

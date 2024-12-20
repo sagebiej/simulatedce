@@ -8,6 +8,7 @@ update}
 sim_all(
   nosim = 2,
   resps,
+  designtype = NULL,
   destype = NULL,
   designpath,
   u,
@@ -23,6 +24,10 @@ sim_all(
 \item{nosim}{Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.}
 
 \item{resps}{Number of respondents you want to simulate}
+
+\item{designtype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
+
+\item{destype}{Deprecated. Use designtype instead.}
 
 \item{designpath}{The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"}
 

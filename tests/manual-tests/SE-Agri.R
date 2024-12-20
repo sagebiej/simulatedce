@@ -2,7 +2,6 @@ rm(list=ls())
 devtools::load_all()
 
 
-library(rlang)
 
 designpath<- system.file("extdata","SE_AGRI", package = "simulateDCE")
 
@@ -40,6 +39,6 @@ ul<- list(u1=
               v3 =V.3 ~ basc)
 )
 
-seagri <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                  designpath = designpath, u=ul, bcoeff = bcoeff, manipulations = manipulations)
+seagri <- sim_all(nosim = nosim, resps=resps, designtype = destype,
+                  designpath = designpath, u=ul, bcoeff = bcoeff, manipulations = manipulations, utility_transform_type = "exact")
 

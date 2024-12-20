@@ -4,7 +4,6 @@ rm(list=ls())
 devtools::load_all()
 
 
-library(rlang)
 
 designpath<- system.file("extdata","SE_DRIVE" ,package = "simulateDCE")
 
@@ -50,5 +49,5 @@ ul<-list( u1 =
 
 destype="ngene"
 
-sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
+sedrive <- sim_all(nosim = nosim, resps=resps ,destype = "ngene",
                    designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, utility_transform_type = "exact")

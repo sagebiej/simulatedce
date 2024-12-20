@@ -27,7 +27,7 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE, chunks=1, utility_transform_type = "simple"){
+sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE, chunks=1, utility_transform_type = "simple"){
 
   #################################################
   ########## Input Validation Test ###############
@@ -67,7 +67,7 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   }
 
   # Check if decisiongroups ends with 1
-  if (tail(decisiongroups, 1) != 1) {
+  if (utils::tail(decisiongroups, 1) != 1) {
     stop("Decision groups must end with 1.")
   }
 
@@ -83,7 +83,7 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
     formula_strings <- unlist(u)
     coef_names <- unique(unlist(lapply(formula_strings, function(f) {
       # Parse the formula to extract coefficient names
-      all_vars <- all.vars(as.formula(f))
+      all_vars <- all.vars(stats::as.formula(f))
       coef_vars <- all_vars[grep("^b", all_vars)]
       return(coef_vars)
     })))
@@ -116,7 +116,7 @@ sim_all <- function(nosim=2, resps, destype=NULL, designpath, u, bcoeff, decisio
   tictoc::tic()
 
   all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  destype=destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate, chunks =chunks, utility_transform_type = utility_transform_type) %>%  ## iterate simulation over all designs
+                           no_sim= nosim,respondents = resps,  designtype=designtype, destype =destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate, chunks =chunks, utility_transform_type = utility_transform_type) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 

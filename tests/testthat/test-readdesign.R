@@ -2,7 +2,7 @@ design_path <- system.file("extdata","agora", "altscf_eff.ngd" ,package = "simul
 
 
 test_that("wrong designtype", {
-  expect_error(readdesign(design = design_path, designtype = "ng"),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+  expect_error(readdesign(design = design_path, designtype = "ng"),"Invalid value for design. Please provide either NULL, 'ngene' or 'spdesign', or do not use the argument 'designtype'. NULL lets us to guess the design.")
 })
 
 
