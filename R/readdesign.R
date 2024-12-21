@@ -41,10 +41,13 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
       # Code to execute if condition is true
       designtype = "ngene"
       message("I guessed it is an ngene file")
-    } else {
-      # Code to execute if condition is false
+    } else if("spdesign" %in% class(readRDS(design)) ) {
+
       designtype = "spdesign"
-      message("I assume it is a spdesign")
+      message("I assume it is a spdesign.")
+    } else {
+      designtype <- "idefix"
+      message("I assume it is an idefix design.")
     }
 
   }
