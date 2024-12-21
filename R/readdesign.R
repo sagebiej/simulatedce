@@ -71,7 +71,7 @@ as.data.frame(designf)
     read_test() %>%
       tibble::rownames_to_column(var = "row_id") %>%
       dplyr::filter(!grepl("no.choice", row_id)) %>% # Exclude no.choice rows
-      dplyr::select(!contains("cte")) %>% # Drop unnecessary columns
+      dplyr::select(!dplyr::contains("cte")) %>% # Drop unnecessary columns
       dplyr::mutate(
         # Extract Choice.situation as number after 'set'
         Choice.situation = as.integer(sub("^set(\\d+).*", "\\1", row_id)),
