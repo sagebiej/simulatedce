@@ -60,7 +60,7 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
     designf<-designf[["design"]] %>%
       as.data.frame()
   }
-
+as.data.frame(designf)
       }
   idefix <- function() {
 
