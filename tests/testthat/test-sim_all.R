@@ -19,7 +19,7 @@ comprehensive_design_test  <- function(nosim, resps, designtype, designpath, ul,
 
   test_that("wrong designtype", {
     expect_error(sim_all(nosim = nosim, resps=resps, designtype = "ng",
-                         designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups),"Invalid value for design. Please provide either NULL, 'ngene' or 'spdesign', or do not use the argument 'designtype'. NULL lets us to guess the design.")
+                         designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups),"Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
   })
 
 

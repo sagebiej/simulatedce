@@ -49,6 +49,41 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
 
   }
 
+
+  read_test <- function() {
+
+      designf <- readRDS(design)
+  if (is.list(designf) & !is.data.frame(designf)){
+    if (!"design" %in% names(designf)) {
+      stop("The 'design' list element is missing. Make sure to provide a proper spdesign object.")
+    }
+    designf<-designf[["design"]] %>%
+      as.data.frame()
+  }
+
+      }
+  idefix <- function() {
+
+       # Process the data
+    read_test() %>%
+      tibble::rownames_to_column(var = "row_id") %>%
+      dplyr::filter(!grepl("no.choice", row_id)) %>% # Exclude no.choice rows
+      dplyr::select(!contains("cte")) %>% # Drop unnecessary columns
+      dplyr::mutate(
+        # Extract Choice.situation as number after 'set'
+        Choice.situation = as.integer(sub("^set(\\d+).*", "\\1", row_id)),
+        # Extract alt as the alternative identifier
+        alt = sub(".*\\.", "", row_id)
+      ) %>%
+      dplyr::select(-row_id) %>% # Drop the original row_id
+      tidyr::pivot_wider(
+        id_cols = "Choice.situation",          # Group by Choice.situation
+        names_from = alt,                # Use alt to create column suffixes
+        values_from = -c("Choice.situation", "alt"), # Values from other columns
+        names_glue = "{alt}.{.value}"          # Custom naming convention
+      )
+  }
+
   design <- switch(designtype,
                    "ngene" = suppressWarnings(readr::read_delim(design,
                                                                 delim = "\t",
@@ -59,14 +94,8 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
                    )) %>%
                      dplyr::filter(!is.na(Choice.situation)),
                    "spdesign" = {
-                         designf <- readRDS(design)
-                     if (is.list(designf) & !is.data.frame(designf)){
-                       if (!"design" %in% names(designf)) {
-                         stop("The 'design' list element is missing. Make sure to provide a proper spdesign object.")
-                       }
-                       designf<-designf[["design"]]
-                     }
-                     as.data.frame(designf) %>%
+
+                       read_test()  %>%
                        dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%
                        dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()) %>%
                        dplyr::rename_with(~ dplyr::case_when(
@@ -76,7 +105,8 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
 
                    }
                    ,
-                   stop("Invalid value for design. Please provide either NULL, 'ngene' or 'spdesign', or do not use the argument 'designtype'. NULL lets us to guess the design.")
+                   "idefix" = idefix() ,
+                   stop("Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
   )
 
 }

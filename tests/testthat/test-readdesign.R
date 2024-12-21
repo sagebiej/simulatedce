@@ -2,7 +2,7 @@ design_path <- system.file("extdata","agora", "altscf_eff.ngd" ,package = "simul
 
 
 test_that("wrong designtype", {
-  expect_error(readdesign(design = design_path, designtype = "ng"),"Invalid value for design. Please provide either NULL, 'ngene' or 'spdesign', or do not use the argument 'designtype'. NULL lets us to guess the design.")
+  expect_error(readdesign(design = design_path, designtype = "ng"),"Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
 })
 
 
@@ -22,6 +22,19 @@ test_that("expect message of guess", {
 })
 
 
+test_that("with or without autodetct get same results for ngene", {
+
+  t <-readdesign(design_path)
+  t2 <-readdesign(design_path, designtype = "ngene")
+
+  expect_equal(t,t2)
+
+
+}
+
+)
+
+
 ### Tests for spdesign
 
 design_path <- system.file("extdata","CSA", "linear", "BLIbay.RDS" ,package = "simulateDCE")
@@ -30,11 +43,28 @@ test_that("all is correct", {
   expect_no_error(readdesign(design = design_path, designtype = "spdesign"))
 })
 
+
+
+
+
+
 # Same Tests for spdesign, but detect automatically if it is spdesign
 
 test_that("prints message for guessing", {
   expect_message(readdesign(design = design_path), "I assume it is a spdesign")
 })
+
+test_that("with or without autodetct get same results for spdesign", {
+
+  t <-readdesign(design_path)
+  t2 <-readdesign(design_path, designtype = "spdesign")
+
+  expect_equal(t,t2)
+
+
+}
+
+          )
 
 
 ## trying objects that do not work
