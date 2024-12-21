@@ -2,13 +2,13 @@
 % Please edit documentation in R/simulate_choices.R
 \name{simulate_choices}
 \alias{simulate_choices}
-\title{Simulate choices based on a dataframe with a design}
+\title{Simulate choices based on a data.frame with a design and respondents}
 \usage{
 simulate_choices(
   data,
   utility,
   setspp,
-  bcoefficients,
+  bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
   estimate
@@ -21,7 +21,7 @@ simulate_choices(
 
 \item{setspp}{an integer, the number of choice sets per person}
 
-\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
@@ -30,10 +30,10 @@ simulate_choices(
 \item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 }
 \value{
-a dataframe that includes simulated choices and a design
+a data.frame that includes simulated choices and a design
 }
 \description{
-Simulate choices based on a dataframe with a design
+Simulate choices based on a data.frame with a design and respondents
 }
 \examples{
 \dontrun{simulate_choices(datadet, ut,setspp)}

@@ -8,10 +8,10 @@ sim_choice(
   designfile,
   no_sim = 10,
   respondents = 330,
-  ut,
+  u,
   designtype = NULL,
   destype = NULL,
-  bcoefficients,
+  bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
   estimate,
@@ -26,13 +26,13 @@ sim_choice(
 
 \item{respondents}{Number of respondents. How many respondents do you want to simulate in each run.}
 
-\item{ut}{The first element of the utility function list}
+\item{u}{A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"}
 
 \item{designtype}{Is it a design created with ngene, spdesign or idefix. use 'ngene', 'spdesign' or 'idefix. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. Idefix objects should also be stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
 
 \item{destype}{Deprecated. Use designtype instead.}
 
-\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
@@ -52,6 +52,6 @@ Simulate and estimate choices
 }
 \examples{
 \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
- mnl_U,ut=u[[1]] ,designtype="ngene")}
+ mnl_U,u=u[[1]] ,designtype="ngene")}
 
 }

@@ -4,8 +4,6 @@
 #' @param resps Number of respondents you want to simulate
 #' @inheritParams readdesign
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
-#' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"
-#' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
 #' @inheritParams sim_choice
 #' @inheritParams simulate_choices
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
@@ -27,15 +25,27 @@
 #'      bheight2=0.25,
 #'      bheight3=0.50)
 #'
-sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath, u, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate = TRUE, chunks=1, utility_transform_type = "simple"){
-
+sim_all <- function(nosim = 2,
+                    resps,
+                    designtype = NULL,
+                    destype = NULL,
+                    designpath,
+                    u,
+                    bcoeff,
+                    decisiongroups = c(0, 1),
+                    manipulations = list(),
+                    estimate = TRUE,
+                    chunks = 1,
+                    utility_transform_type = "simple") {
   #################################################
   ########## Input Validation Test ###############
   #################################################
 
   ########### validate the utility function ########
-  if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))){
-    stop(" 'u' must be provided and must be a list containing at least one list element (list of lists).")
+  if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))) {
+    stop(
+      " 'u' must be provided and must be a list containing at least one list element (list of lists)."
+    )
   }
 
   ########## validate the bcoeff list ################
@@ -46,7 +56,9 @@ sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath,
 
 
   if (nosim < chunks) {
-    stop("You cannot have more chunks than runs. The number of chunks tells us how often we save the simulation results on disk. Maximum one per run.")
+    stop(
+      "You cannot have more chunks than runs. The number of chunks tells us how often we save the simulation results on disk. Maximum one per run."
+    )
   }
 
   # Check if bcoeff is a list
@@ -54,7 +66,7 @@ sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath,
     stop("Argument 'bcoeff' must be a list.")
   }
 
-  if (length(u) != length(decisiongroups) -1){
+  if (length(u) != length(decisiongroups) - 1) {
     stop("Number of decision groups must equal number of utility functions!")
   }
   if (!is.vector(decisiongroups)) {
@@ -78,7 +90,7 @@ sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath,
   }
 
   #### check that all the coefficients in utility function have a cooresponding value in bcoeff ####
-    # Extract coefficients from utility function starting with "b"
+  # Extract coefficients from utility function starting with "b"
   coeff_names_ul <- unique(unlist(lapply(u, function(u) {
     formula_strings <- unlist(u)
     coef_names <- unique(unlist(lapply(formula_strings, function(f) {
@@ -93,30 +105,52 @@ sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath,
   # Check if all utility function coefficients starting with "b" are covered in bcoeff list
   missing_coeffs <- coeff_names_ul[!(coeff_names_ul %in% names(bcoeff))]
   if (length(missing_coeffs) > 0) {
-    stop(paste("Missing coefficients in 'bcoeff':", paste(missing_coeffs, collapse = ", "), ". Perhaps there is a typo?"))
+    stop(paste(
+      "Missing coefficients in 'bcoeff':",
+      paste(missing_coeffs, collapse = ", "),
+      ". Perhaps there is a typo?"
+    ))
   }
   ########## validate resps #####################
-  if (missing(resps) ||  !(is.integer(resps) || (is.numeric(resps) && identical(trunc(resps), resps)))) {
-    stop(" 'resps' must be provided and must be an integer indicating  the number of respondents per run.")
+  if (missing(resps) ||
+      !(is.integer(resps) ||
+        (is.numeric(resps) && identical(trunc(resps), resps)))) {
+    stop(
+      " 'resps' must be provided and must be an integer indicating  the number of respondents per run."
+    )
   }
   ########## validate designpath ################
   if (!dir.exists(designpath)) {
-    stop(" The folder where your designs are stored does not exist. \n Check if designpath is correctly specified")
+    stop(
+      " The folder where your designs are stored does not exist. \n Check if designpath is correctly specified"
+    )
   }
 
   #################################################
   ########## End Validation Tests #################
   #################################################
 
-  designfile<-list.files(designpath,full.names = T)
-  designname <- stringr::str_remove_all(list.files(designpath,full.names = F),
-                               "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
+  designfile <- list.files(designpath, full.names = T)
+  designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
 
 
   tictoc::tic()
 
-  all_designs<- purrr::map(designfile, sim_choice,
-                           no_sim= nosim,respondents = resps,  designtype=designtype, destype =destype, ut=u, bcoefficients = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, estimate = estimate, chunks =chunks, utility_transform_type = utility_transform_type) %>%  ## iterate simulation over all designs
+  all_designs <- purrr::map(
+    designfile,
+    sim_choice,
+    no_sim = nosim,
+    respondents = resps,
+    designtype = designtype,
+    destype = destype,
+    u = u,
+    bcoeff = bcoeff,
+    decisiongroups = decisiongroups,
+    manipulations = manipulations,
+    estimate = estimate,
+    chunks = chunks,
+    utility_transform_type = utility_transform_type
+  ) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
 
@@ -124,49 +158,63 @@ sim_all <- function(nosim=2, resps, designtype=NULL, destype = NULL, designpath,
 
   print(time)
 
-if (estimate==TRUE) {
+  if (estimate == TRUE) {
+    powa <- purrr::map(all_designs, ~ .x$power)
 
 
+browser()
 
-  powa <- purrr::map(all_designs, ~ .x$power)
+    summaryall <- data.frame(truepar = as.double(c(bcoeff,rep(NA,length(bcoeff)))), as.data.frame(purrr::map(all_designs, ~ .x$summary)) )%>%
+      dplyr::select(!dplyr::ends_with("vars")) %>%
+      dplyr::relocate(truepar, dplyr::ends_with(c(
+        ".n", "mean", "sd", "min" , "max", "range" , "se"
+      )))
+
+    coefall <- purrr::map(all_designs, ~ .x$coefs)
+
+    pat <- paste0("(", paste(designname, collapse = "|"), ").") # needed to identify pattern to be replaced
+
+    s <- as.data.frame(coefall) %>%
+      dplyr::select(!dplyr::matches("pval|run")) %>%
+      dplyr::rename_with( ~ sub("est_b", "", .x), dplyr::everything()) %>%
+      dplyr::rename_with(~ paste0(., "_", stringr::str_extract(., pat)),
+                         dplyr::everything()) %>%   # rename attributes for reshape part 1
+      dplyr::rename_with(~ stringr::str_replace(., pattern = pat, replacement =
+                                                  ""),
+                         dplyr::everything())  %>%
+      stats::reshape(
+        varying = 1:ncol(.),
+        sep = "_"  ,
+        direction = "long" ,
+        timevar = "design",
+        idvar = "run"
+      )
 
 
+    p = list()
 
+    for (att in names(dplyr::select(s, -c("design", "run")))) {
+      p[[att]] <- plot_multi_histogram(s, att, "design")
 
-  summaryall <- as.data.frame(purrr::map(all_designs, ~.x$summary)) %>%
-    dplyr::select(!dplyr::ends_with("vars")) %>%
-    dplyr::relocate(dplyr::ends_with(c(".n", "mean","sd", "min" ,"max", "range" , "se" )))
+      print(p[[att]])
 
-  coefall <- purrr::map(all_designs, ~ .x$coefs)
+    }
 
-  pat<-paste0("(",paste(designname,collapse = "|"),").") # needed to identify pattern to be replaced
-
-  s<-as.data.frame(coefall) %>%
-    dplyr::select(!dplyr::matches("pval|run")) %>%
-    dplyr::rename_with(~ sub("est_b", "", .x), dplyr::everything()) %>%
-    dplyr::rename_with( ~ paste0(.,"_",stringr::str_extract(.,pat )), dplyr::everything() ) %>%   # rename attributes for reshape part 1
-    dplyr::rename_with( ~ stringr::str_replace(.,pattern = pat,replacement=""), dplyr::everything() )  %>%
-    stats::reshape(varying =1:ncol(.), sep = "_"  , direction = "long" ,timevar = "design", idvar = "run" )
-
-
-  p=list()
-
-  for (att in names(dplyr::select(s,-c("design","run")))) {
-
-    p[[att]] <- plot_multi_histogram(s,att,"design")
-
-    print(p[[att]])
+    all_designs[["summaryall"]] = summaryall
+    all_designs[["graphs"]] = p
+    all_designs[["powa"]] = powa
 
   }
-
-  all_designs[["summaryall"]] = summaryall
-  all_designs[["graphs"]]=p
-  all_designs[["powa"]]=powa
-
-}
-  all_designs[["time"]]=time
-  all_designs[["arguements"]] = list( "Beta values" = bcoeff, "Utility functions" = u , "Decision groups" =decisiongroups , "Manipulation of vars" = manipulations,
-                                      "Number Simulations" = nosim, "Respondents" = resps, "Designpath" = designpath)
+  all_designs[["time"]] = time
+  all_designs[["arguements"]] = list(
+    "Beta values" = bcoeff,
+    "Utility functions" = u ,
+    "Decision groups" = decisiongroups ,
+    "Manipulation of vars" = manipulations,
+    "Number Simulations" = nosim,
+    "Respondents" = resps,
+    "Designpath" = designpath
+  )
 
 
 

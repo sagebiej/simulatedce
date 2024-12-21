@@ -1,23 +1,23 @@
-#' Simulate choices based on a dataframe with a design
+#' Simulate choices based on a data.frame with a design and respondents
 #'
 #' @param data a dataframe that includes a design repeated for the number of observations
 #' @param utility a list with the utility functions, one utility function for each alternatives
 #' @param setspp an integer, the number of choice sets per person
-#' @param bcoefficients List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions
+#' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
-#' @return a dataframe that includes simulated choices and a design
+#' @return a data.frame that includes simulated choices and a design
 #' @export
 #'
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
-simulate_choices <- function(data, utility, setspp, bcoefficients, decisiongroups = c(0,1), manipulations = list(), estimate) {  #the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate) {  #the part in dataset that needs to be repeated in each run
 
 
 
 ### unpack the bcoeff list so variables are accessible
-  for (key in names(bcoefficients)) {
-    assign(key, bcoefficients[[key]])
+  for (key in names(bcoeff)) {
+    assign(key, bcoeff[[key]])
   }
 
 

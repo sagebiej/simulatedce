@@ -3,7 +3,7 @@
 #' @param designfile path to a file containing a design.
 #' @param no_sim Number of runs i.e. how often do you want the simulation to be repeated
 #' @param respondents Number of respondents. How many respondents do you want to simulate in each run.
-#' @param ut The first element of the utility function list
+#' @param u A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"
 #' @inheritParams readdesign
 #' @inheritParams simulate_choices
 #' @param chunks The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.
@@ -12,13 +12,13 @@
 #' @export
 #'
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
-#'  mnl_U,ut=u[[1]] ,designtype="ngene")}
+#'  mnl_U,u=u[[1]] ,designtype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim = 10, respondents = 330,ut ,designtype = NULL, destype = NULL, bcoefficients, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
+sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
 
   if (utility_transform_type == "simple") {
-    message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.", call. = FALSE)
+    message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.")
   }
 
 
@@ -32,7 +32,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330,ut ,designtype
 
     cat("This is Run number ", run)
 
-    database <- simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
+    database <- simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
     model<-mixl::estimate(model_spec,start_values = est, availabilities = availabilities, data= database)
@@ -52,7 +52,7 @@ designs_all <- list()
 
  cat("Utility function used in simulation, ie the true utility: \n\n")
 
-     print(ut)
+     print(u)
 
 
 
@@ -90,7 +90,7 @@ designs_all <- list()
 
 
 
-  database <- simulate_choices(data=datadet, utility = ut, setspp = setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations)
+  database <- simulate_choices(data=datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
 ### start estimation
@@ -102,7 +102,7 @@ designs_all <- list()
     ####  Function that transforms user written utility for simulation into utility function for mixl.
     transform_util <- function() {
 
-      mnl_U <-paste(purrr::map_chr(ut[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
+      mnl_U <-paste(purrr::map_chr(u[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
         stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"=" $alt"))
 
     }
@@ -116,14 +116,14 @@ transform_util2 <- function() {
   )
 
   mnl_U <- paste(
-    purrr::map_chr(ut[[1]], as.character, keep.source.attr = TRUE),
+    purrr::map_chr(u[[1]], as.character, keep.source.attr = TRUE),
     collapse = "",
     ";"
   ) %>%
     # Replace coefficients with exact matches
     stringr::str_replace_all(stats::setNames(
-      paste0("@", names(bcoefficients)),
-      paste0("(?<![._a-zA-Z0-9])", names(bcoefficients), "(?![._a-zA-Z0-9-])")
+      paste0("@", names(bcoeff)),
+      paste0("(?<![._a-zA-Z0-9])", names(bcoeff), "(?![._a-zA-Z0-9-])")
     )) %>%
     # General transformations
     stringr::str_replace_all(c(
@@ -260,7 +260,7 @@ transform_util2 <- function() {
   return(output)
 } else {
 
-  output<- 1:no_sim %>% purrr::map(~ simulate_choices(datadet, utility = ut, setspp=setpp, bcoefficients = bcoefficients, decisiongroups = decisiongroups, manipulations = manipulations))
+  output<- 1:no_sim %>% purrr::map(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations))
   return(output)
 
 }
