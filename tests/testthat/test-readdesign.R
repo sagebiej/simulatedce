@@ -97,4 +97,97 @@ test_that("all is correct with full idefix objects", {
   expect_no_error(readdesign(design_idefix, designtype = "idefix"))
 })
 
+#### new tests with kind help from chatgpt
+
+
+library(testthat)
+library(simulateDCE)
+
+test_that("readdesign correctly identifies and processes ngene files", {
+  # Arrange
+  design_ngene <- system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE")
+
+  # Act
+  result <- readdesign(design_ngene)
+
+  # Assert
+  expect_s3_class(result, "data.frame")  # Check the result is a data frame
+  expect_true("Choice.situation" %in% colnames(result))  # Verify key column presence
+
+  # Ensure there are alternative-related columns
+  alt_columns <- colnames(result)[grepl("^alt", colnames(result))]
+  expect_gt(length(alt_columns), 0)  # Confirm at least one alt-related column exists
+
+  # Validate the structure of the output
+  expect_gt(nrow(result), 0)  # Ensure the data frame has rows
+  expect_gt(ncol(result), 1)  # Ensure the data frame has more than one column
+  expect_message(readdesign(design_ngene), "I guessed it is an ngene file")
+})
+
+test_that("readdesign correctly identifies and processes spdesign files", {
+  # Arrange
+  design_sp <- system.file("extdata", "ValuGaps", "des1.RDS", package = "simulateDCE")
+
+  # Act
+  result_default <- readdesign(design_sp)
+  result_explicit <- readdesign(design_sp, designtype = "spdesign")
+
+  # Assert
+  expect_s3_class(result_default, "data.frame")  # Check the result is a data frame
+  expect_s3_class(result_explicit, "data.frame")
+  expect_identical(result_default, result_explicit)  # Default and explicit designtype should match
+  expect_true("Choice.situation" %in% colnames(result_default))  # Verify key column presence
+
+  # Ensure there are alternative-related columns
+  alt_columns <- colnames(result_default)[grepl("^alt", colnames(result_default))]
+  expect_gt(length(alt_columns), 0)  # Confirm at least one alt-related column exists
+
+  # Validate the structure of the output
+  expect_gt(nrow(result_default), 0)  # Ensure the data frame has rows
+  expect_gt(ncol(result_default), 1)  # Ensure the data frame has more than one column
+  expect_message(readdesign(design_sp), "I assume it is a spdesign.")
+})
+
+test_that("readdesign correctly identifies and processes idefix files", {
+  # Arrange
+  design_idefix <- system.file("extdata", "Idefix_designs", "test_design2.RDS", package = "simulateDCE")
+
+  # Act
+  result <- readdesign(design_idefix)
+
+  # Assert
+  expect_s3_class(result, "data.frame")  # Check the result is a data frame
+  expect_true("Choice.situation" %in% colnames(result))  # Verify key column presence
+
+  # Ensure there are alternative-related columns
+  alt_columns <- colnames(result)[grepl("^alt", colnames(result))]
+  expect_gt(length(alt_columns), 0)  # Confirm at least one alt-related column exists
+
+  # Validate the structure of the output
+  expect_gt(nrow(result), 0)  # Ensure the data frame has rows
+  expect_gt(ncol(result), 1)  # Ensure the data frame has more than one column
+  expect_message(readdesign(design_idefix), "I assume it is an idefix design.")
+})
+
+
+
+test_that("readdesign returns a data frame with proper structure", {
+  # Arrange
+  design_ngene <- system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE")
+
+  # Act
+  result <- readdesign(design_ngene)
+
+  # Assert
+  expect_s3_class(result, "data.frame")  # Check the result is a data frame
+  expect_true("Choice.situation" %in% colnames(result))
+
+  # Ensure there are alternative-related columns
+  alt_columns <- colnames(result)[grepl("^alt", colnames(result))]
+  expect_gt(length(alt_columns), 0)  # Confirm at least one alt-related column exists
+
+  # Validate the structure of the output
+  expect_gt(nrow(result), 0)  # Ensure the data frame has rows
+  expect_gt(ncol(result), 1)  # Ensure the data frame has more than one column
+})
 

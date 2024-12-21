@@ -19,3 +19,5 @@ identical(t,t2)
 design_idefix <- system.file("extdata","Idefix_designs", "test_design2.RDS" ,package = "simulateDCE")
 
 t3 <-readdesign(design_idefix)
+
+c <- (readRDS(design_idefix))
