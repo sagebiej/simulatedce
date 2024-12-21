@@ -84,3 +84,17 @@ design_path <- system.file("extdata","ValuGaps", "des1.RDS" ,package = "simulate
 test_that("all is correct with full spdesign objects", {
   expect_no_error(readdesign(design = design_path, designtype = "spdesign"))
 })
+
+
+
+### Tests for idefix
+
+design_idefix <- system.file("extdata","Idefix_designs", "test_design2.RDS" ,package = "simulateDCE")
+
+
+
+test_that("all is correct with full idefix objects", {
+  expect_no_error(readdesign(design_idefix, designtype = "idefix"))
+})
+
+

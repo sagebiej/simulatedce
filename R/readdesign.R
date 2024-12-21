@@ -75,10 +75,10 @@ as.data.frame(designf)
         # Extract alt as the alternative identifier
         alt = sub(".*\\.", "", row_id)
       ) %>%
-      dplyr::select(-row_id) %>% # Drop the original row_id
+      dplyr::select(-"row_id") %>% # Drop the original row_id
       tidyr::pivot_wider(
         id_cols = "Choice.situation",          # Group by Choice.situation
-        names_from = alt,                # Use alt to create column suffixes
+        names_from = "alt",                # Use alt to create column suffixes
         values_from = -c("Choice.situation", "alt"), # Values from other columns
         names_glue = "{alt}.{.value}"          # Custom naming convention
       )
