@@ -1,7 +1,7 @@
 #'  Creates a dataframe with the design.
 #'
 #' @param design The path to a design file
-#' @param designtype Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.
+#' @param designtype Is it a design created with ngene, spdesign or idefix. use 'ngene', 'spdesign' or 'idefix. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. Idefix objects should also be stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.
 #' @param destype Deprecated. Use designtype instead.
 #' @return a dataframe
 #' @export
