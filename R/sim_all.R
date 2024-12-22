@@ -4,6 +4,7 @@
 #' @param resps Number of respondents you want to simulate
 #' @inheritParams readdesign
 #' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
+#' @param reshape_type Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.
 #' @inheritParams sim_choice
 #' @inheritParams simulate_choices
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
@@ -36,7 +37,8 @@ sim_all <- function(nosim = 2,
                     manipulations = list(),
                     estimate = TRUE,
                     chunks = 1,
-                    utility_transform_type = "simple") {
+                    utility_transform_type = "simple",
+                    reshape_type = "auto") {
   #################################################
   ########## Input Validation Test ###############
   #################################################
@@ -162,38 +164,87 @@ sim_all <- function(nosim = 2,
     powa <- purrr::map(all_designs, ~ .x$power)
 
 
-browser()
 
-    summaryall <- data.frame(truepar = as.double(c(bcoeff,rep(NA,length(bcoeff)))), as.data.frame(purrr::map(all_designs, ~ .x$summary)) )%>%
+
+
+    summaryall <- data.frame(truepar = as.double(c(bcoeff, rep(
+      NA, length(bcoeff)
+    ))), as.data.frame(purrr::map(all_designs, ~ .x$summary))) %>%
       dplyr::select(!dplyr::ends_with("vars")) %>%
       dplyr::relocate(truepar, dplyr::ends_with(c(
-        ".n", "mean", "sd", "min" , "max", "range" , "se"
+        ".n", "truepar", "mean", "sd", "min" , "max", "range" , "se"
       )))
 
     coefall <- purrr::map(all_designs, ~ .x$coefs)
 
     pat <- paste0("(", paste(designname, collapse = "|"), ").") # needed to identify pattern to be replaced
 
-    s <- as.data.frame(coefall) %>%
+
+    preprocessed <- as.data.frame(coefall) %>%
       dplyr::select(!dplyr::matches("pval|run")) %>%
-      dplyr::rename_with( ~ sub("est_b", "", .x), dplyr::everything()) %>%
-      dplyr::rename_with(~ paste0(., "_", stringr::str_extract(., pat)),
-                         dplyr::everything()) %>%   # rename attributes for reshape part 1
-      dplyr::rename_with(~ stringr::str_replace(., pattern = pat, replacement =
-                                                  ""),
-                         dplyr::everything())  %>%
-      stats::reshape(
-        varying = 1:ncol(.),
-        sep = "_"  ,
-        direction = "long" ,
-        timevar = "design",
-        idvar = "run"
-      )
+      dplyr::rename_with(~ sub("est_", "", .x), dplyr::everything()) %>%
+      dplyr::rename_with( ~ paste0(., "_", stringr::str_extract(., pat)),
+                          dplyr::everything()) %>%   # rename attributes for reshape part 1
+      dplyr::rename_with( ~ stringr::str_replace(., pattern = pat, replacement =
+                                                   ""),
+                          dplyr::everything())
+
+
+    s <- switch(
+      reshape_type,
+      "stats" = {
+        message("Using stats::reshape for reshaping...")
+        stats::reshape(
+          preprocessed,
+          varying = 1:ncol(preprocessed),
+          sep = "_",
+          direction = "long",
+          timevar = "design"
+        ) %>%
+          dplyr::select(-id)
+      },
+      "tidyr" = {
+        message("Using tidyr::pivot_longer for reshaping...")
+        tidyr::pivot_longer(
+          preprocessed,
+          cols = dplyr::everything(),
+          names_to = c(".value", "design"),
+          names_sep = "_",
+          values_drop_na = TRUE
+        )
+      },
+      "auto" = {
+        tryCatch(
+          {
+            message("Trying tidyr::pivot_longer for reshaping...")
+            tidyr::pivot_longer(
+              preprocessed,
+              cols = dplyr::everything(),
+              names_to = c(".value", "design"),
+              names_sep = "_",
+              values_drop_na = TRUE
+            )
+          },
+          error = function(e) {
+            message("tidyr::pivot_longer failed, falling back to stats::reshape...")
+            stats::reshape(
+              preprocessed,
+              varying = 1:ncol(preprocessed),
+              sep = "_",
+              direction = "long",
+              timevar = "design"
+            ) %>%
+              dplyr::select(-id)
+          }
+        )
+      },
+      stop("You need to specify either 'tidyr', 'stats', or 'auto' as the reshape_type")
+    )
 
 
     p = list()
 
-    for (att in names(dplyr::select(s, -c("design", "run")))) {
+    for (att in names(dplyr::select(s, -c("design")))) {
       p[[att]] <- plot_multi_histogram(s, att, "design")
 
       print(p[[att]])
