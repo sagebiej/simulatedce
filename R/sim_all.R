@@ -165,13 +165,13 @@ sim_all <- function(nosim = 2,
 
 
 
-
-
-    summaryall <- data.frame(truepar = as.double(c(bcoeff, rep(
-      NA, length(bcoeff)
-    ))), as.data.frame(purrr::map(all_designs, ~ .x$summary))) %>%
+    summaryall <- as.data.frame(purrr::map(all_designs, ~ .x$summary)) %>%
       dplyr::select(!dplyr::ends_with("vars")) %>%
-      dplyr::relocate(truepar, dplyr::ends_with(c(
+      tibble::rownames_to_column("parname") %>%
+      dplyr::mutate(parname = stringr::str_remove(parname, "^est_")) %>%
+      dplyr::left_join(data.frame(truepar = unlist(bcoeff)) %>% tibble::rownames_to_column("parname"),
+                       by="parname") %>%
+      dplyr::relocate(parname, dplyr::ends_with(c(
         ".n", "truepar", "mean", "sd", "min" , "max", "range" , "se"
       )))
 
