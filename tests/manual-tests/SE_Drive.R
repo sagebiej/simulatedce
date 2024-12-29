@@ -2,7 +2,7 @@
 
 rm(list=ls())
 devtools::load_all()
-
+library(rlang)
 
 
 designpath<- system.file("extdata","SE_DRIVE" ,package = "simulateDCE")

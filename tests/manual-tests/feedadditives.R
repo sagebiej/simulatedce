@@ -7,7 +7,7 @@ designpath<- system.file("extdata","feedadditives" ,package = "simulateDCE")
 
 notes <- "Three heuristics"
 
-resps =300  # number of respondents
+resps =396  # number of respondents
 nosim=2 # number of simulations to run (about 500 is minimum)
 destype = "ngene"
 

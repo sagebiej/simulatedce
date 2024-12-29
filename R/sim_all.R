@@ -165,15 +165,16 @@ sim_all <- function(nosim = 2,
 
 
 
-    summaryall <- as.data.frame(purrr::map(all_designs, ~ .x$summary)) %>%
-      dplyr::select(!dplyr::ends_with("vars")) %>%
-      tibble::rownames_to_column("parname") %>%
-      dplyr::mutate(parname = stringr::str_remove(parname, "^est_")) %>%
-      dplyr::left_join(data.frame(truepar = unlist(bcoeff)) %>% tibble::rownames_to_column("parname"),
-                       by="parname") %>%
-      dplyr::relocate(parname, dplyr::ends_with(c(
-        ".n", "truepar", "mean", "sd", "min" , "max", "range" , "se"
-      )))
+summaryall <- as.data.frame(purrr::map(all_designs, ~ .x$summary)) %>%
+  dplyr::select(!dplyr::ends_with("vars")) %>%
+  tibble::rownames_to_column("parname") %>%
+  dplyr::mutate(parname = stringr::str_remove(parname, "^est_")) %>%
+  dplyr::left_join(data.frame(truepar = unlist(bcoeff)) %>% tibble::rownames_to_column("parname") %>%
+                     dplyr::mutate(parname=stringr::str_replace_all(parname,"\\.","_")),   ##because parameters have been renamed for mixl, we have to make sure we substitute all . with _
+                   by="parname") %>%
+  dplyr::relocate(parname, dplyr::ends_with(c(
+    ".n", "truepar", "mean", "sd", "min" , "max", "range" , "se"
+  )))
 
     coefall <- purrr::map(all_designs, ~ .x$coefs)
 
