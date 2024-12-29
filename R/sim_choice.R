@@ -21,7 +21,14 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
     message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.")
   }
 
+  # Create a lookup table for bcoeff names
+  bcoeff_lookup <- tibble::tibble(
+    original = names(bcoeff),
+    modified = stringr::str_replace_all(names(bcoeff), "_", "")
+  )
 
+  # Replace all underscores in bcoeff names with an empty string
+  names(bcoeff) <- bcoeff_lookup$modified
 
 
 
@@ -130,8 +137,8 @@ transform_util2 <- function() {
       `priors\\["` = "",
       `"\\]` = "",
       `~` = "=",
-      `\\.` = "_",
-      `V_` = "U_"
+   #  `\\.` = "_",    ## can be deleted when everything works
+      `V.` = "U_"    ## was originally V_
     )) %>%
     # Replace only relevant database variables
     stringr::str_replace_all(stats::setNames(
