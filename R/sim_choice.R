@@ -24,13 +24,31 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
   # Create a lookup table for bcoeff names
   bcoeff_lookup <- tibble::tibble(
     original = names(bcoeff),
-    modified = stringr::str_replace_all(names(bcoeff), "_", "")
+    modified = stringr::str_replace_all(names(bcoeff), "[._]", "")
   )
 
   # Replace all underscores in bcoeff names with an empty string
   names(bcoeff) <- bcoeff_lookup$modified
 
 
+  u <- purrr::map(u, function(utility_group) {
+    purrr::map(utility_group, function(utility) {
+      # Convert the RHS of the formula to a single string
+      rhs_string <- paste(deparse(formula.tools::rhs(utility)), collapse = " ")
+
+      # Replace coefficient names in the RHS string
+      modified_rhs <- stringr::str_replace_all(
+        rhs_string,
+        stats::setNames(
+          bcoeff_lookup$modified,
+          paste0("(?<![a-zA-Z0-9._])", bcoeff_lookup$original, "(?![a-zA-Z0-9._])")
+        )
+      )
+
+      # Recreate the formula with the modified RHS
+      formula(paste(as.character(formula.tools::lhs(utility)), "~", modified_rhs))
+    })
+  })
 
 
 #### Function to simulate and estimate ####
