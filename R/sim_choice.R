@@ -137,8 +137,8 @@ transform_util2 <- function() {
       `priors\\["` = "",
       `"\\]` = "",
       `~` = "=",
-   #  `\\.` = "_",    ## can be deleted when everything works
-      `V.` = "U_"    ## was originally V_
+    `\\.` = "_",    ## can be deleted when everything works
+      `V_` = "U_"    ## was originally V_
     )) %>%
     # Replace only relevant database variables
     stringr::str_replace_all(stats::setNames(
