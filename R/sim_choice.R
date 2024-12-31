@@ -25,7 +25,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
   bcoeff <- bcoeff_result$bcoeff
   bcoeff_lookup <- bcoeff_result$bcoeff_lookup
 
-
+browser()
   u <- purrr::map(u, function(utility_group) {
     purrr::map(utility_group, function(utility) {
       # Convert the RHS of the formula to a single string
@@ -41,7 +41,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
       )
 
       # Recreate the formula with the modified RHS
-      formula(paste(as.character(formula.tools::lhs(utility)), "~", modified_rhs))
+      stats::formula(paste(as.character(formula.tools::lhs(utility)), "~", modified_rhs))
     })
   })
 
