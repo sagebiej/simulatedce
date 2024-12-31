@@ -94,3 +94,46 @@ make_md <- function(f=file){
 
 }
 
+
+
+#' Modify bcoeff Names
+#'
+#' This function modifies the names of beta coefficients (`bcoeff`) by removing
+#' dots and underscores to ensure consistent naming. If the names are already modified,
+#' the function skips processing.
+#'
+#' @param bcoeff A named list of beta coefficients. The names of this list are
+#'   the coefficients used in the utility function.
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{bcoeff}{The modified `bcoeff` list with updated names.}
+#'   \item{bcoeff_lookup}{A tibble mapping the original names to the modified names.}
+#' }
+#'
+#' @keywords internal
+modify_bcoeff_names <- function(bcoeff) {
+  # Check if bcoeff names need modification
+  if (any(grepl("[._]", names(bcoeff)))) {
+    # Create a lookup table
+    bcoeff_lookup <- tibble::tibble(
+      original = names(bcoeff),
+      modified = stringr::str_replace_all(names(bcoeff), "[._]", "")
+    )
+
+    # Modify the names in the original bcoeff
+    names(bcoeff) <- bcoeff_lookup$modified
+  } else {
+    # No modification needed; create a trivial lookup table
+    bcoeff_lookup <- tibble::tibble(
+      original = names(bcoeff),
+      modified = names(bcoeff)
+    )
+  }
+
+  # Return both modified bcoeff and lookup table
+  list(
+    bcoeff = bcoeff,
+    bcoeff_lookup = bcoeff_lookup
+  )
+}

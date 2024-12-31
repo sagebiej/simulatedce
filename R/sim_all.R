@@ -91,7 +91,7 @@ sim_all <- function(nosim = 2,
     stop("Values in 'bcoeff' must be numeric.")
   }
 
-  #### check that all the coefficients in utility function have a cooresponding value in bcoeff ####
+  #### check that all the coefficients in utility function have a corresponding value in bcoeff ####
   # Extract coefficients from utility function starting with "b"
   coeff_names_ul <- unique(unlist(lapply(u, function(u) {
     formula_strings <- unlist(u)
@@ -131,6 +131,12 @@ sim_all <- function(nosim = 2,
   #################################################
   ########## End Validation Tests #################
   #################################################
+
+
+  bcoeff_result <- modify_bcoeff_names(bcoeff)
+  bcoeff <- bcoeff_result$bcoeff
+
+
 
   designfile <- list.files(designpath, full.names = T)
   designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
