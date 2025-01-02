@@ -1,6 +1,6 @@
 Package: simulateDCE
 Title: Simulate data for discrete choice experiments 
-Version: 0.2.0.9005
+Version: 0.2.0.9006
 Authors@R: 
     person(given = "Julian", family = "Sagebiel", email = "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
