@@ -113,22 +113,30 @@ make_md <- function(f=file){
 #'
 #' @keywords internal
 modify_bcoeff_names <- function(bcoeff) {
-  # Check if bcoeff names need modification
-  if (any(grepl("[._]", names(bcoeff)))) {
-    # Create a lookup table
-    bcoeff_lookup <- tibble::tibble(
-      original = names(bcoeff),
-      modified = stringr::str_replace_all(names(bcoeff), "[._]", "")
-    )
-
-    # Modify the names in the original bcoeff
-    names(bcoeff) <- bcoeff_lookup$modified
+  # Check if bcoeff already has a lookup table attribute
+  if (!is.null(attr(bcoeff, "bcoeff_lookup"))) {
+    message("bcoeff_lookup already exists; skipping modification.")
+    # Retrieve the existing lookup table
+    bcoeff_lookup <- attr(bcoeff, "bcoeff_lookup")
   } else {
-    # No modification needed; create a trivial lookup table
-    bcoeff_lookup <- tibble::tibble(
-      original = names(bcoeff),
-      modified = names(bcoeff)
-    )
+    # Check if bcoeff names need modification
+    if (any(grepl("[._]", names(bcoeff)))) {
+      # Create a lookup table
+      bcoeff_lookup <- tibble::tibble(
+        original = names(bcoeff),
+        modified = stringr::str_replace_all(names(bcoeff), "[._]", "")
+      )
+      # Modify the names in the original bcoeff
+      names(bcoeff) <- bcoeff_lookup$modified
+    } else {
+      # No modification needed; create a trivial lookup table
+      bcoeff_lookup <- tibble::tibble(
+        original = names(bcoeff),
+        modified = names(bcoeff)
+      )
+    }
+    # Attach the lookup table as an attribute to bcoeff
+    attr(bcoeff, "bcoeff_lookup") <- bcoeff_lookup
   }
 
   # Return both modified bcoeff and lookup table
