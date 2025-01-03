@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The goal of simulateDCE is to make it easy to simulate choice experiment datasets using designs from NGENE or `spdesign`. You have to store the design file in a subfolder and need to specify certain parameters and the utility functions for the data generating process. The package is useful for:
+The goal of simulateDCE is to make it easy to simulate choice experiment datasets using designs from NGENE, `idefix` or `spdesign`. You have to store the design file(s) in a subfolder and need to specify certain parameters and the utility functions for the data generating process. The package is useful for:
 
 1.  Test different designs in terms of statistical power, efficiency and unbiasedness
 
@@ -33,13 +33,22 @@ The goal of simulateDCE is to make it easy to simulate choice experiment dataset
 
 ## Installation
 
-You can install the development version of simulateDCE from gitlab. You need to install the `remotes` package first. The current version is alpha and there is no version on cran:
+You can install simulateDCE from github. You need to install the `devtools` package first. The current version is alpha and there is no version on cran:
 
 ``` r
 
-install.packages("remotes")
-remotes::install_gitlab(repo = "dj44vuri/simulateDCE" , host = "https://git.idiv.de")
+install.packages("devtools")
+devtools::install_git('https://github.com/sagebiej/simulateDCE', ref = "main")
 ```
+
+For the latest development version use this: 
+
+``` r
+
+install.packages("devtools")
+devtools::install_git('https://github.com/sagebiej/simulateDCE', ref = "devel")
+```
+
 
 ## Example
 
@@ -54,12 +63,10 @@ library(rlang)
 library(formula.tools)
 
 
-library(rlang)
-
 designpath<- system.file("extdata","SE_DRIVE" ,package = "simulateDCE")
 
 resps =120  # number of respondents
-nosim= 2 # number of simulations to run (about 500 is minimum)
+nosim= 400 # number of simulations to run (about 500 is minimum)
 
 
 
@@ -107,7 +114,7 @@ ul<-list( u1 =
 destype="ngene"
 
 sedrive <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff)
+                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
 
 ```
