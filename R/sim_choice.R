@@ -16,6 +16,10 @@
 #'
 sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
+  # Stop condition to check if chunks is a positive integer
+  if (!is.numeric(chunks) || chunks <= 0 || chunks != as.integer(chunks)) {
+    stop("`chunks` must be a positive integer.")
+  }
 
   if (utility_transform_type == "simple") {
     message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.")
