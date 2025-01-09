@@ -14,7 +14,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,u=u[[1]] ,designtype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
+sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple" ,mode = "parallel") {
 
 
   #################################################
@@ -98,31 +98,6 @@ designs_all <- list()
      print(u)
 
 
-     # future::plan("multisession")
-     #
-     #
-     # tictoc::tic("start simulation")
-     #
-     # sets <- 1:no_sim %>%
-     #   furrr::future_map(
-     #     ~ {
-     #
-     #       estimate_sim(
-     #         run = .x,
-     #         data = datadet,
-     #         utility = u,
-     #         setspp = setpp,
-     #         bcoeff = bcoeff,
-     #         decisiongroups = decisiongroups,
-     #         manipulations = manipulations,
-     #         model_spec = model_spec,
-     #         start_values = est,
-     #         availabilities = availabilities
-     #       )
-     #     },
-     #     .options = furrr::furrr_options(seed = TRUE)
-     #   )
-     # tictoc::toc()
 
 
 

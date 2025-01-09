@@ -16,7 +16,8 @@ sim_choice(
   manipulations = list(),
   estimate,
   chunks = 1,
-  utility_transform_type = "simple"
+  utility_transform_type = "simple",
+  mode = "parallel"
 )
 }
 \arguments{
