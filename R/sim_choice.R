@@ -16,6 +16,11 @@
 #'
 sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple") {
 
+
+  #################################################
+  ########## Input Validation Test ###############
+  #################################################
+
   # Stop condition to check if chunks is a positive integer
   if (!is.numeric(chunks) || chunks <= 0 || chunks != as.integer(chunks)) {
     stop("`chunks` must be a positive integer.")
@@ -25,11 +30,14 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
     message("'simple' is deprecated and will be removed in the future. Use 'exact' instead.")
   }
 
+
+
+## make bcoeff clean
   bcoeff_result <- modify_bcoeff_names(bcoeff)
   bcoeff <- bcoeff_result$bcoeff
   bcoeff_lookup <- bcoeff_result$bcoeff_lookup
 
-
+### make utility function clean
   u <- purrr::map(u, function(utility_group) {
     purrr::map(utility_group, function(utility) {
       # Convert the RHS of the formula to a single string
@@ -50,7 +58,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
   })
 
 
-#### Function to simulate and estimate ####
+#### Function to simulate ####
 
   estimate_sim <- function(run = 1,
                            data,  # Data for simulation
@@ -74,13 +82,6 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
                                  decisiongroups = decisiongroups,
                                  manipulations = manipulations)
 
-    # Estimate the model
-    # model <- mixl::estimate(model_spec = model_spec,
-    #                         start_values = start_values,
-    #                         availabilities = availabilities,
-    #                         data = database)
-
-    #return(model)
   }
 
 
@@ -97,7 +98,31 @@ designs_all <- list()
      print(u)
 
 
-
+     # future::plan("multisession")
+     #
+     #
+     # tictoc::tic("start simulation")
+     #
+     # sets <- 1:no_sim %>%
+     #   furrr::future_map(
+     #     ~ {
+     #
+     #       estimate_sim(
+     #         run = .x,
+     #         data = datadet,
+     #         utility = u,
+     #         setspp = setpp,
+     #         bcoeff = bcoeff,
+     #         decisiongroups = decisiongroups,
+     #         manipulations = manipulations,
+     #         model_spec = model_spec,
+     #         start_values = est,
+     #         availabilities = availabilities
+     #       )
+     #     },
+     #     .options = furrr::furrr_options(seed = TRUE)
+     #   )
+     # tictoc::toc()
 
 
 
@@ -128,21 +153,40 @@ designs_all <- list()
     as.data.frame()
 
 
+  switchmap <- function(.x, .f, mode = c("parallel", "sequential"), workers = NULL, ..., .progress = TRUE) {
+    mode <- match.arg(mode)  # Ensure valid mode input
+
+    switch(
+      mode,
+      "parallel" = {
+        # Set up parallel backend
+        if (!is.null(workers)) {
+          future::plan("multisession", workers = workers)
+        } else {
+          future::plan("multisession")
+        }
+        on.exit(future::plan("sequential"), add = TRUE)  # Ensure plan is reset after execution
+        furrr::future_map(.x, .f, ..., .options = furrr::furrr_options(seed = TRUE))
+      },
+      "sequential" = {
+
+        purrr::map(.x, .f, ..., .progress = .progress)
+      }
+    )
+  }
 
 
-
-
-  database <- simulateDCE::simulate_choices(data=datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
+  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations), mode = "parallel")
 
 
 ### start estimation
 
   if(estimate==TRUE) {
-
+database <- sim_data[[1]]
 
 
     ####  Function that transforms user written utility for simulation into utility function for mixl.
-    transform_util <- function() {
+transform_util <- function() {
 
       mnl_U <-paste(purrr::map_chr(u[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
         stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"=" $alt"))
@@ -269,35 +313,21 @@ transform_util2 <- function() {
 
 
   } else {
-browser()
 
 
-    future::plan("multisession")
 
 
-tictoc::tic("start")
 
-  output <- 1:no_sim %>%
-    furrr::future_map(
-      ~ {
-
-        estimate_sim(
-          run = .x,
-          data = datadet,
-          utility = u,
-          setspp = setpp,
-          bcoeff = bcoeff,
-          decisiongroups = decisiongroups,
-          manipulations = manipulations,
-          model_spec = model_spec,
-          start_values = est,
-          availabilities = availabilities
-        )
-      },
-      .options = furrr::furrr_options(seed = TRUE)
+tictoc::tic("start_estimation")
+    output <- purrr::map(
+      sim_data,
+      ~ mixl::estimate(
+        model_spec = model_spec,
+        start_values = est,
+        availabilities = availabilities,
+        data = .x
+      )
     )
-tictoc::toc()
-    future::plan("sequential")
 
   }
 
@@ -329,8 +359,7 @@ tictoc::toc()
   return(output)
 } else {
 
-  output<- 1:no_sim %>% purrr::map(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations))
-  return(output)
+  return(sim_data)
 
 }
 }
