@@ -8,14 +8,15 @@
 #' @inheritParams simulate_choices
 #' @param chunks The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.
 #' @param utility_transform_type How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.
+#' @param mode Set to "parallel" if parts should be run in parallel mode
 #' @return a list with all information on the run
 #' @export
 #'
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,u=u[[1]] ,designtype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple" ,mode = "parallel") {
-
+sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple" ,mode = c("parallel", "sequential")) {
+  mode <- match.arg(mode)
 
   #################################################
   ########## Input Validation Test ###############
@@ -128,8 +129,8 @@ designs_all <- list()
     as.data.frame()
 
 
-  switchmap <- function(.x, .f, mode = c("parallel", "sequential"), workers = NULL, ..., .progress = TRUE) {
-    mode <- match.arg(mode)  # Ensure valid mode input
+  switchmap <- function(.x, .f, mode , workers = NULL, ..., .progress = TRUE) {
+
 
     switch(
       mode,
@@ -151,7 +152,7 @@ designs_all <- list()
   }
 
 
-  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations), mode = "parallel")
+  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations), mode = mode)
 
 
 ### start estimation
@@ -306,7 +307,7 @@ tictoc::tic("start_estimation")
 
   }
 
-
+tictoc::toc()
 
   coefs<-purrr::map(1:length(output),~summary(output[[.]])[["coefTable"]][c(1,8)]  %>%
                tibble::rownames_to_column() %>%

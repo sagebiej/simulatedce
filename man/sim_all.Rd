@@ -18,7 +18,8 @@ sim_all(
   estimate = TRUE,
   chunks = 1,
   utility_transform_type = "simple",
-  reshape_type = "auto"
+  reshape_type = "auto",
+  mode = c("parallel", "sequential")
 )
 }
 \arguments{
@@ -47,6 +48,8 @@ sim_all(
 \item{utility_transform_type}{How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.}
 
 \item{reshape_type}{Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.}
+
+\item{mode}{Set to "parallel" if parts should be run in parallel mode}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

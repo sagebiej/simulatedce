@@ -38,11 +38,12 @@ sim_all <- function(nosim = 2,
                     estimate = TRUE,
                     chunks = 1,
                     utility_transform_type = "simple",
-                    reshape_type = "auto") {
+                    reshape_type = "auto",
+                    mode= c("parallel", "sequential")) {
   #################################################
   ########## Input Validation Test ###############
   #################################################
-
+  mode <- match.arg(mode)
   ########### validate the utility function ########
   if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))) {
     stop(
@@ -142,7 +143,7 @@ sim_all <- function(nosim = 2,
   designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
 
 
-  tictoc::tic()
+  tictoc::tic("total time for simulation and estimation")
 
   all_designs <- purrr::map(
     designfile,
@@ -157,7 +158,8 @@ sim_all <- function(nosim = 2,
     manipulations = manipulations,
     estimate = estimate,
     chunks = chunks,
-    utility_transform_type = utility_transform_type
+    utility_transform_type = utility_transform_type,
+    mode = mode
   ) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 
