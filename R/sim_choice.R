@@ -15,7 +15,7 @@
 #' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
 #'  mnl_U,u=u[[1]] ,designtype="ngene")}
 #'
-sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple" ,mode = c("parallel", "sequential")) {
+sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype = NULL, destype = NULL, bcoeff, decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1, utility_transform_type = "simple" ,mode = c("parallel", "sequential"),  preprocess_function = NULL) {
   mode <- match.arg(mode)
 
   #################################################
@@ -59,31 +59,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
   })
 
 
-#### Function to simulate ####
 
-  estimate_sim <- function(run = 1,
-                           data,  # Data for simulation
-                           utility,  # Utility functions
-                           setspp,   # Sets per respondent
-                           bcoeff,   # Coefficients
-                           decisiongroups, # Decision-making groups
-                           manipulations,  # Manipulations
-                           model_spec,     # Model specification for mixl
-                           start_values,   # Starting values for estimation
-                           availabilities  # Availability matrix
-  ) {
-    # Log the run number
-    cat("This is Run number ", run, "\n")
-
-    # Simulate choices
-    database <- simulate_choices(data = datadet,
-                                 utility = utility,
-                                 setspp = setspp,
-                                 bcoeff = bcoeff,
-                                 decisiongroups = decisiongroups,
-                                 manipulations = manipulations)
-
-  }
 
 
 
@@ -152,7 +128,7 @@ designs_all <- list()
   }
 
 
-  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations), mode = mode)
+  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations , preprocess_function = preprocess_function), mode = mode)
 
 
 ### start estimation

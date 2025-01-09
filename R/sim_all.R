@@ -39,7 +39,8 @@ sim_all <- function(nosim = 2,
                     chunks = 1,
                     utility_transform_type = "simple",
                     reshape_type = "auto",
-                    mode= c("parallel", "sequential")) {
+                    mode= c("parallel", "sequential"),
+                    preprocess_function = NULL) {
   #################################################
   ########## Input Validation Test ###############
   #################################################
@@ -159,7 +160,8 @@ sim_all <- function(nosim = 2,
     estimate = estimate,
     chunks = chunks,
     utility_transform_type = utility_transform_type,
-    mode = mode
+    mode = mode,
+    preprocess_function = preprocess_function
   ) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
 

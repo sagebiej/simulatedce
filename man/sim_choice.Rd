@@ -17,7 +17,8 @@ sim_choice(
   estimate,
   chunks = 1,
   utility_transform_type = "simple",
-  mode = c("parallel", "sequential")
+  mode = c("parallel", "sequential"),
+  preprocess_function = NULL
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ sim_choice(
 \item{utility_transform_type}{How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.}
 
 \item{mode}{Set to "parallel" if parts should be run in parallel mode}
+
+\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
 }
 \value{
 a list with all information on the run

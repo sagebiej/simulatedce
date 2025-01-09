@@ -19,7 +19,8 @@ sim_all(
   chunks = 1,
   utility_transform_type = "simple",
   reshape_type = "auto",
-  mode = c("parallel", "sequential")
+  mode = c("parallel", "sequential"),
+  preprocess_function = NULL
 )
 }
 \arguments{
@@ -50,6 +51,8 @@ sim_all(
 \item{reshape_type}{Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.}
 
 \item{mode}{Set to "parallel" if parts should be run in parallel mode}
+
+\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
