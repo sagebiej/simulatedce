@@ -52,17 +52,35 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,designtype
 
 #### Function to simulate and estimate ####
 
-  estimate_sim <- function(run=1) {         #start loop
+  estimate_sim <- function(run = 1,
+                           data,  # Data for simulation
+                           utility,  # Utility functions
+                           setspp,   # Sets per respondent
+                           bcoeff,   # Coefficients
+                           decisiongroups, # Decision-making groups
+                           manipulations,  # Manipulations
+                           model_spec,     # Model specification for mixl
+                           start_values,   # Starting values for estimation
+                           availabilities  # Availability matrix
+  ) {
+    # Log the run number
+    cat("This is Run number ", run, "\n")
 
-    cat("This is Run number ", run)
+    # Simulate choices
+    database <- simulate_choices(data = datadet,
+                                 utility = utility,
+                                 setspp = setspp,
+                                 bcoeff = bcoeff,
+                                 decisiongroups = decisiongroups,
+                                 manipulations = manipulations)
 
-    database <- simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
+    # Estimate the model
+    # model <- mixl::estimate(model_spec = model_spec,
+    #                         start_values = start_values,
+    #                         availabilities = availabilities,
+    #                         data = database)
 
-
-    model<-mixl::estimate(model_spec,start_values = est, availabilities = availabilities, data= database)
-
-    return(model)
-
+    #return(model)
   }
 
 
@@ -114,7 +132,7 @@ designs_all <- list()
 
 
 
-  database <- simulate_choices(data=datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
+  database <- simulateDCE::simulate_choices(data=datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations)
 
 
 ### start estimation
@@ -189,7 +207,7 @@ transform_util2 <- function() {
 
 # specify model for mixl estimation
 
-  model_spec <- mixl::specify_model(mnl_U, database, disable_multicore=F)
+  model_spec <- mixl::specify_model(utility_script = mnl_U, dataset = database, disable_multicore=T)
 
   est=stats::setNames(rep(0,length(model_spec$beta_names)), model_spec$beta_names)
 
@@ -251,8 +269,35 @@ transform_util2 <- function() {
 
 
   } else {
+browser()
 
-    output <- 1:no_sim %>% purrr::map(estimate_sim)
+
+    future::plan("multisession")
+
+
+tictoc::tic("start")
+
+  output <- 1:no_sim %>%
+    furrr::future_map(
+      ~ {
+
+        estimate_sim(
+          run = .x,
+          data = datadet,
+          utility = u,
+          setspp = setpp,
+          bcoeff = bcoeff,
+          decisiongroups = decisiongroups,
+          manipulations = manipulations,
+          model_spec = model_spec,
+          start_values = est,
+          availabilities = availabilities
+        )
+      },
+      .options = furrr::furrr_options(seed = TRUE)
+    )
+tictoc::toc()
+    future::plan("sequential")
 
   }
 
