@@ -14,7 +14,17 @@
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
 simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate, preprocess_function = NULL) {  #the part in dataset that needs to be repeated in each run
 
-
+  if (!is.null(preprocess_function)) {
+    if (!is.function(preprocess_function)) {
+      stop("`preprocess_function` must be a function.")
+    } else {
+      # Execute the user-supplied `preprocess_function`
+      prepro_data <- preprocess_function()
+      cat("\n Preprocess function has been executed.\n")
+    }
+  } else {
+    cat("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
+  }
 
 
 ### unpack the bcoeff list so variables are accessible
@@ -45,9 +55,9 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   n=seq_along(1:length(utility[[1]]))    # number of utility functions
 
 
-  cat("\n dataset final_set exists: ",exists("final_set"), "\n")
+  cat("\n dataset preprossed_data exists: ",exists("prepro_data"), "\n")
 
-  if(exists("final_set")) data = dplyr::left_join(data,final_set, by = "ID")
+  if(exists("prepro_data")) data = dplyr::left_join(data,prepro_data, by = "ID")
 
   cat("\n decisiongroups exists: " ,length(decisiongroups)>2)
 
