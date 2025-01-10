@@ -232,13 +232,13 @@ transform_util2 <- function() {
 
     tictoc::tic(paste0("start_estimation of chunk",i))
 
-    output <- sim_data[[start_point]]:sim_data[[end_point]] %>%
+    output <- start_point:end_point %>%
     purrr::map(
             ~ mixl::estimate(
         model_spec = model_spec,
         start_values = est,
         availabilities = availabilities,
-        data = .x
+        data = sim_data[[.x]]
       )
     )
  tictoc::toc()
