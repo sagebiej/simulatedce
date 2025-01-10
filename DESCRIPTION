@@ -29,7 +29,8 @@ Imports:
     tidyr,
     rlang,
     future,
-    furrr
+    furrr,
+    qs
 Suggests: 
     knitr,
     testthat (>= 3.0.0)

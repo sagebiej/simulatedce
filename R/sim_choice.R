@@ -86,6 +86,9 @@ designs_all <- list()
 
   design<- readdesign(design = designfile, designtype = designtype, destype = destype)
 
+
+  dname <- designname <- stringr::str_remove_all(designfile, "(.ngd|_|.RDS)")
+
   if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
 
   nsets<-nrow(design)
@@ -243,8 +246,9 @@ transform_util2 <- function() {
     )
  tictoc::toc()
 
+chunkfilename <- paste0(dname,"_tmp_",i,".qs")
 
-  saveRDS(output,paste0("tmp_",i,".RDS"))
+  qs::qsave(output,chunkfilename,preset = "fast")
   rm(output)
 
     gc()
@@ -265,8 +269,8 @@ transform_util2 <- function() {
   # Assuming the files are named in sequence as 'tmp_1.RDS', 'tmp_2.RDS', ..., 'tmp_n.RDS'
   for (i in 1:chunks) {
     # Load each RDS file
-    file_content <- readRDS(paste0("tmp_", i, ".RDS"))
-    file.remove(paste0("tmp_", i, ".RDS"))
+    file_content <- qs::qread(chunkfilename)
+    file.remove(chunkfilename)
 
     # Append the contents of each file to the all_outputs list
     output <- c(output, file_content)
@@ -318,7 +322,7 @@ tictoc::toc()
 
 
   return(output)
-} else {
+} else { # if estimate not TRUE, return only simulated data.
 
   return(sim_data)
 
