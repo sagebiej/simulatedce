@@ -219,7 +219,7 @@ transform_util2 <- function() {
   # Initialize the starting point for the first chunk
   start_point <- 1
 
-  for (i in 1:chunks) {
+  for (i in seq_along(1:chunks)) {
     # Calculate the end point for the current chunk
     end_point <- start_point + chunk_size - 1
 
@@ -228,15 +228,24 @@ transform_util2 <- function() {
       end_point <- no_sim
     }
 
-    # Run simulations for the current chunk
+    # Run estimations for the current chunk
+
+    tictoc::tic(paste0("start_estimation of chunk",i))
+
+    output <- sim_data[[start_point]]:sim_data[[end_point]] %>%
+    purrr::map(
+            ~ mixl::estimate(
+        model_spec = model_spec,
+        start_values = est,
+        availabilities = availabilities,
+        data = .x
+      )
+    )
+ tictoc::toc()
 
 
-    output <- start_point:end_point %>% purrr::map(estimate_sim)
-
-
-
-      saveRDS(output,paste0("tmp_",i,".RDS"))
-      rm(output)
+  saveRDS(output,paste0("tmp_",i,".RDS"))
+  rm(output)
 
     gc()
 
@@ -248,8 +257,8 @@ transform_util2 <- function() {
 
     # Break the loop if the end point reaches or exceeds no_sim
     if (start_point > no_sim) break
-
 }
+
 
   output <- list()  # Initialize the list to store all outputs
 
@@ -280,10 +289,10 @@ tictoc::tic("start_estimation")
         data = .x
       )
     )
-
+tictoc::toc()
   }
 
-tictoc::toc()
+
 
   coefs<-purrr::map(1:length(output),~summary(output[[.]])[["coefTable"]][c(1,8)]  %>%
                tibble::rownames_to_column() %>%

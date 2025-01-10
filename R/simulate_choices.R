@@ -20,6 +20,9 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     } else {
       # Execute the user-supplied `preprocess_function`
       prepro_data <- preprocess_function()
+      if (!is.null(prepro_data) && (!is.data.frame(prepro_data) || !"ID" %in% names(prepro_data))) {
+        stop("The output of `preprocess_function` must be a data.frame with a column named 'ID'.")
+      }
       cat("\n Preprocess function has been executed.\n")
     }
   } else {
@@ -40,14 +43,6 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
        dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
   }
 
-#  Here one can add additional case-specific data
-  cat(" \n does sou_gis exist: ", exists("sou_gis"), "\n")
-
-  if (exists("sou_gis") && is.function(sou_gis)) {
-    sou_gis()
-
-    cat("\n source of gis has been done \n")
-  }
 
 
   if(!exists("manipulations")) manipulations=list() ## If no user input on further data manipulations
