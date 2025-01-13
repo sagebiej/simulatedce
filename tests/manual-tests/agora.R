@@ -1,12 +1,12 @@
 
 rm(list=ls())
-devtools::load_all()
+#devtools::load_all()
 
 
 designpath<- system.file("extdata","agora" ,package = "simulateDCE")
 
 resps =360  # number of respondents
-nosim=2 # number of simulations to run (about 500 is minimum)
+nosim=10 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
 
@@ -41,5 +41,9 @@ ul<-list( u1 =
 
 destype="ngene"
 
-agora <- sim_all(nosim = nosim, resps=resps, designtype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff, utility_transform_type = "exact")
+tictoc::tic("Total length Agora")
+
+agora <- simulateDCE::sim_all(nosim = nosim, resps=resps, designtype = destype,
+                   designpath = designpath, u=ul, bcoeff = bcoeff, utility_transform_type = "exact",mode = "parallel")
+
+tictoc::toc()
