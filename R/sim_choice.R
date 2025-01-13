@@ -233,7 +233,7 @@ transform_util2 <- function() {
 
     # Run estimations for the current chunk
 
-    tictoc::tic(paste0("start_estimation of chunk",i))
+    tictoc::tic(paste0("start_estimation of chunk ",i))
 
     output <- start_point:end_point %>%
     purrr::map(
@@ -267,8 +267,9 @@ chunkfilename <- paste0(dname,"_tmp_",i,".qs")
   output <- list()  # Initialize the list to store all outputs
 
   # Assuming the files are named in sequence as 'tmp_1.RDS', 'tmp_2.RDS', ..., 'tmp_n.RDS'
-  for (i in 1:chunks) {
+  for (i in seq_along(1:chunks)) {
     # Load each RDS file
+    chunkfilename <- paste0(dname,"_tmp_",i,".qs")
     file_content <- qs::qread(chunkfilename)
     file.remove(chunkfilename)
 
