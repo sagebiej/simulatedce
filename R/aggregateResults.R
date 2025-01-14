@@ -3,19 +3,20 @@
 #' Processes the simulation results to extract summaries, coefficients, and graphs.
 #'
 #' @param all_designs A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice
-#' @param bcoeff A named list of true parameter values used in the simulation.
-#' @param designname A character vector of design names used in the simulation.
-#' @param reshape_type Method for reshaping data: "auto", "stats", or "tidyr".
-#'
 #' @return A list with aggregated results including summary, coefficients, graphs, and power.
 #' @export
-aggregateResults <- function(all_designs, designname, bcoeff, reshape_type){
+aggregateResults <- function(all_designs){
 
 
+
+
+designname <- all_designs[["arguements"]][["designname"]]
+reshape_type <- all_designs[["arguements"]][["Reshape Type"]]
+bcoeff <- all_designs[["arguements"]][["Beta values"]]
 
 powa <- purrr::map(all_designs, ~ .x$power)
 
-summaryall <- as.data.frame(purrr::map(all_designs, ~ .x$summary)) %>%
+summaryall <- as.data.frame(purrr::compact(purrr::map(all_designs, ~ .x$summary))) %>%  ## purrr::compact to remove all NULL
   dplyr::select(!dplyr::ends_with("vars")) %>%
   tibble::rownames_to_column("parname") %>%
   dplyr::mutate(parname = stringr::str_remove(parname, "^est_")) %>%
@@ -26,10 +27,9 @@ summaryall <- as.data.frame(purrr::map(all_designs, ~ .x$summary)) %>%
     ".n", "truepar", "mean", "sd", "min" , "max", "range" , "se"
   )))
 
-coefall <- purrr::map(all_designs, ~ .x$coefs)
+coefall <- purrr::compact(purrr::map(all_designs, ~ .x$coefs))
 
 pat <- paste0("(", paste(designname, collapse = "|"), ").") # needed to identify pattern to be replaced
-
 
 preprocessed <- as.data.frame(coefall) %>%
   dplyr::select(!dplyr::matches("pval|run")) %>%

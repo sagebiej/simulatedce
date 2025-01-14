@@ -170,11 +170,6 @@ sim_all <- function(nosim = 2,
 
   print(time)
 
-  if (estimate == TRUE) {
-all_designs<- simulateDCE::aggregateResults(all_designs=all_designs, designname=designname, bcoeff=bcoeff, reshape_type=reshape_type)
-
-  }
-
   all_designs[["time"]] = time
   all_designs[["arguements"]] = list(
     "Beta values" = bcoeff,
@@ -183,8 +178,18 @@ all_designs<- simulateDCE::aggregateResults(all_designs=all_designs, designname=
     "Manipulation of vars" = manipulations,
     "Number Simulations" = nosim,
     "Respondents" = resps,
-    "Designpath" = designpath
+    "Designpath" = designpath,
+    "Reshape Type" = reshape_type,
+    "mode" = mode,
+    "designname" = designname
   )
+
+  if (estimate == TRUE) {
+all_designs<- simulateDCE::aggregateResults(all_designs=all_designs)
+
+  }
+
+
 
 
 
