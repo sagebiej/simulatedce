@@ -4,14 +4,14 @@
 \alias{aggregateResults}
 \title{Aggregate Simulation Results}
 \usage{
-aggregateResults()
+aggregateResults(all_designs, designname, bcoeff, reshape_type)
 }
 \arguments{
-\item{all_designs}{A list of simulation results from sim_choice.}
-
-\item{bcoeff}{A named list of true parameter values used in the simulation.}
+\item{all_designs}{A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice}
 
 \item{designname}{A character vector of design names used in the simulation.}
+
+\item{bcoeff}{A named list of true parameter values used in the simulation.}
 
 \item{reshape_type}{Method for reshaping data: "auto", "stats", or "tidyr".}
 }

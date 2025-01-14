@@ -21,14 +21,14 @@ bcoeff <- list(
 
 
 
-manipulations = list(alt1.professional=     expr(alt1.initiator==1),
-                     alt2.professional=     expr(alt2.initiator==1),
-                     alt1.expert      =     expr(alt1.initiator==2),
-                     alt2.expert      =     expr(alt2.initiator==2),
-                     alt1.domestic    =     expr(alt1.funding==1),
-                     alt2.domestic    =     expr(alt2.funding==1),
-                     alt1.foreign     =     expr(alt1.funding==2),
-                     alt2.foreign     =     expr(alt2.funding==2))
+manipulations = list(alt1.professional=     rlang::expr(alt1.initiator==1),
+                     alt2.professional=     rlang::expr(alt2.initiator==1),
+                     alt1.expert      =     rlang::expr(alt1.initiator==2),
+                     alt2.expert      =     rlang::expr(alt2.initiator==2),
+                     alt1.domestic    =     rlang::expr(alt1.funding==1),
+                     alt2.domestic    =     rlang::expr(alt2.funding==1),
+                     alt1.foreign     =     rlang::expr(alt1.funding==2),
+                     alt2.foreign     =     rlang::expr(alt2.funding==2))
 
 
 #place your utility functions here

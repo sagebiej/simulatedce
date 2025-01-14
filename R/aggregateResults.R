@@ -2,13 +2,14 @@
 #'
 #' Processes the simulation results to extract summaries, coefficients, and graphs.
 #'
-#' @param all_designs A list of simulation results from sim_choice.
+#' @param all_designs A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice
 #' @param bcoeff A named list of true parameter values used in the simulation.
 #' @param designname A character vector of design names used in the simulation.
 #' @param reshape_type Method for reshaping data: "auto", "stats", or "tidyr".
 #'
 #' @return A list with aggregated results including summary, coefficients, graphs, and power.
-aggregateResults <- function(){
+#' @export
+aggregateResults <- function(all_designs, designname, bcoeff, reshape_type){
 
 
 
@@ -104,19 +105,6 @@ for (att in names(dplyr::select(s, -c("design")))) {
 all_designs[["summaryall"]] = summaryall
 all_designs[["graphs"]] = p
 all_designs[["powa"]] = powa
-
-
-all_designs[["time"]] = time
-all_designs[["arguements"]] = list(
-  "Beta values" = bcoeff,
-  "Utility functions" = u ,
-  "Decision groups" = decisiongroups ,
-  "Manipulation of vars" = manipulations,
-  "Number Simulations" = nosim,
-  "Respondents" = resps,
-  "Designpath" = designpath
-)
-
 
 
 return(all_designs)
