@@ -29,13 +29,15 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     cat("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
   }
 
+  tictoc::tic("whole simulate choices")
 
+tictoc::tic("assign keys for bcoeff)")
 ### unpack the bcoeff list so variables are accessible
   for (key in names(bcoeff)) {
     assign(key, bcoeff[[key]])
   }
 
-
+tictoc::toc()
 
 
   by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
@@ -69,24 +71,32 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     data$group=1
   }
 
+tictoc::tic("user entered manipulations")
+
 ## Do user entered manipulations to choice set
   data<- data %>%
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!! manipulations)
+  tictoc::toc()
 
 
+tictoc::tic("split dataframe into groups")
 ## split dataframe into groups
   subsets<- split(data,data$group)
 
+tictoc::toc()
 
+tictoc::tic("for each group calculate utility")
   ## for each group calculate utility
   subsets <-  purrr::map2(.x = seq_along(utility),.y = subsets,
                    ~ dplyr::mutate(.y,purrr::map_dfc(utility[[.x]],by_formula)))
 
   ##put data from eachgroup together again
   data <-dplyr::bind_rows(subsets)
+tictoc::toc()
 
 
+tictoc::tic("add random component")
 ## add random component and calculate total utility
   data<- data %>%
     dplyr::rename_with(~ stringr::str_replace_all(.,pattern = "\\.","_"), tidyr::everything()) %>%
@@ -97,7 +107,9 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     as.data.frame()
 
 
+tictoc::toc()
 
+tictoc::toc()
 
   cat("\n data has been created \n")
 

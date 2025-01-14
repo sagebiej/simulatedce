@@ -50,4 +50,4 @@ ul<-list( u1 =
 destype="ngene"
 
 sedrive <- sim_all(nosim = nosim, resps=resps ,destype = "ngene",
-                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, utility_transform_type = "exact")
+                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, utility_transform_type = "exact" ,mode = "sequential")
