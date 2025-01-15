@@ -30,7 +30,8 @@ Imports:
     rlang,
     future,
     furrr,
-    qs
+    qs,
+    data.table
 Suggests: 
     knitr,
     testthat (>= 3.0.0)

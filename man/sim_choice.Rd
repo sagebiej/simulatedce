@@ -18,7 +18,8 @@ sim_choice(
   chunks = 1,
   utility_transform_type = "simple",
   mode = c("parallel", "sequential"),
-  preprocess_function = NULL
+  preprocess_function = NULL,
+  savefile = NULL
 )
 }
 \arguments{

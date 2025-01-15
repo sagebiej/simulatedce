@@ -10,7 +10,7 @@
 #' @param preprocess_function = NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.
 #' @return a data.frame that includes simulated choices and a design
 #' @export
-#'
+#' @import data.table
 #' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
 simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate, preprocess_function = NULL) {  #the part in dataset that needs to be repeated in each run
 
@@ -79,6 +79,13 @@ tictoc::tic("user entered manipulations")
     dplyr::mutate(!!! manipulations)
   tictoc::toc()
 
+#   browser()
+#
+# d2 <- as.data.table(data)
+#
+# lhs <- as.character(formula.tools::lhs(utility$u1$v1))
+# rhs <- as.character(formula.tools::rhs(utility$u1$v1))
+# d2<- d2[, (lhs) := eval(parse(text = rhs))]
 
 tictoc::tic("split dataframe into groups")
 ## split dataframe into groups
@@ -95,12 +102,11 @@ tictoc::tic("for each group calculate utility")
   data <-dplyr::bind_rows(subsets)
 tictoc::toc()
 
-
 tictoc::tic("add random component")
 ## add random component and calculate total utility
-  data<- data %>%
+  data<- data %>% dplyr::ungroup() %>%
     dplyr::rename_with(~ stringr::str_replace_all(.,pattern = "\\.","_"), tidyr::everything()) %>%
-    dplyr::mutate(dplyr::across(.cols=dplyr::all_of(n),.fns = ~ evd::rgumbel(setspp,loc=0, scale=1), .names = "{'e'}_{n}" ),
+    dplyr::mutate(dplyr::across(.cols=dplyr::all_of(n),.fns = ~ evd::rgumbel(dplyr::n(),loc=0, scale=1), .names = "{'e'}_{n}" ),
            dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_")) ) %>% dplyr::ungroup() %>%
     dplyr::mutate(CHOICE=max.col(.[,grep("U_",names(.))])
     )   %>%

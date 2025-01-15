@@ -81,13 +81,6 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,
     }
   }
 
-### create folder to store results
-
-
-
-
-
-
 
 
 # Empty list where to store all designs later on
@@ -114,23 +107,7 @@ designs_all <- list()
 
   dname <- designname <- stringr::str_remove_all(designfile, "(.ngd|_|.RDS)")
 
-  if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
-
-  nsets<-nrow(design)
-  nblocks<-max(design$Block)
-  setpp <- nsets/nblocks      # Choice Sets per respondent
-
-  replications <- respondents/nblocks
-
-  ## if replications is non int, assign unevenly
-
-  datadet<- design %>%
-    dplyr::arrange(Block,Choice.situation) %>%
-    dplyr::slice(rep(dplyr::row_number(), replications)) %>%    ## replicate design according to number of replications
-
-    dplyr::mutate(ID = rep(1:respondents, each=setpp)) %>%  # create Respondent ID.
-    dplyr::relocate(ID,`Choice.situation`) %>%
-    as.data.frame()
+  datadet <- simulateDCE::createDataset(design = design, respondents = respondents )
 
 
   switchmap <- function(.x, .f, mode , workers = NULL, ..., .progress = TRUE) {
