@@ -20,7 +20,8 @@ sim_all(
   utility_transform_type = "simple",
   reshape_type = "auto",
   mode = c("parallel", "sequential"),
-  preprocess_function = NULL
+  preprocess_function = NULL,
+  savefile = NULL
 )
 }
 \arguments{
@@ -53,6 +54,8 @@ sim_all(
 \item{mode}{Set to "parallel" if parts should be run in parallel mode}
 
 \item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
+
+\item{savefile}{Indicate a path if you want to store the results after each design simulation locally. This is useful in case you fear that your computer crashes}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

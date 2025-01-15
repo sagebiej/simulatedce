@@ -40,7 +40,8 @@ sim_all <- function(nosim = 2,
                     utility_transform_type = "simple",
                     reshape_type = "auto",
                     mode= c("parallel", "sequential"),
-                    preprocess_function = NULL) {
+                    preprocess_function = NULL,
+                    savefile = NULL) {
   #################################################
   ########## Input Validation Test ###############
   #################################################
@@ -146,6 +147,9 @@ sim_all <- function(nosim = 2,
 
   tictoc::tic("total time for simulation and estimation")
 
+if (is.null(savefile)) {
+
+
   all_designs <- purrr::map(
     designfile,
     sim_choice,
@@ -161,10 +165,36 @@ sim_all <- function(nosim = 2,
     chunks = chunks,
     utility_transform_type = utility_transform_type,
     mode = mode,
-    preprocess_function = preprocess_function
+    preprocess_function = preprocess_function,
+    savefile = NULL
   ) %>%  ## iterate simulation over all designs
     stats::setNames(designname)
+} else{
 
+  purrr::walk(
+    designfile,
+    sim_choice,
+    no_sim = nosim,
+    respondents = resps,
+    designtype = designtype,
+    destype = destype,
+    u = u,
+    bcoeff = bcoeff,
+    decisiongroups = decisiongroups,
+    manipulations = manipulations,
+    estimate = estimate,
+    chunks = chunks,
+    utility_transform_type = utility_transform_type,
+    mode = mode,
+    preprocess_function = preprocess_function,
+    savefile = savefile
+  )
+  gc()
+
+  all_designs<-purrr::map(list.files(dirname(savefile),full.names = TRUE),qs::qread)%>%
+    stats::setNames(designname)
+
+}
 
   time <- tictoc::toc()
 
