@@ -9,6 +9,8 @@ createDataset(design, respondents)
 \arguments{
 \item{design}{A data frame containing the design matrix for the choice experiment.
 It should include at least the columns \code{Choice.situation} and optionally \code{Block}.}
+
+\item{respondents}{The number of respondents to generate data for.}
 }
 \value{
 A data frame containing the augmented design matrix with additional columns:
@@ -38,5 +40,5 @@ design <- data.frame(
   Attribute1 = rnorm(12),
   Attribute2 = sample(1:3, 12, replace = TRUE)
 )
-result <- createDataset(design)
+result <- createDataset(design,10)
 }

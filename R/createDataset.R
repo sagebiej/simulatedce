@@ -6,6 +6,8 @@
 #' @param design A data frame containing the design matrix for the choice experiment.
 #'   It should include at least the columns `Choice.situation` and optionally `Block`.
 #'
+#' @param respondents The number of respondents to generate data for.
+#'
 #' @details
 #' The function performs the following steps:
 #' \itemize{
@@ -32,7 +34,7 @@
 #'   Attribute1 = rnorm(12),
 #'   Attribute2 = sample(1:3, 12, replace = TRUE)
 #' )
-#' result <- createDataset(design)
+#' result <- createDataset(design,10)
 createDataset <- function(design, respondents) {
 
 if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block

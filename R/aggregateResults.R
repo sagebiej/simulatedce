@@ -3,11 +3,21 @@
 #' Processes the simulation results to extract summaries, coefficients, and graphs.
 #'
 #' @param all_designs A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice
+#' @param fromfolder A folder from where to read simulations. If provided, the function will read all .qs files from the folder and process them. The files are usually saved by your earlier work and should be qs files as they are more efficient that rds files.
 #' @return A list with aggregated results including summary, coefficients, graphs, and power.
 #' @export
-aggregateResults <- function(all_designs){
+aggregateResults <- function(all_designs ,fromfolder = NULL){
+
+if (!is.null(fromfolder)) {
+
+  if(!dir.exists(fromfolder)) stop("Folder from where to read simulations does not exist.")
+
+  designs <- list.files(path = fromfolder, pattern = "*.qs" , full.names = TRUE)
+
+  purrr::map(designs, qs::qread) %>% stats::setNames(basename(designs))
 
 
+}
 
 
 designname <- all_designs[["arguements"]][["designname"]]

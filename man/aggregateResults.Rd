@@ -4,10 +4,12 @@
 \alias{aggregateResults}
 \title{Aggregate Simulation Results}
 \usage{
-aggregateResults(all_designs)
+aggregateResults(all_designs, fromfolder = NULL)
 }
 \arguments{
 \item{all_designs}{A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice}
+
+\item{fromfolder}{A folder from where to read simulations. If provided, the function will read all .qs files from the folder and process them. The files are usually saved by your earlier work and should be qs files as they are more efficient that rds files.}
 }
 \value{
 A list with aggregated results including summary, coefficients, graphs, and power.

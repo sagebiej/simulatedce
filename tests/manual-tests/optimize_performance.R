@@ -1,13 +1,12 @@
 
 rm(list=ls())
 devtools::load_all()
-library(microbenchmark)
 
 
 design<- system.file("extdata","spdesigns","designs","twoattr.RDS", package = "simulateDCE")
 
 
-resps =400  # number of respondents
+resps =4000  # number of respondents
 nosim=2 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
@@ -31,9 +30,11 @@ ul<- list(uA=
 
 )
 
-#simplesim <- sim_all(nosim = nosim, resps = resps,designpath = designpath, bcoeff = bcoeff, u = ul,designtype = "spdesign" , decisiongroups = desisiongroups)
+simplesim <- sim_all(nosim = nosim, resps = resps,designpath = designpath, bcoeff = bcoeff, u = ul,designtype = "spdesign" , decisiongroups = desisiongroups)
 
 formattedes <- readdesign(design = design)
-data <- simulateDCE::createDataset(formattedes, respondents = resps)
-microbenchmark(sim_d <-simulate_choices(data= data, bcoeff = bcoeff, u = ul, decisiongroups = desisiongroups), times = 10 )
+
+simulate_choices()
+
+
 
