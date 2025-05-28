@@ -24,7 +24,9 @@ designname <- all_designs[["arguements"]][["designname"]]
 reshape_type <- all_designs[["arguements"]][["Reshape Type"]]
 bcoeff <- all_designs[["arguements"]][["Beta values"]]
 
-powa <- purrr::map(all_designs, ~ .x$power)
+powa <- all_designs |>
+  purrr::map(~ .x$power) |>
+  purrr::compact()
 
 summaryall <- as.data.frame(purrr::compact(purrr::map(all_designs, ~ .x$summary))) %>%  ## purrr::compact to remove all NULL
   dplyr::select(!dplyr::ends_with("vars")) %>%
