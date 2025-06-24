@@ -1,32 +1,30 @@
-library(rlang)
 library(formula.tools)
 
 ## all tests are wrapped in single function to make it easier to call on different designs,
 ## which is done at the end of this script
 
-comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bcoeff,  decisiongroups=c(0,1)) {
+comprehensive_design_test  <- function(nosim, resps, designtype, designpath, ul, bcoeff,  decisiongroups=c(0,1)) {
     # Test cases related to sim_all function
   test_that("u is not a list of lists", {
-    expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps=resps, designtype = destype,
                          designpath = designpath, u=data.frame(u=" alp"), bcoeff = bcoeff),
                  "must be provided and must be a list containing at least one list")
   })
 
   test_that("no value provided for  utility", {
-    expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps=resps, designtype = destype,
                          designpath = designpath, bcoeff = bcoeff),
                  "must be provided and must be a list containing at least one list")
   })
 
-
   test_that("wrong designtype", {
-    expect_error(sim_all(nosim = nosim, resps=resps, destype = "ng",
-                         designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups),"Invalid value for design. Please provide either 'ngene' or 'spdesign'.")
+    expect_error(sim_all(nosim = nosim, resps=resps, designtype = "ng",
+                         designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups),"Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
   })
 
 
   test_that("folder does not exist", {
-    expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps=resps, designtype = destype,
                          designpath = system.file("da/bullshit", package = "simulateDCE"), u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
       ,
                  "The folder where your designs are stored does not exist.")
@@ -34,23 +32,34 @@ comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bc
 
   test_that("seed setting makes code reproducible", {
     set.seed(3333)
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
+    result1 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     set.seed(3333)
-    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
+    result2 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     expect_identical(result1[["summaryall"]], result2[["summaryall"]])
   })
 
   test_that("No seed setting makes code results different", {
 
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
+    result1 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
 
-    result2 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
+    result2 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     expect_failure(expect_identical(result1[["summaryall"]], result2[["summaryall"]]))
   })
+
+  test_that("exact and simple produce same results", {
+    set.seed(3333)
+    result1 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups, utility_transform_type = "simple")
+
+    set.seed(3333)
+    result2 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups , , utility_transform_type = "exact")
+
+    expect_identical(result1[["summaryall"]], result2[["summaryall"]])
+  })
+
 
   test_that("Length of utility functions matches number of decision groups", {
     # Define test inputs
@@ -86,35 +95,35 @@ comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bc
     baddecisiongroups <- c(0,0.3,0.6,1)
 
     # Test that the function throws an error when lengths don't match
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = badlist, bcoeff = badbcoeff, decisiongroups =  baddecisiongroups), "Number of decision groups must equal number of utility functions!")
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = badlist, bcoeff = badbcoeff, decisiongroups =  baddecisiongroups), "Number of decision groups must equal number of utility functions!")
 
     # Define test inputs where lengths match
     gooddecisiongroups <- c(0,0.3,0.6, 0.8, 1)
 
     # Test that the function does not throw an error when lengths match (assumed true in input)
-    expect_no_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups =  decisiongroups))
+    expect_no_error(sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups =  decisiongroups))
   })
 
 
   ########### Additional Tests ##############
   test_that("bcoeff is provided", {
-      expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+      expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype,
                            designpath = designpath, u = ul))
   })
 
   test_that("bcoeff contains valid values", {
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype,
                          designpath = designpath, u = ul, bcoeff = list(bsq = "invalid")))
   })
 
   test_that("bcoeff is a list", {
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype,
                          designpath = designpath, u = ul, bcoeff = "not a list")
     )
   })
 
   test_that("B coefficients in the utility functions dont match those in the bcoeff list", {
-    expect_error(sim_all(nosim = nosim, resps=resps, destype = destype,
+    expect_error(sim_all(nosim = nosim, resps=resps, designtype = destype,
                          designpath = designpath, u = ul, bcoeff = list(bWRONG = 0.00)))
   })
 
@@ -125,24 +134,24 @@ comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bc
 
   test_that("Design path must be a valid directory", {
     # Test case: designpath is not a character string
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 123, u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = 123, u = ul, bcoeff = bcoeff))
 
     # Test case: designpath does not exist
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = '/nonexistent/path', u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = '/nonexistent/path', u = ul, bcoeff = bcoeff))
 
     # Test case: designpath is not a directory
-    expect_error(sim_all(nosim = nosim, resps = resps, destype = destype, designpath = 'path/to/a/file.txt', u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = 'path/to/a/file.txt', u = ul, bcoeff = bcoeff))
   })
 
   test_that("Resps must be an integer", {
     # Test case: resps is missing
-    expect_error(sim_all(nosim = nosim, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
 
     # Test case: resps is not an integer
-    expect_error(sim_all(nosim = nosim, resps = "abc", destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, resps = "abc", designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
 
     # Test case: resps is a numeric but not an integer
-    expect_error(sim_all(nosim = nosim, resps = 1.5, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
+    expect_error(sim_all(nosim = nosim, resps = 1.5, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff))
 
   })
 
@@ -152,7 +161,7 @@ comprehensive_design_test  <- function(nosim, resps, destype, designpath, ul, bc
 
   test_that("Simulation results are reasonable", {
 
-    result1 <- sim_all(nosim = nosim, resps = resps, destype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
+    result1 <- sim_all(nosim = nosim, resps = resps, designtype = destype, designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
 
     # obtain the names of the design files (without extensions)
     designs <- tools::file_path_sans_ext(list.files(designpath, full.names = FALSE))
@@ -221,7 +230,7 @@ ul<- list(u1= list(
 )
 )
 
-comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff)
+comprehensive_design_test(nosim=nosim, resps=resps, designtype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff)
 
 ###############################
 #### From feedadditives #######

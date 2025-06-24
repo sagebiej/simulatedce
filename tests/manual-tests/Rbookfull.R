@@ -1,7 +1,7 @@
 
 rm(list=ls())
 devtools::load_all()
-
+### currently used to test the chunks option
 
 set.seed(3393)
 
@@ -11,7 +11,7 @@ designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
 notes <- "No Heuristics"
 
 resps =240  # number of respondents
-nosim=2 # number of simulations to run (about 500 is minimum)
+nosim=19 # number of simulations to run (about 500 is minimum)
 
 #betacoefficients should not include "-"
 bcoeff<-list(
@@ -38,8 +38,8 @@ ul<- list(u1= list(
 
 
 
-rbook <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
-                 designpath = designpath, u= ul, bcoeff = bcoeff)
+rbook <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype  = destype,
+                 designpath = designpath, u= ul, bcoeff = bcoeff, chunks = 4, utility_transform_type = "exact")
 
 
 

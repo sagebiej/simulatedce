@@ -1,15 +1,14 @@
 Package: simulateDCE
 Title: Simulate data for discrete choice experiments 
-Version: 0.2.0
+Version: 0.2.0.9006
 Authors@R: 
     person(given = "Julian", family = "Sagebiel", email = "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
-    person(given = "Samuel", family = "Smock", email = "samuel.smock@idiv.de", role = c("aut", "cre"))
 Description: A package that supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     dplyr (>= 1.1.4),
     evd,
@@ -23,12 +22,16 @@ Imports:
     readr,
     rmarkdown,
     stats,
-    rlang,
     utils,
     stringr,
     tibble,
     tictoc,
-    tidyr
+    tidyr,
+    rlang,
+    future,
+    furrr,
+    qs,
+    data.table
 Suggests: 
     knitr,
     testthat (>= 3.0.0)

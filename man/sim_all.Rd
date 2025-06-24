@@ -8,12 +8,20 @@ update}
 sim_all(
   nosim = 2,
   resps,
+  designtype = NULL,
   destype = NULL,
   designpath,
   u,
   bcoeff,
   decisiongroups = c(0, 1),
-  manipulations = list()
+  manipulations = list(),
+  estimate = TRUE,
+  chunks = 1,
+  utility_transform_type = "simple",
+  reshape_type = "auto",
+  mode = c("parallel", "sequential"),
+  preprocess_function = NULL,
+  savefile = NULL
 )
 }
 \arguments{
@@ -21,17 +29,33 @@ sim_all(
 
 \item{resps}{Number of respondents you want to simulate}
 
-\item{destype}{Is it a design created with ngene or with spdesign. Ngene desings should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
+\item{designtype}{Is it a design created with ngene, spdesign or idefix. use 'ngene', 'spdesign' or 'idefix. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. Idefix objects should also be stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
+
+\item{destype}{Deprecated. Use designtype instead.}
 
 \item{designpath}{The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"}
 
 \item{u}{A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"}
 
-\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+
+\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
+
+\item{chunks}{The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.}
+
+\item{utility_transform_type}{How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.}
+
+\item{reshape_type}{Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.}
+
+\item{mode}{Set to "parallel" if parts should be run in parallel mode}
+
+\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
+
+\item{savefile}{Indicate a path if you want to store the results after each design simulation locally. This is useful in case you fear that your computer crashes}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.

@@ -4,3 +4,6 @@
 inst/doc
 /doc/
 /Meta/
+*.pdf
+tests/testthat/Rplots.pdf
+testdir/

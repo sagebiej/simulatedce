@@ -30,7 +30,7 @@ ul<- list(uA=
 
 )
 
-simplesim <- sim_all(nosim = nosim, resps = resps,designpath = designpath, bcoeff = bcoeff, u = ul,destype = "spdesign" , decisiongroups = desisiongroups)
+simplesim <- sim_all(nosim = nosim, resps = resps,designpath = designpath, bcoeff = bcoeff, u = ul,designtype = "spdesign" , decisiongroups = desisiongroups)
 
 testdata = simplesim[["twoattr"]][[1]][["data"]] %>%
   distinct(group, Choice_situation ,.keep_all = T) %>%

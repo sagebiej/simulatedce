@@ -41,10 +41,14 @@ ul<- list(u1= list(
 )
 )
 
+savefile = "testdir/file"
+
+csa <- simulateDCE::sim_all(nosim = nosim, resps=resps, designtype = destype,
+                            designpath = designpath, u= ul, bcoeff = bcoeff, utility_transform_type = "exact", savefile =
+                            NULL, mode = "sequential")
 
 
-csa <- simulateDCE::sim_all(nosim = nosim, resps=resps, destype = destype,
-                            designpath = designpath, u= ul, bcoeff = bcoeff)
+
 
 
 

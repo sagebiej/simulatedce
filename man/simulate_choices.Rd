@@ -2,16 +2,17 @@
 % Please edit documentation in R/simulate_choices.R
 \name{simulate_choices}
 \alias{simulate_choices}
-\title{Simulate choices based on a dataframe with a design}
+\title{Simulate choices based on a data.frame with a design and respondents}
 \usage{
 simulate_choices(
   data,
   utility,
   setspp,
-  destype,
-  bcoefficients,
+  bcoeff,
   decisiongroups = c(0, 1),
-  manipulations = list()
+  manipulations = list(),
+  estimate,
+  preprocess_function = NULL
 )
 }
 \arguments{
@@ -21,19 +22,21 @@ simulate_choices(
 
 \item{setspp}{an integer, the number of choice sets per person}
 
-\item{destype}{Is it a design created with ngene or with spdesign. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object design$design}
-
-\item{bcoefficients}{List of initial coefficients for the utility function. List content/length can vary based on application, but should all begin with b and be the same as those entered in the utility functions}
+\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+
+\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
+
+\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
 }
 \value{
-a dataframe that includes simulated choices and a design
+a data.frame that includes simulated choices and a design
 }
 \description{
-Simulate choices based on a dataframe with a design
+Simulate choices based on a data.frame with a design and respondents
 }
 \examples{
 \dontrun{simulate_choices(datadet, ut,setspp)}

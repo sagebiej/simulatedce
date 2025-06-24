@@ -2,7 +2,6 @@ rm(list=ls())
 devtools::load_all()
 
 
-library(rlang)
 
 designpath<- system.file("extdata","SE_AGRI", package = "simulateDCE")
 
@@ -22,14 +21,14 @@ bcoeff <- list(
 
 
 
-manipulations = list(alt1.professional=     expr(alt1.initiator==1),
-                     alt2.professional=     expr(alt2.initiator==1),
-                     alt1.expert      =     expr(alt1.initiator==2),
-                     alt2.expert      =     expr(alt2.initiator==2),
-                     alt1.domestic    =     expr(alt1.funding==1),
-                     alt2.domestic    =     expr(alt2.funding==1),
-                     alt1.foreign     =     expr(alt1.funding==2),
-                     alt2.foreign     =     expr(alt2.funding==2))
+manipulations = list(alt1.professional=     rlang::expr(alt1.initiator==1),
+                     alt2.professional=     rlang::expr(alt2.initiator==1),
+                     alt1.expert      =     rlang::expr(alt1.initiator==2),
+                     alt2.expert      =     rlang::expr(alt2.initiator==2),
+                     alt1.domestic    =     rlang::expr(alt1.funding==1),
+                     alt2.domestic    =     rlang::expr(alt2.funding==1),
+                     alt1.foreign     =     rlang::expr(alt1.funding==2),
+                     alt2.foreign     =     rlang::expr(alt2.funding==2))
 
 
 #place your utility functions here
@@ -40,6 +39,6 @@ ul<- list(u1=
               v3 =V.3 ~ basc)
 )
 
-seagri <- sim_all(nosim = nosim, resps=resps, destype = destype,
-                  designpath = designpath, u=ul, bcoeff = bcoeff, manipulations = manipulations)
+seagri <- sim_all(nosim = nosim, resps=resps, designtype = destype,
+                  designpath = designpath, u=ul, bcoeff = bcoeff, manipulations = manipulations, utility_transform_type = "exact")
 
