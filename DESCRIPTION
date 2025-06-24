@@ -4,7 +4,7 @@ Version: 0.3.0
 Authors@R: 
     person(given = "Julian", family = "Sagebiel", email = "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
-Description: A package that supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other.
+Description: Supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other and compare the performance of new models.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
