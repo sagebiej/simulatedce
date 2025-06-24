@@ -1,4 +1,4 @@
-# simulateDCE (development version)
+# simulateDCE 0.3.0
 
 # simulateDCE 0.2.0
 
