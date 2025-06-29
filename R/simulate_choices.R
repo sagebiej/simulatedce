@@ -23,10 +23,10 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
       if (!is.null(prepro_data) && (!is.data.frame(prepro_data) || !"ID" %in% names(prepro_data))) {
         stop("The output of `preprocess_function` must be a data.frame with a column named 'ID'.")
       }
-      cat("\n Preprocess function has been executed.\n")
+      message("\n Preprocess function has been executed.\n")
     }
   } else {
-    cat("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
+    message("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
   }
 
   tictoc::tic("whole simulate choices")
@@ -52,11 +52,11 @@ tictoc::toc()
   n=seq_along(1:length(utility[[1]]))    # number of utility functions
 
 
-  cat("\n dataset preprossed_data exists: ",exists("prepro_data"), "\n")
+  message("\n dataset preprossed_data exists: ",exists("prepro_data"), "\n")
 
   if(exists("prepro_data")) data = dplyr::left_join(data,prepro_data, by = "ID")
 
-  cat("\n decisiongroups exists: " ,length(decisiongroups)>2)
+  message("\n decisiongroups exists: " ,length(decisiongroups)>2)
 
   if(length(decisiongroups)>2)  {     ### create a new variable to classify decision groups.
 
@@ -65,7 +65,11 @@ tictoc::toc()
                                               labels = seq_along(decisiongroups[-length(decisiongroups)]),
                                               include.lowest = TRUE)))
 
-    print(table(data$group))
+    message(
+      "\nGroup counts:\n",
+      paste(capture.output(print(table(data$group))), collapse = "\n")
+    )
+
   } else {
 
     data$group=1
@@ -117,11 +121,14 @@ tictoc::toc()
 
 tictoc::toc()
 
-  cat("\n data has been created \n")
+  message("\n data has been created \n")
 
-  cat("\n First few observations of the dataset \n ")
-  print(utils::head(data))
-  cat("\n \n ")
+message(
+  "\nFirst few observations of the dataset\n",
+  paste(capture.output(utils::head(data)), collapse = "\n"),
+  "\n\n"
+)
+
   return(data)
 
 }

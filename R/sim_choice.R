@@ -13,8 +13,23 @@
 #' @return a list with all information on the run
 #' @export
 #'
-#' @examples \dontrun{  simchoice(designfile="somefile", no_sim=10, respondents=330,
-#'  mnl_U,u=u[[1]] ,designtype="ngene")}
+#' @examples bcoeff <- list(
+#'                          basc = -1.2,
+#'                          basc2 = -1.4,
+#'                          baction = 0.1,
+#'                          badvisory =0.4,
+#'                          bpartnertest = 0.3,
+#'                          bcomp = 0.02)
+#'          ul<-list( u1 =
+#'                      list(
+#'
+#'             v1 = V.1 ~ basc +baction*alt1.b + badvisory * alt1.c +bpartnertest*alt1.d + bcomp* alt1.p ,
+#'
+#'             v2 = V.2 ~ basc2 + baction*alt2.b + badvisory * alt2.c + bpartnertest * alt2.d + bcomp * alt2.p ,
+#'             v3 = V.3 ~ 0))
+#'
+#' sim_choice(designfile=system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"), no_sim=10, respondents=330,
+#'  u=ul, bcoeff = bcoeff, estimate = FALSE)
 #'
 sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,
                        designtype = NULL, destype = NULL, bcoeff,
@@ -88,9 +103,12 @@ designs_all <- list()
 
 #### Print some messages ####
 
- cat("Utility function used in simulation, ie the true utility: \n\n")
+## one-liner ---------------------------------------------------------------
+message(
+  "\nUtility function used in simulation (true utility):\n",
+  paste(capture.output(print(u)), collapse = "\n")
+)
 
-     print(u)
 
 
 
@@ -200,9 +218,11 @@ transform_util2 <- function() {
       stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
     )
 
-    ####  Print selected utility function
-    cat("Transformed utility function (type:", utility_transform_type, "):\n")
-    print(mnl_U)
+    ## message-based version ---------------------------------------------------
+    message(
+      "\nTransformed utility function (type: ", utility_transform_type, "):\n",
+      paste(capture.output(print(mnl_U)), collapse = "\n")
+    )
 
 
 
@@ -255,8 +275,9 @@ chunkfilename <- paste0(dname,"_tmp_",i,".qs")
 
     gc()
 
-    # Print or save the output as required
-    print(paste("Results for chunk", i, "from", start_point, "to", end_point))
+    ## message-based progress note --------------------------------------------
+    message(sprintf("Results for chunk %s from %s to %s", i, start_point, end_point))
+
 
     # Update the start point for the next chunk
     start_point <- end_point + 1
@@ -318,10 +339,26 @@ tictoc::toc()
   output[["metainfo"]] <- c(Path = designfile, NoSim = no_sim, NoResp =respondents)
 
 
-  print(kableExtra::kable(output[["summary"]],digits = 2, format = "rst"))
+  ## ----- summary table -----------------------------------------------------
+  message(
+    "\nSummary table:\n",
+    paste(
+      capture.output(
+        print(kableExtra::kable(output[["summary"]], digits = 2, format = "rst"))
+      ),
+      collapse = "\n"
+    )
+  )
 
+  ## ----- power results -----------------------------------------------------
+  message(
+    "\nPower results:\n",
+    paste(
+      capture.output(print(output[["power"]])),
+      collapse = "\n"
+    )
+  )
 
-  print(output[["power"]])
 
 
 

@@ -4,7 +4,7 @@ Version: 0.3.0
 Authors@R: 
     person(given = "Julian", family = "Sagebiel", email = "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
-Description: Supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other and compare the performance of new models. The goal of 'simulateDCE' is to make it easy to simulate choice experiment datasets using designs from 'NGENE', 'idefix' or 'spdesign'. You have to store the design file(s) in a subfolder and need to specify certain parameters and the utility functions for the data generating process. For more details on choice experiments see Mariel et al. (2021) <doi: 10.1007/978-3-030-62669-3>.
+Description: Supports simulating choice experiment data for given designs. It helps to quickly test different designs against each other and compare the performance of new models. The goal of 'simulateDCE' is to make it easy to simulate choice experiment datasets using designs from 'NGENE', 'idefix' or 'spdesign'. You have to store the design file(s) in a subfolder and need to specify certain parameters and the utility functions for the data generating process. For more details on choice experiments see Mariel et al. (2021) <doi:10.1007/978-3-030-62669-3>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

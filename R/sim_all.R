@@ -198,7 +198,8 @@ if (is.null(savefile)) {
 
   time <- tictoc::toc()
 
-  print(time)
+  message(paste(capture.output(print(time)), collapse = "\n"))
+
 
   all_designs[["time"]] = time
   all_designs[["arguements"]] = list(
