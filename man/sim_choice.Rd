@@ -89,8 +89,8 @@ v2 <- V.2 ~ basc2 +
 
 sim_choice(
   designfile = system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
-  no_sim = 10,
-  respondents = 330,
+  no_sim = 2,
+  respondents = 144,
   u = ul,
   bcoeff = bcoeff,
   estimate = FALSE

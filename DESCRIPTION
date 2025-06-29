@@ -27,15 +27,15 @@ Imports:
     tibble,
     tictoc,
     tidyr,
-    rlang,
     future,
     furrr,
     qs,
     data.table
 Suggests: 
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    rlang
 Config/testthat/edition: 3
 Depends: 
-    R (>= 3.6.0)
+    R (>= 4.1.0)
 VignetteBuilder: knitr
