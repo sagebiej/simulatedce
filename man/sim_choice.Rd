@@ -61,21 +61,39 @@ Simulate and estimate choices
 }
 \examples{
 bcoeff <- list(
-                         basc = -1.2,
-                         basc2 = -1.4,
-                         baction = 0.1,
-                         badvisory =0.4,
-                         bpartnertest = 0.3,
-                         bcomp = 0.02)
-         ul<-list( u1 =
-                     list(
+  basc = -1.2,
+  basc2 = -1.4,
+  baction = 0.1,
+  badvisory = 0.4,
+  bpartnertest = 0.3,
+  bcomp = 0.02
+)
+ul <- list(
+  u1 =
+    list(
+     #' # model specification ----------------------------------------------
+v1 <- V.1 ~ basc +
+  baction      * alt1.b +
+  badvisory    * alt1.c +
+  bpartnertest * alt1.d +
+  bcomp        * alt1.p,
 
-            v1 = V.1 ~ basc +baction*alt1.b + badvisory * alt1.c +bpartnertest*alt1.d + bcomp* alt1.p ,
+v2 <- V.2 ~ basc2 +
+  baction      * alt2.b +
+  badvisory    * alt2.c +
+  bpartnertest * alt2.d +
+  bcomp        * alt2.p,
+ v3 <- V.3 ~ 0
+    )
+)
 
-            v2 = V.2 ~ basc2 + baction*alt2.b + badvisory * alt2.c + bpartnertest * alt2.d + bcomp * alt2.p ,
-            v3 = V.3 ~ 0))
-
-sim_choice(designfile=system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"), no_sim=10, respondents=330,
- u=ul, bcoeff = bcoeff, estimate = FALSE)
+sim_choice(
+  designfile = system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
+  no_sim = 10,
+  respondents = 330,
+  u = ul,
+  bcoeff = bcoeff,
+  estimate = FALSE
+)
 
 }

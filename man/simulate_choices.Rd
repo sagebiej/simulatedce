@@ -39,5 +39,7 @@ a data.frame that includes simulated choices and a design
 Simulate choices based on a data.frame with a design and respondents
 }
 \examples{
-\dontrun{simulate_choices(datadet, ut,setspp)}
+\dontrun{
+simulate_choices(datadet, ut, setspp)
+}
 }

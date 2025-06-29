@@ -20,5 +20,7 @@ nothing, stores the data on the local system
 Title Downloads and extracts external data to be used in the simulation
 }
 \examples{
-\dontrun{ download_and_extract_zip(url="www.nextcloud.de/mysuperfile")}
+\dontrun{
+download_and_extract_zip(url = "www.nextcloud.de/mysuperfile")
+}
 }

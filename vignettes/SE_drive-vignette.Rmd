@@ -50,39 +50,40 @@ sim_all is the highest level function in the package and will run simulations fo
 
 ```{r initialize}
 # pass beta coefficients as a list
-  bcoeff <- list(
-    bpreis = -0.01,
-    blade = -0.07,
-    bwarte = 0.02)
+bcoeff <- list(
+  bpreis = -0.01,
+  blade = -0.07,
+  bwarte = 0.02
+)
 
-manipulations = list(alt1.x2=     expr(alt1.x2/10),
-                     alt1.x3=     expr(alt1.x3/10),
-                     alt2.x2=     expr(alt2.x2/10),
-                     alt2.x3=     expr(alt2.x3/10)
+manipulations <- list(
+  alt1.x2 = expr(alt1.x2 / 10),
+  alt1.x3 = expr(alt1.x3 / 10),
+  alt2.x2 = expr(alt2.x2 / 10),
+  alt2.x3 = expr(alt2.x3 / 10)
 )
 
 
-#place your utility functions here
-ul<-list( u1 =
+# place your utility functions here
+ul <- list(
+  u1 =
 
-           list(
-             v1 =V.1~  bpreis * alt1.x1 + blade*alt1.x2 + bwarte*alt1.x3   ,
-             v2 =V.2~  bpreis * alt2.x1 + blade*alt2.x2 + bwarte*alt2.x3
-           )
-
-         ,
-         u2 = list(  v1 =V.1~  bpreis * alt1.x1    ,
-                     v2 =V.2~  bpreis * alt2.x1)
-
+    list(
+      v1 = V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3,
+      v2 = V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
+    ),
+  u2 = list(
+    v1 = V.1 ~ bpreis * alt1.x1,
+    v2 = V.2 ~ bpreis * alt2.x1
+  )
 )
-
 ```
 # Decision Groups
 
 If the utility function set passed to sim all has more than 1 utility function group as is the case above (u1, u2 etc.) an additional variable, 'decision groups' must be given to tell the function what portion of respondents should be given each utility function.
 
 ```{r decision}
-decisiongroups=c(0,0.7,1)
+decisiongroups <- c(0, 0.7, 1)
 ```
 
 # Other parameters
@@ -92,15 +93,13 @@ Besides these arguments the user must also specify the number of respondents in 
 The simulation can be ran using spdesign or NGENE design files which will be contained in the design path. The design path and design type, must also be specified: 
 
 ```{r other}
+designpath <- system.file("extdata", "SE_DRIVE", package = "simulateDCE")
 
-designpath<- system.file("extdata","SE_DRIVE" ,package = "simulateDCE")
-
-resps =120  # number of respondents
-nosim= 2 # number of simulations to run (about 500 is minimum)
+resps <- 120 # number of respondents
+nosim <- 2 # number of simulations to run (about 500 is minimum)
 
 
-destype="ngene"
-
+destype <- "ngene"
 ```
 
 # Output
@@ -108,11 +107,10 @@ destype="ngene"
 The sim_all function returns a multidimensional R list containing graphs, simulated observations and a dataframe containing sumaries of estimated b coefficients. In general these will be printed to the console, but the entire results can also be assigned to an r list object.
 
 ```{r output}
- sedrive <- sim_all(nosim = nosim, resps=resps, designtype = destype,
-                   designpath = designpath, u=ul, bcoeff = bcoeff, decisiongroups = decisiongroups)
-
-  
-
+sedrive <- sim_all(
+  nosim = nosim, resps = resps, designtype = destype,
+  designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups
+)
 ```
 
 # Accessing the Output in R

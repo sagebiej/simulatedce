@@ -11,8 +11,10 @@
 #' @return a data.frame that includes simulated choices and a design
 #' @export
 #' @import data.table
-#' @examples \dontrun{simulate_choices(datadet, ut,setspp)}
-simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0,1), manipulations = list(), estimate, preprocess_function = NULL) {  #the part in dataset that needs to be repeated in each run
+#' @examples \dontrun{
+#' simulate_choices(datadet, ut, setspp)
+#' }
+simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(), estimate, preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
 
   if (!is.null(preprocess_function)) {
     if (!is.function(preprocess_function)) {
@@ -31,104 +33,107 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
 
   tictoc::tic("whole simulate choices")
 
-tictoc::tic("assign keys for bcoeff)")
-### unpack the bcoeff list so variables are accessible
+  tictoc::tic("assign keys for bcoeff)")
+  ### unpack the bcoeff list so variables are accessible
   for (key in names(bcoeff)) {
     assign(key, bcoeff[[key]])
   }
 
-tictoc::toc()
+  tictoc::toc()
 
 
-  by_formula <- function(equation){ #used to take formulas as inputs in simulation utility function
-      dplyr::pick(dplyr::everything()) |>
-       dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation) )
+  by_formula <- function(equation) { # used to take formulas as inputs in simulation utility function
+    dplyr::pick(dplyr::everything()) |>
+      dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation))
   }
 
 
 
-  if(!exists("manipulations")) manipulations=list() ## If no user input on further data manipulations
+  if (!exists("manipulations")) manipulations <- list() ## If no user input on further data manipulations
 
-  n=seq_along(1:length(utility[[1]]))    # number of utility functions
+  n <- seq_along(1:length(utility[[1]])) # number of utility functions
 
 
-  message("\n dataset preprossed_data exists: ",exists("prepro_data"), "\n")
+  message("\n dataset preprossed_data exists: ", exists("prepro_data"), "\n")
 
-  if(exists("prepro_data")) data = dplyr::left_join(data,prepro_data, by = "ID")
+  if (exists("prepro_data")) data <- dplyr::left_join(data, prepro_data, by = "ID")
 
-  message("\n decisiongroups exists: " ,length(decisiongroups)>2)
+  message("\n decisiongroups exists: ", length(decisiongroups) > 2)
 
-  if(length(decisiongroups)>2)  {     ### create a new variable to classify decision groups.
+  if (length(decisiongroups) > 2) { ### create a new variable to classify decision groups.
 
-    data = dplyr::mutate(data,group = as.numeric(cut(dplyr::row_number(),
-                                              breaks = decisiongroups * dplyr::n(),
-                                              labels = seq_along(decisiongroups[-length(decisiongroups)]),
-                                              include.lowest = TRUE)))
+    data <- dplyr::mutate(data, group = as.numeric(cut(dplyr::row_number(),
+      breaks = decisiongroups * dplyr::n(),
+      labels = seq_along(decisiongroups[-length(decisiongroups)]),
+      include.lowest = TRUE
+    )))
 
     message(
       "\nGroup counts:\n",
-      paste(capture.output(print(table(data$group))), collapse = "\n")
+      paste(utils::capture.output(print(table(data$group))), collapse = "\n")
     )
-
   } else {
-
-    data$group=1
+    data$group <- 1
   }
 
-tictoc::tic("user entered manipulations")
+  tictoc::tic("user entered manipulations")
 
-## Do user entered manipulations to choice set
-  data<- data %>%
+  ## Do user entered manipulations to choice set
+  data <- data %>%
     dplyr::group_by(ID) %>%
-    dplyr::mutate(!!! manipulations)
+    dplyr::mutate(!!!manipulations)
   tictoc::toc()
 
-#   browser()
-#
-# d2 <- as.data.table(data)
-#
-# lhs <- as.character(formula.tools::lhs(utility$u1$v1))
-# rhs <- as.character(formula.tools::rhs(utility$u1$v1))
-# d2<- d2[, (lhs) := eval(parse(text = rhs))]
+  #   browser()
+  #
+  # d2 <- as.data.table(data)
+  #
+  # lhs <- as.character(formula.tools::lhs(utility$u1$v1))
+  # rhs <- as.character(formula.tools::rhs(utility$u1$v1))
+  # d2<- d2[, (lhs) := eval(parse(text = rhs))]
 
-tictoc::tic("split dataframe into groups")
-## split dataframe into groups
-  subsets<- split(data,data$group)
+  tictoc::tic("split dataframe into groups")
+  ## split dataframe into groups
+  subsets <- split(data, data$group)
 
-tictoc::toc()
+  tictoc::toc()
 
-tictoc::tic("for each group calculate utility")
+  tictoc::tic("for each group calculate utility")
   ## for each group calculate utility
-  subsets <-  purrr::map2(.x = seq_along(utility),.y = subsets,
-                   ~ dplyr::mutate(.y,purrr::map_dfc(utility[[.x]],by_formula)))
+  subsets <- purrr::map2(
+    .x = seq_along(utility), .y = subsets,
+    ~ dplyr::mutate(.y, purrr::map_dfc(utility[[.x]], by_formula))
+  )
 
-  ##put data from eachgroup together again
-  data <-dplyr::bind_rows(subsets)
-tictoc::toc()
+  ## put data from eachgroup together again
+  data <- dplyr::bind_rows(subsets)
+  tictoc::toc()
 
-tictoc::tic("add random component")
-## add random component and calculate total utility
-  data<- data %>% dplyr::ungroup() %>%
-    dplyr::rename_with(~ stringr::str_replace_all(.,pattern = "\\.","_"), tidyr::everything()) %>%
-    dplyr::mutate(dplyr::across(.cols=dplyr::all_of(n),.fns = ~ evd::rgumbel(dplyr::n(),loc=0, scale=1), .names = "{'e'}_{n}" ),
-           dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_")) ) %>% dplyr::ungroup() %>%
-    dplyr::mutate(CHOICE=max.col(.[,grep("U_",names(.))])
-    )   %>%
+  tictoc::tic("add random component")
+  ## add random component and calculate total utility
+  data <- data %>%
+    dplyr::ungroup() %>%
+    dplyr::rename_with(~ stringr::str_replace_all(., pattern = "\\.", "_"), tidyr::everything()) %>%
+    dplyr::mutate(
+      dplyr::across(.cols = dplyr::all_of(n), .fns = ~ evd::rgumbel(dplyr::n(), loc = 0, scale = 1), .names = "{'e'}_{n}"),
+      dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_"))
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(CHOICE = max.col(.[, grep("U_", names(.))])) %>%
     as.data.frame()
 
 
-tictoc::toc()
+  tictoc::toc()
 
-tictoc::toc()
+  tictoc::toc()
 
   message("\n data has been created \n")
 
-message(
-  "\nFirst few observations of the dataset\n",
-  paste(capture.output(utils::head(data)), collapse = "\n"),
-  "\n\n"
-)
+  message(
+    "\nFirst few observations of the dataset\n",
+    paste(utils::capture.output(utils::head(data)), collapse = "\n"),
+    "\n\n"
+  )
 
   return(data)
-
 }

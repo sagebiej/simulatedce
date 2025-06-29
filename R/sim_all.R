@@ -12,19 +12,21 @@
 #'
 #' @examples
 #'
-#'  designpath<- system.file("extdata","Rbook" ,package = "simulateDCE")
-#'  resps =240  # number of respondents
-#'  nosim=2 # number of simulations to run (about 500 is minimum)
+#' designpath <- system.file("extdata", "Rbook", package = "simulateDCE")
+#' resps <- 240 # number of respondents
+#' nosim <- 2 # number of simulations to run (about 500 is minimum)
 #'
 #'
-#'  bcoeff <-list(bsq=0.00,
-#'      bredkite=-0.05,
-#'      bdistance=0.50,
-#'      bcost=-0.05,
-#'      bfarm2=0.25,
-#'      bfarm3=0.50,
-#'      bheight2=0.25,
-#'      bheight3=0.50)
+#' bcoeff <- list(
+#'   bsq = 0.00,
+#'   bredkite = -0.05,
+#'   bdistance = 0.50,
+#'   bcost = -0.05,
+#'   bfarm2 = 0.25,
+#'   bfarm3 = 0.50,
+#'   bheight2 = 0.25,
+#'   bheight3 = 0.50
+#' )
 #'
 sim_all <- function(nosim = 2,
                     resps,
@@ -39,7 +41,7 @@ sim_all <- function(nosim = 2,
                     chunks = 1,
                     utility_transform_type = "simple",
                     reshape_type = "auto",
-                    mode= c("parallel", "sequential"),
+                    mode = c("parallel", "sequential"),
                     preprocess_function = NULL,
                     savefile = NULL) {
   #################################################
@@ -118,8 +120,8 @@ sim_all <- function(nosim = 2,
   }
   ########## validate resps #####################
   if (missing(resps) ||
-      !(is.integer(resps) ||
-        (is.numeric(resps) && identical(trunc(resps), resps)))) {
+    !(is.integer(resps) ||
+      (is.numeric(resps) && identical(trunc(resps), resps)))) {
     stop(
       " 'resps' must be provided and must be an integer indicating  the number of respondents per run."
     )
@@ -142,70 +144,66 @@ sim_all <- function(nosim = 2,
 
 
   designfile <- list.files(designpath, full.names = T)
-  designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)")  ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
+  designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)") ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
 
 
   tictoc::tic("total time for simulation and estimation")
 
-if (is.null(savefile)) {
+  if (is.null(savefile)) {
+    all_designs <- purrr::map(
+      designfile,
+      sim_choice,
+      no_sim = nosim,
+      respondents = resps,
+      designtype = designtype,
+      destype = destype,
+      u = u,
+      bcoeff = bcoeff,
+      decisiongroups = decisiongroups,
+      manipulations = manipulations,
+      estimate = estimate,
+      chunks = chunks,
+      utility_transform_type = utility_transform_type,
+      mode = mode,
+      preprocess_function = preprocess_function,
+      savefile = NULL
+    ) %>% ## iterate simulation over all designs
+      stats::setNames(designname)
+  } else {
+    purrr::walk(
+      designfile,
+      sim_choice,
+      no_sim = nosim,
+      respondents = resps,
+      designtype = designtype,
+      destype = destype,
+      u = u,
+      bcoeff = bcoeff,
+      decisiongroups = decisiongroups,
+      manipulations = manipulations,
+      estimate = estimate,
+      chunks = chunks,
+      utility_transform_type = utility_transform_type,
+      mode = mode,
+      preprocess_function = preprocess_function,
+      savefile = savefile
+    )
+    gc()
 
-
-  all_designs <- purrr::map(
-    designfile,
-    sim_choice,
-    no_sim = nosim,
-    respondents = resps,
-    designtype = designtype,
-    destype = destype,
-    u = u,
-    bcoeff = bcoeff,
-    decisiongroups = decisiongroups,
-    manipulations = manipulations,
-    estimate = estimate,
-    chunks = chunks,
-    utility_transform_type = utility_transform_type,
-    mode = mode,
-    preprocess_function = preprocess_function,
-    savefile = NULL
-  ) %>%  ## iterate simulation over all designs
-    stats::setNames(designname)
-} else{
-
-  purrr::walk(
-    designfile,
-    sim_choice,
-    no_sim = nosim,
-    respondents = resps,
-    designtype = designtype,
-    destype = destype,
-    u = u,
-    bcoeff = bcoeff,
-    decisiongroups = decisiongroups,
-    manipulations = manipulations,
-    estimate = estimate,
-    chunks = chunks,
-    utility_transform_type = utility_transform_type,
-    mode = mode,
-    preprocess_function = preprocess_function,
-    savefile = savefile
-  )
-  gc()
-
-  all_designs<-purrr::map(list.files(dirname(savefile),full.names = TRUE),qs::qread)%>%
-    stats::setNames(designname)
-
-}
+    all_designs <- purrr::map(list.files(dirname(savefile), full.names = TRUE), qs::qread) %>%
+      stats::setNames(designname)
+  }
 
   time <- tictoc::toc()
 
-  message(paste(capture.output(print(time)), collapse = "\n"))
+  message(paste(utils::capture.output(print(time)), collapse = "\n"))
 
 
-  all_designs[["time"]] = time
-  all_designs[["arguements"]] = list(
+  all_designs[["time"]] <- time
+  all_designs[["arguements"]] <- list(
     "Beta values" = bcoeff,
-    "Utility functions" = u ,
-    "Decision groups" = decisiongroups ,
+    "Utility functions" = u,
+    "Decision groups" = decisiongroups,
     "Manipulation of vars" = manipulations,
     "Number Simulations" = nosim,
     "Respondents" = resps,
@@ -216,8 +214,7 @@ if (is.null(savefile)) {
   )
 
   if (estimate == TRUE) {
-all_designs<- simulateDCE::aggregateResults(all_designs=all_designs)
-
+    all_designs <- simulateDCE::aggregateResults(all_designs = all_designs)
   }
 
 

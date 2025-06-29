@@ -7,18 +7,14 @@
 #' @export
 #'
 #' @examples library(simulateDCE)
-#'           mydesign <-readdesign(
-#'           system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"),
-#'            "ngene")
+#' mydesign <- readdesign(
+#'   system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
+#'   "ngene"
+#' )
 #'
-#'            print(mydesign)
+#' print(mydesign)
 #'
-
-
-
 readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
-
-
   # Ensure both designtype and destype are not set simultaneously
   if (!is.null(designtype) && !is.null(destype)) {
     stop("Both 'designtype' and 'destype' cannot be specified at the same time. Please use only 'designtype'.")
@@ -33,41 +29,34 @@ readdesign <- function(design = designfile, designtype = NULL, destype = NULL) {
 
 
   if (is.null(designtype)) {
-
-
-
     # Check if the string ends with ".ngd"
     if (grepl("\\.ngd$", design)) {
       # Code to execute if condition is true
-      designtype = "ngene"
+      designtype <- "ngene"
       message("I guessed it is an ngene file")
-    } else if("spdesign" %in% class(readRDS(design)) ) {
-
-      designtype = "spdesign"
+    } else if ("spdesign" %in% class(readRDS(design))) {
+      designtype <- "spdesign"
       message("I assume it is a spdesign.")
     } else {
       designtype <- "idefix"
       message("I assume it is an idefix design.")
     }
-
   }
 
 
   read_test <- function() {
-
-      designf <- readRDS(design)
-  if (is.list(designf) & !is.data.frame(designf)){
-    if (!"design" %in% names(designf)) {
-      stop("The 'design' list element is missing. Make sure to provide a proper spdesign object.")
-    }
-    designf<-designf[["design"]] %>%
-      as.data.frame()
-  }
-as.data.frame(designf)
+    designf <- readRDS(design)
+    if (is.list(designf) & !is.data.frame(designf)) {
+      if (!"design" %in% names(designf)) {
+        stop("The 'design' list element is missing. Make sure to provide a proper spdesign object.")
       }
+      designf <- designf[["design"]] %>%
+        as.data.frame()
+    }
+    as.data.frame(designf)
+  }
   idefix <- function() {
-
-       # Process the data
+    # Process the data
     read_test() %>%
       tibble::rownames_to_column(var = "row_id") %>%
       dplyr::filter(!grepl("no.choice", row_id)) %>% # Exclude no.choice rows
@@ -80,38 +69,32 @@ as.data.frame(designf)
       ) %>%
       dplyr::select(-"row_id") %>% # Drop the original row_id
       tidyr::pivot_wider(
-        id_cols = "Choice.situation",          # Group by Choice.situation
-        names_from = "alt",                # Use alt to create column suffixes
+        id_cols = "Choice.situation", # Group by Choice.situation
+        names_from = "alt", # Use alt to create column suffixes
         values_from = -c("Choice.situation", "alt"), # Values from other columns
-        names_glue = "{alt}.{.value}"          # Custom naming convention
+        names_glue = "{alt}.{.value}" # Custom naming convention
       )
   }
 
   design <- switch(designtype,
-                   "ngene" = suppressWarnings(readr::read_delim(design,
-                                                                delim = "\t",
-                                                                escape_double = FALSE,
-                                                                trim_ws = TRUE,
-                                                                col_select = c(-Design, -tidyr::starts_with("...")),
-                                                                name_repair = "universal", show_col_types = FALSE ,guess_max = Inf
-                   )) %>%
-                     dplyr::filter(!is.na(Choice.situation)),
-                   "spdesign" = {
-
-                       read_test()  %>%
-                       dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%
-                       dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()) %>%
-                       dplyr::rename_with(~ dplyr::case_when(
-                         . == "block" ~ "Block",
-                         TRUE ~ .
-                       ), tidyr::everything())
-
-                   }
-                   ,
-                   "idefix" = idefix() ,
-                   stop("Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
+    "ngene" = suppressWarnings(readr::read_delim(design,
+      delim = "\t",
+      escape_double = FALSE,
+      trim_ws = TRUE,
+      col_select = c(-Design, -tidyr::starts_with("...")),
+      name_repair = "universal", show_col_types = FALSE, guess_max = Inf
+    )) %>%
+      dplyr::filter(!is.na(Choice.situation)),
+    "spdesign" = {
+      read_test() %>%
+        dplyr::mutate(Choice.situation = 1:dplyr::n()) %>%
+        dplyr::rename_with(~ stringr::str_replace(., pattern = "_", "\\."), tidyr::everything()) %>%
+        dplyr::rename_with(~ dplyr::case_when(
+          . == "block" ~ "Block",
+          TRUE ~ .
+        ), tidyr::everything())
+    },
+    "idefix" = idefix(),
+    stop("Invalid value for design. Please provide either NULL, 'ngene', 'spdesign'or 'idefix',  or do not use the argument 'designtype'. NULL lets us to guess the design.")
   )
-
 }
-
-

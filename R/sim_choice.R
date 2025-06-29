@@ -14,27 +14,45 @@
 #' @export
 #'
 #' @examples bcoeff <- list(
-#'                          basc = -1.2,
-#'                          basc2 = -1.4,
-#'                          baction = 0.1,
-#'                          badvisory =0.4,
-#'                          bpartnertest = 0.3,
-#'                          bcomp = 0.02)
-#'          ul<-list( u1 =
-#'                      list(
+#'   basc = -1.2,
+#'   basc2 = -1.4,
+#'   baction = 0.1,
+#'   badvisory = 0.4,
+#'   bpartnertest = 0.3,
+#'   bcomp = 0.02
+#' )
+#' ul <- list(
+#'   u1 =
+#'     list(
+#'      #' # model specification ----------------------------------------------
+#' v1 <- V.1 ~ basc +
+#'   baction      * alt1.b +
+#'   badvisory    * alt1.c +
+#'   bpartnertest * alt1.d +
+#'   bcomp        * alt1.p,
 #'
-#'             v1 = V.1 ~ basc +baction*alt1.b + badvisory * alt1.c +bpartnertest*alt1.d + bcomp* alt1.p ,
+#' v2 <- V.2 ~ basc2 +
+#'   baction      * alt2.b +
+#'   badvisory    * alt2.c +
+#'   bpartnertest * alt2.d +
+#'   bcomp        * alt2.p,
+#'  v3 <- V.3 ~ 0
+#'     )
+#' )
 #'
-#'             v2 = V.2 ~ basc2 + baction*alt2.b + badvisory * alt2.c + bpartnertest * alt2.d + bcomp * alt2.p ,
-#'             v3 = V.3 ~ 0))
+#' sim_choice(
+#'   designfile = system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
+#'   no_sim = 10,
+#'   respondents = 330,
+#'   u = ul,
+#'   bcoeff = bcoeff,
+#'   estimate = FALSE
+#' )
 #'
-#' sim_choice(designfile=system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"), no_sim=10, respondents=330,
-#'  u=ul, bcoeff = bcoeff, estimate = FALSE)
-#'
-sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,
+sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
                        designtype = NULL, destype = NULL, bcoeff,
-                       decisiongroups=c(0,1), manipulations = list() , estimate, chunks=1,
-                       utility_transform_type = "simple" ,mode = c("parallel", "sequential"),
+                       decisiongroups = c(0, 1), manipulations = list(), estimate, chunks = 1,
+                       utility_transform_type = "simple", mode = c("parallel", "sequential"),
                        preprocess_function = NULL,
                        savefile = NULL) {
   mode <- match.arg(mode)
@@ -54,12 +72,12 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,
 
 
 
-## make bcoeff clean
+  ## make bcoeff clean
   bcoeff_result <- modify_bcoeff_names(bcoeff)
   bcoeff <- bcoeff_result$bcoeff
   bcoeff_lookup <- bcoeff_result$bcoeff_lookup
 
-### make utility function clean
+  ### make utility function clean
   u <- purrr::map(u, function(utility_group) {
     purrr::map(utility_group, function(utility) {
       # Convert the RHS of the formula to a single string
@@ -80,59 +98,54 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u ,
   })
 
 
-### function to store results
-  savef <- function(object){
-
+  ### function to store results
+  savef <- function(object) {
     if (!is.null(savefile)) {
-
       # Create the directory if it does not exist
       save_dir <- dirname(savefile)
       if (!dir.exists(save_dir)) {
         dir.create(save_dir, recursive = TRUE)
         message("Directory created: ", save_dir)
       }
-      qs::qsave(object, paste0(savefile,"_",basename(designname),".qs"), preset = "fast")
-      message("Output saved to: ", paste0(savefile,"_",basename(designname),".qs"))
+      qs::qsave(object, paste0(savefile, "_", basename(designname), ".qs"), preset = "fast")
+      message("Output saved to: ", paste0(savefile, "_", basename(designname), ".qs"))
     }
   }
 
 
 
-# Empty list where to store all designs later on
-designs_all <- list()
+  # Empty list where to store all designs later on
+  designs_all <- list()
 
-#### Print some messages ####
+  #### Print some messages ####
 
-## one-liner ---------------------------------------------------------------
-message(
-  "\nUtility function used in simulation (true utility):\n",
-  paste(capture.output(print(u)), collapse = "\n")
-)
-
-
+  ## one-liner ---------------------------------------------------------------
+  message(
+    "\nUtility function used in simulation (true utility):\n",
+    paste(utils::capture.output(print(u)), collapse = "\n")
+  )
 
 
 
 
 
 
-#### Read in the design file and set core variables ####
+
+
+  #### Read in the design file and set core variables ####
 
 
 
-  design<- readdesign(design = designfile, designtype = designtype, destype = destype)
+  design <- readdesign(design = designfile, designtype = designtype, destype = destype)
 
 
   dname <- designname <- stringr::str_remove_all(designfile, "(.ngd|_|.RDS)")
 
-  datadet <- simulateDCE::createDataset(design = design, respondents = respondents )
+  datadet <- simulateDCE::createDataset(design = design, respondents = respondents)
 
 
-  switchmap <- function(.x, .f, mode , workers = NULL, ..., .progress = TRUE) {
-
-
-    switch(
-      mode,
+  switchmap <- function(.x, .f, mode, workers = NULL, ..., .progress = TRUE) {
+    switch(mode,
       "parallel" = {
         # Set up parallel backend
         if (!is.null(workers)) {
@@ -140,79 +153,75 @@ message(
         } else {
           future::plan("multisession")
         }
-        on.exit(future::plan("sequential"), add = TRUE)  # Ensure plan is reset after execution
+        on.exit(future::plan("sequential"), add = TRUE) # Ensure plan is reset after execution
         furrr::future_map(.x, .f, ..., .options = furrr::furrr_options(seed = TRUE))
       },
       "sequential" = {
-
         purrr::map(.x, .f, ..., .progress = .progress)
       }
     )
   }
 
 
-  sim_data<- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp=setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations , preprocess_function = preprocess_function), mode = mode)
+  sim_data <- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, preprocess_function = preprocess_function), mode = mode)
 
 
-### start estimation
+  ### start estimation
 
-  if(estimate==TRUE) {
-database <- sim_data[[1]]
+  if (estimate == TRUE) {
+    database <- sim_data[[1]]
 
 
     ####  Function that transforms user written utility for simulation into utility function for mixl.
-transform_util <- function() {
-
-      mnl_U <-paste(purrr::map_chr(u[[1]],as.character,keep.source.attr = TRUE),collapse = "",";") %>%
-        stringr::str_replace_all( c( "priors\\[\"" = "" , "\"\\]" = "" ,  "~" = "=", "\\." = "_" , " b" = " @b"  , "V_"="U_", " alt"=" $alt"))
-
+    transform_util <- function() {
+      mnl_U <- paste(purrr::map_chr(u[[1]], as.character, keep.source.attr = TRUE), collapse = "", ";") %>%
+        stringr::str_replace_all(c("priors\\[\"" = "", "\"\\]" = "", "~" = "=", "\\." = "_", " b" = " @b", "V_" = "U_", " alt" = " $alt"))
     }
 
 
-transform_util2 <- function() {
-  # Exclude columns that match "V_<any integer>" or "U_<any integer>" pattern
-  relevant_database_vars <- setdiff(
-    names(database),
-    c(grep("^(V_|U_|e_)\\d+$", names(database), value = TRUE), "CHOICE")
-  )
+    transform_util2 <- function() {
+      # Exclude columns that match "V_<any integer>" or "U_<any integer>" pattern
+      relevant_database_vars <- setdiff(
+        names(database),
+        c(grep("^(V_|U_|e_)\\d+$", names(database), value = TRUE), "CHOICE")
+      )
 
-  mnl_U <- paste(
-    purrr::map_chr(u[[1]], as.character, keep.source.attr = TRUE),
-    collapse = "",
-    ";"
-  ) %>%
-    # Replace coefficients with exact matches
-    stringr::str_replace_all(stats::setNames(
-      paste0("@", names(bcoeff)),
-      paste0("(?<![._a-zA-Z0-9])", names(bcoeff), "(?![._a-zA-Z0-9-])")
-    )) %>%
-    # General transformations
-    stringr::str_replace_all(c(
-      `priors\\["` = "",
-      `"\\]` = "",
-      `~` = "=",
-    `\\.` = "_",    ## can be deleted when everything works
-      `V_` = "U_"    ## was originally V_
-    )) %>%
-    # Replace only relevant database variables
-    stringr::str_replace_all(stats::setNames(
-      paste0("$", relevant_database_vars),
-      paste0("(?<![._a-zA-Z0-9])", relevant_database_vars, "(?![._a-zA-Z0-9-])")
-    )) %>%
-    # Clean up duplicate symbols
-    stringr::str_replace_all(c(`@@` = "@", "\\$\\$" = "$"))
+      mnl_U <- paste(
+        purrr::map_chr(u[[1]], as.character, keep.source.attr = TRUE),
+        collapse = "",
+        ";"
+      ) %>%
+        # Replace coefficients with exact matches
+        stringr::str_replace_all(stats::setNames(
+          paste0("@", names(bcoeff)),
+          paste0("(?<![._a-zA-Z0-9])", names(bcoeff), "(?![._a-zA-Z0-9-])")
+        )) %>%
+        # General transformations
+        stringr::str_replace_all(c(
+          `priors\\["` = "",
+          `"\\]` = "",
+          `~` = "=",
+          `\\.` = "_", ## can be deleted when everything works
+          `V_` = "U_" ## was originally V_
+        )) %>%
+        # Replace only relevant database variables
+        stringr::str_replace_all(stats::setNames(
+          paste0("$", relevant_database_vars),
+          paste0("(?<![._a-zA-Z0-9])", relevant_database_vars, "(?![._a-zA-Z0-9-])")
+        )) %>%
+        # Clean up duplicate symbols
+        stringr::str_replace_all(c(`@@` = "@", "\\$\\$" = "$"))
 
-  return(mnl_U)
-}
-
-
+      return(mnl_U)
+    }
 
 
-# transform utility function to mixl format
+
 
     # transform utility function to mixl format
-    mnl_U <- switch(
-      utility_transform_type,
+
+    # transform utility function to mixl format
+    mnl_U <- switch(utility_transform_type,
       "simple" = transform_util(),
       "exact" = transform_util2(),
       stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
@@ -221,157 +230,146 @@ transform_util2 <- function() {
     ## message-based version ---------------------------------------------------
     message(
       "\nTransformed utility function (type: ", utility_transform_type, "):\n",
-      paste(capture.output(print(mnl_U)), collapse = "\n")
+      paste(utils::capture.output(print(mnl_U)), collapse = "\n")
     )
 
 
 
-# specify model for mixl estimation
+    # specify model for mixl estimation
 
-  model_spec <- mixl::specify_model(utility_script = mnl_U, dataset = database, disable_multicore=T)
+    model_spec <- mixl::specify_model(utility_script = mnl_U, dataset = database, disable_multicore = T)
 
-  est=stats::setNames(rep(0,length(model_spec$beta_names)), model_spec$beta_names)
+    est <- stats::setNames(rep(0, length(model_spec$beta_names)), model_spec$beta_names)
 
 
-  availabilities <- mixl::generate_default_availabilities(
-    database, model_spec$num_utility_functions)
+    availabilities <- mixl::generate_default_availabilities(
+      database, model_spec$num_utility_functions
+    )
 
-  if (chunks >1) {
+    if (chunks > 1) {
+      # Calculate the size of each chunk
+      chunk_size <- ceiling(no_sim / chunks)
 
-  # Calculate the size of each chunk
-  chunk_size <- ceiling(no_sim / chunks)
+      # Initialize the starting point for the first chunk
+      start_point <- 1
 
-  # Initialize the starting point for the first chunk
-  start_point <- 1
+      for (i in seq_along(1:chunks)) {
+        # Calculate the end point for the current chunk
+        end_point <- start_point + chunk_size - 1
 
-  for (i in seq_along(1:chunks)) {
-    # Calculate the end point for the current chunk
-    end_point <- start_point + chunk_size - 1
+        # Ensure we do not go beyond the total number of simulations
+        if (end_point > no_sim) {
+          end_point <- no_sim
+        }
 
-    # Ensure we do not go beyond the total number of simulations
-    if (end_point > no_sim) {
-      end_point <- no_sim
+        # Run estimations for the current chunk
+
+        tictoc::tic(paste0("start_estimation of chunk ", i))
+
+        output <- start_point:end_point %>%
+          purrr::map(
+            ~ mixl::estimate(
+              model_spec = model_spec,
+              start_values = est,
+              availabilities = availabilities,
+              data = sim_data[[.x]]
+            )
+          )
+        tictoc::toc()
+
+        chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
+
+        qs::qsave(output, chunkfilename, preset = "fast")
+        rm(output)
+
+        gc()
+
+        ## message-based progress note --------------------------------------------
+        message(sprintf("Results for chunk %s from %s to %s", i, start_point, end_point))
+
+
+        # Update the start point for the next chunk
+        start_point <- end_point + 1
+
+        # Break the loop if the end point reaches or exceeds no_sim
+        if (start_point > no_sim) break
+      }
+
+
+      output <- list() # Initialize the list to store all outputs
+
+      # Assuming the files are named in sequence as 'tmp_1.RDS', 'tmp_2.RDS', ..., 'tmp_n.RDS'
+      for (i in seq_along(1:chunks)) {
+        # Load each RDS file
+        chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
+        file_content <- qs::qread(chunkfilename)
+        file.remove(chunkfilename)
+
+        # Append the contents of each file to the all_outputs list
+        output <- c(output, file_content)
+      }
+    } else {
+      tictoc::tic("start_estimation")
+      output <- purrr::map(
+        sim_data,
+        ~ mixl::estimate(
+          model_spec = model_spec,
+          start_values = est,
+          availabilities = availabilities,
+          data = .x
+        )
+      )
+      tictoc::toc()
     }
 
-    # Run estimations for the current chunk
 
-    tictoc::tic(paste0("start_estimation of chunk ",i))
 
-    output <- start_point:end_point %>%
-    purrr::map(
-            ~ mixl::estimate(
-        model_spec = model_spec,
-        start_values = est,
-        availabilities = availabilities,
-        data = sim_data[[.x]]
+    coefs <- purrr::map(1:length(output), ~ summary(output[[.]])[["coefTable"]][c(1, 8)] %>%
+      tibble::rownames_to_column() %>%
+      tidyr::pivot_wider(names_from = rowname, values_from = c(est, rob_pval0))) %>%
+      dplyr::bind_rows(.id = "run")
+
+    output[["summary"]] <- psych::describe(coefs[, -1], fast = TRUE)
+
+    output[["coefs"]] <- coefs
+
+    pvals <- output[["coefs"]] %>% dplyr::select(dplyr::starts_with("rob_pval0"))
+
+    output[["power"]] <- 100 * table(apply(pvals, 1, function(x) all(x < 0.05))) / nrow(pvals)
+
+
+    output[["metainfo"]] <- c(Path = designfile, NoSim = no_sim, NoResp = respondents)
+
+
+    ## ----- summary table -----------------------------------------------------
+    message(
+      "\nSummary table:\n",
+      paste(
+        utils::capture.output(
+          print(kableExtra::kable(output[["summary"]], digits = 2, format = "rst"))
+        ),
+        collapse = "\n"
       )
     )
- tictoc::toc()
 
-chunkfilename <- paste0(dname,"_tmp_",i,".qs")
-
-  qs::qsave(output,chunkfilename,preset = "fast")
-  rm(output)
-
-    gc()
-
-    ## message-based progress note --------------------------------------------
-    message(sprintf("Results for chunk %s from %s to %s", i, start_point, end_point))
-
-
-    # Update the start point for the next chunk
-    start_point <- end_point + 1
-
-    # Break the loop if the end point reaches or exceeds no_sim
-    if (start_point > no_sim) break
-}
-
-
-  output <- list()  # Initialize the list to store all outputs
-
-  # Assuming the files are named in sequence as 'tmp_1.RDS', 'tmp_2.RDS', ..., 'tmp_n.RDS'
-  for (i in seq_along(1:chunks)) {
-    # Load each RDS file
-    chunkfilename <- paste0(dname,"_tmp_",i,".qs")
-    file_content <- qs::qread(chunkfilename)
-    file.remove(chunkfilename)
-
-    # Append the contents of each file to the all_outputs list
-    output <- c(output, file_content)
-  }
-
-
-  } else {
-
-
-
-
-
-tictoc::tic("start_estimation")
-    output <- purrr::map(
-      sim_data,
-      ~ mixl::estimate(
-        model_spec = model_spec,
-        start_values = est,
-        availabilities = availabilities,
-        data = .x
+    ## ----- power results -----------------------------------------------------
+    message(
+      "\nPower results:\n",
+      paste(
+        utils::capture.output(print(output[["power"]])),
+        collapse = "\n"
       )
     )
-tictoc::toc()
+
+
+
+
+
+
+    savef(output)
+    return(output)
+  } else { # if estimate not TRUE, return only simulated data.
+    savef(sim_data)
+    return(sim_data)
   }
-
-
-
-  coefs<-purrr::map(1:length(output),~summary(output[[.]])[["coefTable"]][c(1,8)]  %>%
-               tibble::rownames_to_column() %>%
-               tidyr::pivot_wider(names_from = rowname, values_from = c(est, rob_pval0)) ) %>%
-    dplyr::bind_rows(.id = "run")
-
-  output[["summary"]] <-psych::describe(coefs[,-1], fast = TRUE)
-
-  output[["coefs"]] <-coefs
-
-  pvals <- output[["coefs"]] %>% dplyr::select(dplyr::starts_with("rob_pval0"))
-
-  output[["power"]] <- 100*table(apply(pvals,1,  function(x) all(x<0.05)))/nrow(pvals)
-
-
-  output[["metainfo"]] <- c(Path = designfile, NoSim = no_sim, NoResp =respondents)
-
-
-  ## ----- summary table -----------------------------------------------------
-  message(
-    "\nSummary table:\n",
-    paste(
-      capture.output(
-        print(kableExtra::kable(output[["summary"]], digits = 2, format = "rst"))
-      ),
-      collapse = "\n"
-    )
-  )
-
-  ## ----- power results -----------------------------------------------------
-  message(
-    "\nPower results:\n",
-    paste(
-      capture.output(print(output[["power"]])),
-      collapse = "\n"
-    )
-  )
-
-
-
-
-
-
-savef(output)
-return(output)
-
-} else { # if estimate not TRUE, return only simulated data.
-  savef(sim_data)
-  return(sim_data)
-
-}
-
-
 }

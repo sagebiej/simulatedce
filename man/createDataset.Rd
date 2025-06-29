@@ -40,5 +40,5 @@ design <- data.frame(
   Attribute1 = rnorm(12),
   Attribute2 = sample(1:3, 12, replace = TRUE)
 )
-result <- createDataset(design,10)
+result <- createDataset(design, 10)
 }

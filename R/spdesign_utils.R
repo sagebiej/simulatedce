@@ -10,7 +10,6 @@
 #' }
 extract_b_values <- function(input_list) {
   extract_b_value <- function(input_string) {
-
     matches <- gregexpr("b_\\w+\\[(-?\\d+\\.?\\d*)\\]", input_string)
     matches <- regmatches(input_string, matches)
     matches <- unlist(matches)
@@ -25,6 +24,6 @@ extract_b_values <- function(input_list) {
   }
 
   b_values <- unlist(lapply(input_list, extract_b_value))
-  b_values<- stats::setNames(b_values,gsub("alt\\d+\\.","",names(b_values)))
+  b_values <- stats::setNames(b_values, gsub("alt\\d+\\.", "", names(b_values)))
   return(as.list(b_values))
 }

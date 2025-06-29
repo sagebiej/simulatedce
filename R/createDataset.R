@@ -34,30 +34,28 @@
 #'   Attribute1 = rnorm(12),
 #'   Attribute2 = sample(1:3, 12, replace = TRUE)
 #' )
-#' result <- createDataset(design,10)
+#' result <- createDataset(design, 10)
 createDataset <- function(design, respondents) {
+  if (!("Block" %in% colnames(design))) design$Block <- 1 # If no Blocks exist, create a variable Blocks to indicate it is only one block
 
-if (!("Block" %in% colnames(design))) design$Block=1  # If no Blocks exist, create a variable Blocks to indicate it is only one block
+  nsets <- nrow(design)
+  nblocks <- max(design$Block)
+  setpp <- nsets / nblocks # Choice Sets per respondent
 
-nsets<-nrow(design)
-nblocks<-max(design$Block)
-setpp <- nsets/nblocks      # Choice Sets per respondent
+  replications <- respondents / nblocks
 
-replications <- respondents/nblocks
+  # assign("nsets", nsets, envir = parent.frame())
+  # assign("nblocks", nblocks, envir = parent.frame())
+  # assign("setpp", setpp, envir = parent.frame())
+  # assign("replications", replications, envir = parent.frame())
 
-# assign("nsets", nsets, envir = parent.frame())
-# assign("nblocks", nblocks, envir = parent.frame())
-# assign("setpp", setpp, envir = parent.frame())
-# assign("replications", replications, envir = parent.frame())
+  ## if replications is non int, assign unevenly
 
-## if replications is non int, assign unevenly
+  datadet <- design %>%
+    dplyr::arrange(Block, Choice.situation) %>%
+    dplyr::slice(rep(dplyr::row_number(), replications)) %>% ## replicate design according to number of replications
 
-datadet<- design %>%
-  dplyr::arrange(Block,Choice.situation) %>%
-  dplyr::slice(rep(dplyr::row_number(), replications)) %>%    ## replicate design according to number of replications
-
-  dplyr::mutate(ID = rep(1:respondents, each=setpp)) %>%  # create Respondent ID.
-  dplyr::relocate(ID,`Choice.situation`) %>%
-  as.data.frame()
-
+    dplyr::mutate(ID = rep(1:respondents, each = setpp)) %>% # create Respondent ID.
+    dplyr::relocate(ID, `Choice.situation`) %>%
+    as.data.frame()
 }

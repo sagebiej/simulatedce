@@ -21,10 +21,11 @@ Creates a dataframe with the design.
 }
 \examples{
 library(simulateDCE)
-          mydesign <-readdesign(
-          system.file("extdata","agora", "altscf_eff.ngd" ,package = "simulateDCE"),
-           "ngene")
+mydesign <- readdesign(
+  system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
+  "ngene"
+)
 
-           print(mydesign)
+print(mydesign)
 
 }
