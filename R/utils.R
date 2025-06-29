@@ -38,47 +38,6 @@ find_dataframe <- function(list_object, dataframe_name) {
 
 
 
-#' Title Downloads and extracts external data to be used in the simulation
-#'
-#' @param url the URL from where the external data can be downloaded. The external data has be wrapped in a zip file
-#' @param dest_folder The folder where the data should be stored
-#' @param zip_name Only needs to be changed if the zip file is differently named as the last part of the URL
-#'
-#' @return nothing, stores the data on the local system
-#' @export
-#'
-#' @examples \dontrun{
-#' download_and_extract_zip(url = "www.nextcloud.de/mysuperfile")
-#' }
-download_and_extract_zip <- function(url, dest_folder = ".", zip_name = NULL) {
-  # If zip_name is not provided, extract it from the URL
-  if (is.null(zip_name)) {
-    zip_name <- basename(url)
-  }
-  folder <- paste0(dest_folder, "/data")
-
-
-  # Check if the folder is empty
-  if (length(list.files(folder)) > 0) {
-    warning("Destination folder is not empty. Nothing copied.")
-    return(invisible(NULL))
-  }
-
-
-  # Download the zip file
-  utils::download.file(url, zip_name, method = "auto", quiet = FALSE, mode = "w", cacheOK = TRUE)
-
-  # Extract the contents
-  utils::unzip(zip_name, exdir = dest_folder)
-
-
-  # Return the path to the extracted folder
-  return(file.path(dest_folder, tools::file_path_sans_ext(zip_name)))
-}
-
-
-
-
 
 
 make_md <- function(f = file) {

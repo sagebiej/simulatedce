@@ -3,7 +3,6 @@
 export("%>%")
 export(aggregateResults)
 export(createDataset)
-export(download_and_extract_zip)
 export(extract_b_values)
 export(readdesign)
 export(sim_all)
