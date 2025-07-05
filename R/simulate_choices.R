@@ -13,7 +13,7 @@
 #' @import data.table
 #' @examples
 #' example_df <- data.frame(
-#'   id = rep(1:100, each = 4),
+#'   ID = rep(1:100, each = 4),
 #'   price = rep(c(10, 10, 20, 20), 100),
 #'   quality = rep(c(1, 2, 1, 2), 100)
 #' )

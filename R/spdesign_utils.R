@@ -5,9 +5,10 @@
 #' @return A named list with parameter values which can be used in `sim_all`
 #' @export
 #'
-#' @examples \dontrun{
-#' extract_b_values(design$utility)
-#' }
+#' @examples
+#' d <- system.file("extdata", "CSA", "linear", "BLIeff.RDS", package = "simulateDCE")
+#' extract_b_values(readRDS(d)$utility)
+#'
 extract_b_values <- function(input_list) {
   extract_b_value <- function(input_string) {
     matches <- gregexpr("b_\\w+\\[(-?\\d+\\.?\\d*)\\]", input_string)

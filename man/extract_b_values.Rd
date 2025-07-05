@@ -16,7 +16,7 @@ A named list with parameter values which can be used in \code{sim_all}
 Title Extracts beta values from an spdesign object
 }
 \examples{
-\dontrun{
-extract_b_values(design$utility)
-}
+d <- system.file("extdata", "CSA", "linear", "BLIeff.RDS", package = "simulateDCE")
+extract_b_values(readRDS(d)$utility)
+
 }
