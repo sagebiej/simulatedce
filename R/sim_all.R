@@ -49,9 +49,16 @@
 #'
 #'
 #' sedrive <- sim_all(
-#'   nosim = nosim, resps = resps,
-#'   designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups,
-#'   manipulations = manipulations, utility_transform_type = "exact", mode = "sequential"
+#'   nosim = nosim,
+#'   resps = resps,
+#'   designpath = designpath,
+#'   u = ul,
+#'   bcoeff = bcoeff,
+#'   decisiongroups = decisiongroups,
+#'   manipulations = manipulations,
+#'   utility_transform_type = "exact",
+#'   mode = "sequential",
+#'   estimate=FALSE
 #' )
 #'
 sim_all <- function(nosim = 2,
