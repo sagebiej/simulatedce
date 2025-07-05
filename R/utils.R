@@ -38,8 +38,6 @@ find_dataframe <- function(list_object, dataframe_name) {
 
 
 
-
-
 make_md <- function(f = file) {
   rmarkdown::render("simulation_output.rmd",
     output_file = paste0(

@@ -11,9 +11,26 @@
 #' @return a data.frame that includes simulated choices and a design
 #' @export
 #' @import data.table
-#' @examples \dontrun{
-#' simulate_choices(datadet, ut, setspp)
-#' }
+#' @examples
+#' example_df <- data.frame(
+#'   id = rep(1:100, each = 4),
+#'   price = rep(c(10, 10, 20, 20), 100),
+#'   quality = rep(c(1, 2, 1, 2), 100)
+#' )
+#'
+#' beta <- list(
+#'   bprice   = -0.2,
+#'   bquality =  0.8
+#' )
+#'
+#' ut <- list(
+#'   u1 = list(
+#'     v1 = V.1 ~ bprice * price + bquality * quality,
+#'     v2 = V.2 ~ 0
+#'   )
+#' )
+#' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta, estimate = FALSE)
+#'
 simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(), estimate, preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
 
   if (!is.null(preprocess_function)) {
