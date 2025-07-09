@@ -8,6 +8,7 @@
 [![CRAN
 status](https://www.r-pkg.org/badges/version/simulateDCE)](https://CRAN.R-project.org/package=simulateDCE)
 
+[![R-CMD-check](https://github.com/sagebiej/simulatedce/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sagebiej/simulatedce/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of simulateDCE is to make it easy to simulate choice experiment
@@ -115,107 +116,69 @@ sedrive <- sim_all(
 #> $u1
 #> $u1$v1
 #> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
-#> <environment: 0x63bacfec1cb8>
+#> <environment: 0x5fd289ec7eb8>
 #> 
 #> $u1$v2
 #> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
-#> <environment: 0x63bacfe5c190>
+#> <environment: 0x5fd289e68760>
 #> 
 #> 
 #> $u2
 #> $u2$v1
 #> V.1 ~ bpreis * alt1.x1
-#> <environment: 0x63bacfdc7a28>
+#> <environment: 0x5fd289dccb80>
 #> 
 #> $u2$v2
 #> V.2 ~ bpreis * alt2.x1
-#> <environment: 0x63bacfd5e178>
+#> <environment: 0x5fd289d6a748>
 #> 'destype' is deprecated. Please use 'designtype' instead.
 #> New names:
 #> • `Choice situation` -> `Choice.situation`
 #> • `` -> `...10`
 #> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.009 sec elapsed
+#> user entered manipulations: 0.01 sec elapsed
+#> split dataframe into groups: 0.005 sec elapsed
+#> for each group calculate utility: 0.891 sec elapsed
+#> add random component: 0.058 sec elapsed
+#> whole simulate choices: 0.974 sec elapsed
+#> 
+#>  No preprocess function provided. Proceeding without additional preprocessing.
+#> 
+#> 
+#>  dataset preprossed_data exists: FALSE
+#> 
+#> 
+#>  decisiongroups exists: TRUE
+#> 
+#> Group counts:
+#> 
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been created 
+#> 
+#> 
+#> First few observations of the dataset
+#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
+#> 1  1                7      80      25     100      60     200     100     1
+#> 2  1               19      20      25      50      60      25       0     1
+#> 3  1               30      20     100      50      80      50     100     1
+#> 4  1               32      40     200      25      80      25       0     1
+#> 5  1               39      40     200       0      80     100     100     1
+#> 6  1               48      60      50      25      20      50     100     1
+#>   group    V_1    V_2        e_1          e_2         U_1         U_2 CHOICE
+#> 1     1  -0.55 -12.60  0.7017091 -0.004845669   0.1517091 -12.6048457      1
+#> 2     1  -0.95  -2.35 -0.7570334 -0.314662810  -1.7070334  -2.6646628      1
+#> 3     1  -6.20  -2.30  0.5284701  0.765330842  -5.6715299  -1.5346692      2
+#> 4     1 -13.90  -2.55  0.6972737  1.276552182 -13.2027263  -1.2734478      2
+#> 5     1 -14.40  -5.80  2.3723773  3.840028537 -12.0276227  -1.9599715      2
+#> 6     1  -3.60  -1.70  0.7219891  0.900484573  -2.8780109  -0.7995154      2
+#> assign keys for bcoeff): 0 sec elapsed
+#> user entered manipulations: 0.012 sec elapsed
 #> split dataframe into groups: 0.004 sec elapsed
-#> for each group calculate utility: 0.763 sec elapsed
-#> add random component: 0.05 sec elapsed
-#> whole simulate choices: 0.836 sec elapsed
-#> 
-#>  No preprocess function provided. Proceeding without additional preprocessing.
-#> 
-#> 
-#>  dataset preprossed_data exists: FALSE
-#> 
-#> 
-#>  decisiongroups exists: TRUE
-#> 
-#> Group counts:
-#> 
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been created 
-#> 
-#> 
-#> First few observations of the dataset
-#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                7      80      25     100      60     200     100     1
-#> 2  1               19      20      25      50      60      25       0     1
-#> 3  1               30      20     100      50      80      50     100     1
-#> 4  1               32      40     200      25      80      25       0     1
-#> 5  1               39      40     200       0      80     100     100     1
-#> 6  1               48      60      50      25      20      50     100     1
-#>   group    V_1    V_2         e_1        e_2         U_1        U_2 CHOICE
-#> 1     1  -0.55 -12.60  0.87205393  2.7212397   0.3220539 -9.8787603      1
-#> 2     1  -0.95  -2.35  2.50466037  2.0344117   1.5546604 -0.3155883      1
-#> 3     1  -6.20  -2.30 -0.04531185  0.5105373  -6.2453118 -1.7894627      2
-#> 4     1 -13.90  -2.55  2.13064965  1.7306129 -11.7693504 -0.8193871      2
-#> 5     1 -14.40  -5.80 -0.23305323 -0.4749703 -14.6330532 -6.2749703      2
-#> 6     1  -3.60  -1.70 -0.39234397  0.3200480  -3.9923440 -1.3799520      2
-#> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.01 sec elapsed
-#> split dataframe into groups: 0.005 sec elapsed
-#> for each group calculate utility: 0.991 sec elapsed
-#> add random component: 0.055 sec elapsed
-#> whole simulate choices: 1.071 sec elapsed
-#> 
-#>  No preprocess function provided. Proceeding without additional preprocessing.
-#> 
-#> 
-#>  dataset preprossed_data exists: FALSE
-#> 
-#> 
-#>  decisiongroups exists: TRUE
-#> 
-#> Group counts:
-#> 
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been created 
-#> 
-#> 
-#> First few observations of the dataset
-#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1                7      80      25     100      60     200     100     1
-#> 2  1               19      20      25      50      60      25       0     1
-#> 3  1               30      20     100      50      80      50     100     1
-#> 4  1               32      40     200      25      80      25       0     1
-#> 5  1               39      40     200       0      80     100     100     1
-#> 6  1               48      60      50      25      20      50     100     1
-#>   group    V_1    V_2        e_1        e_2         U_1         U_2 CHOICE
-#> 1     1  -0.55 -12.60 -0.8954505  1.5838295  -1.4454505 -11.0161705      1
-#> 2     1  -0.95  -2.35  0.4581712  1.8586065  -0.4918288  -0.4913935      2
-#> 3     1  -6.20  -2.30 -0.6642939  0.1084271  -6.8642939  -2.1915729      2
-#> 4     1 -13.90  -2.55  2.5821550 -0.9726034 -11.3178450  -3.5226034      2
-#> 5     1 -14.40  -5.80 -0.5853960  6.4944808 -14.9853960   0.6944808      2
-#> 6     1  -3.60  -1.70 -1.0606336  1.0080913  -4.6606336  -0.6919087      2
-#> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.01 sec elapsed
-#> split dataframe into groups: 0.005 sec elapsed
-#> for each group calculate utility: 0.923 sec elapsed
-#> add random component: 0.043 sec elapsed
-#> whole simulate choices: 0.991 sec elapsed
+#> for each group calculate utility: 1.17 sec elapsed
+#> add random component: 0.063 sec elapsed
+#> whole simulate choices: 1.259 sec elapsed
 #> 
 #>  No preprocess function provided. Proceeding without additional preprocessing.
 #> 
@@ -242,18 +205,18 @@ sedrive <- sim_all(
 #> 5  1               39      40     200       0      80     100     100     1
 #> 6  1               48      60      50      25      20      50     100     1
 #>   group    V_1    V_2         e_1         e_2         U_1        U_2 CHOICE
-#> 1     1  -0.55 -12.60  0.31343709 -0.54042533  -0.2365629 -13.140425      1
-#> 2     1  -0.95  -2.35 -0.53471159 -0.14543346  -1.4847116  -2.495433      1
-#> 3     1  -6.20  -2.30 -0.25968664  1.16187416  -6.4596866  -1.138126      2
-#> 4     1 -13.90  -2.55  1.56132685  1.00850624 -12.3386731  -1.541494      2
-#> 5     1 -14.40  -5.80  0.02436836  0.01878517 -14.3756316  -5.781215      2
-#> 6     1  -3.60  -1.70  0.33427912  0.31509039  -3.2657209  -1.384910      2
+#> 1     1  -0.55 -12.60  2.75514992 -0.66469500   2.2051499 -13.264695      1
+#> 2     1  -0.95  -2.35  0.00533537 -0.04035054  -0.9446646  -2.390351      1
+#> 3     1  -6.20  -2.30  0.74855512  0.39861844  -5.4514449  -1.901382      2
+#> 4     1 -13.90  -2.55  0.23703861  0.51413370 -13.6629614  -2.035866      2
+#> 5     1 -14.40  -5.80  1.63619258 -0.12188201 -12.7638074  -5.921882      2
+#> 6     1  -3.60  -1.70 -0.32856943 -1.04084037  -3.9285694  -2.740840      2
 #> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.009 sec elapsed
-#> split dataframe into groups: 0.004 sec elapsed
-#> for each group calculate utility: 0.75 sec elapsed
-#> add random component: 0.038 sec elapsed
-#> whole simulate choices: 0.812 sec elapsed
+#> user entered manipulations: 0.011 sec elapsed
+#> split dataframe into groups: 0.005 sec elapsed
+#> for each group calculate utility: 1.115 sec elapsed
+#> add random component: 0.053 sec elapsed
+#> whole simulate choices: 1.195 sec elapsed
 #> 
 #>  No preprocess function provided. Proceeding without additional preprocessing.
 #> 
@@ -279,13 +242,51 @@ sedrive <- sim_all(
 #> 4  1               32      40     200      25      80      25       0     1
 #> 5  1               39      40     200       0      80     100     100     1
 #> 6  1               48      60      50      25      20      50     100     1
-#>   group    V_1    V_2       e_1         e_2         U_1        U_2 CHOICE
-#> 1     1  -0.55 -12.60 0.3324202 -0.53441977  -0.2175798 -13.134420      1
-#> 2     1  -0.95  -2.35 1.1890124 -1.06812495   0.2390124  -3.418125      1
-#> 3     1  -6.20  -2.30 1.8902114 -1.25816665  -4.3097886  -3.558167      2
-#> 4     1 -13.90  -2.55 0.1614925 -0.98810524 -13.7385075  -3.538105      2
-#> 5     1 -14.40  -5.80 2.0304296  0.93499834 -12.3695704  -4.865002      2
-#> 6     1  -3.60  -1.70 1.7568673 -0.08023838  -1.8431327  -1.780238      2
+#>   group    V_1    V_2        e_1          e_2         U_1        U_2 CHOICE
+#> 1     1  -0.55 -12.60 -0.1655165  0.333722053  -0.7155165 -12.266278      1
+#> 2     1  -0.95  -2.35 -0.5967960  0.047598095  -1.5467960  -2.302402      1
+#> 3     1  -6.20  -2.30  0.1815357  0.151706904  -6.0184643  -2.148293      2
+#> 4     1 -13.90  -2.55  1.0162094 -0.003073446 -12.8837906  -2.553073      2
+#> 5     1 -14.40  -5.80  1.9017193 -1.307206385 -12.4982807  -7.107206      2
+#> 6     1  -3.60  -1.70  3.0272325  0.101946794  -0.5727675  -1.598053      1
+#> assign keys for bcoeff): 0 sec elapsed
+#> user entered manipulations: 0.016 sec elapsed
+#> split dataframe into groups: 0.007 sec elapsed
+#> for each group calculate utility: 0.871 sec elapsed
+#> add random component: 0.041 sec elapsed
+#> whole simulate choices: 0.949 sec elapsed
+#> 
+#>  No preprocess function provided. Proceeding without additional preprocessing.
+#> 
+#> 
+#>  dataset preprossed_data exists: FALSE
+#> 
+#> 
+#>  decisiongroups exists: TRUE
+#> 
+#> Group counts:
+#> 
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been created 
+#> 
+#> 
+#> First few observations of the dataset
+#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
+#> 1  1                7      80      25     100      60     200     100     1
+#> 2  1               19      20      25      50      60      25       0     1
+#> 3  1               30      20     100      50      80      50     100     1
+#> 4  1               32      40     200      25      80      25       0     1
+#> 5  1               39      40     200       0      80     100     100     1
+#> 6  1               48      60      50      25      20      50     100     1
+#>   group    V_1    V_2        e_1        e_2         U_1         U_2 CHOICE
+#> 1     1  -0.55 -12.60  1.6738036 -1.5621745   1.1238036 -14.1621745      1
+#> 2     1  -0.95  -2.35  1.4617051  2.8739225   0.5117051   0.5239225      2
+#> 3     1  -6.20  -2.30 -1.1041301  1.1893797  -7.3041301  -1.1106203      2
+#> 4     1 -13.90  -2.55 -0.1083358 -0.6587746 -14.0083358  -3.2087746      2
+#> 5     1 -14.40  -5.80  0.8077831 -0.7007500 -13.5922169  -6.5007500      2
+#> 6     1  -3.60  -1.70  1.5490572  0.3438886  -2.0509428  -1.3561114      2
 #> 
 #> 
 #> 
@@ -294,95 +295,92 @@ sedrive <- sim_all(
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   6720 -39150   5400 
+#>   6360 -39600   7025 
 #> initial  value 998.131940 
-#> iter   2 value 814.970351
-#> iter   3 value 805.846680
-#> iter   4 value 803.541830
-#> iter   5 value 768.557360
-#> iter   6 value 759.946571
-#> iter   7 value 758.207673
-#> iter   8 value 758.159802
-#> iter   9 value 758.159633
-#> iter  10 value 758.159614
-#> iter  10 value 758.159614
-#> iter  10 value 758.159606
-#> final  value 758.159606 
+#> iter   2 value 800.504025
+#> iter   3 value 786.395435
+#> iter   4 value 784.242446
+#> iter   5 value 750.719727
+#> iter   6 value 742.063100
+#> iter   7 value 740.790227
+#> iter   8 value 740.763095
+#> iter   9 value 740.763059
+#> iter   9 value 740.763050
+#> iter   9 value 740.763044
+#> final  value 740.763044 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   6700 -38275   6825 
+#>   6200 -37900   7650 
 #> initial  value 998.131940 
-#> iter   2 value 820.928122
-#> iter   3 value 810.981555
-#> iter   4 value 810.478109
-#> iter   5 value 772.492965
-#> iter   6 value 764.024794
-#> iter   7 value 762.566278
-#> iter   8 value 762.533718
-#> iter   9 value 762.533650
-#> iter  10 value 762.533634
-#> iter  10 value 762.533623
-#> iter  10 value 762.533621
-#> final  value 762.533621 
+#> iter   2 value 821.888191
+#> iter   3 value 809.241040
+#> iter   4 value 808.473296
+#> iter   5 value 769.609504
+#> iter   6 value 761.231597
+#> iter   7 value 759.946167
+#> iter   8 value 759.922557
+#> iter   9 value 759.922524
+#> iter   9 value 759.922513
+#> iter   9 value 759.922506
+#> final  value 759.922506 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   6960 -38775   5600 
+#>   6160 -38625   6950 
 #> initial  value 998.131940 
-#> iter   2 value 819.409108
-#> iter   3 value 811.709169
-#> iter   4 value 810.560821
-#> iter   5 value 774.084860
-#> iter   6 value 765.573244
-#> iter   7 value 763.824955
-#> iter   8 value 763.779265
-#> iter   9 value 763.779125
-#> iter  10 value 763.779110
-#> iter  10 value 763.779110
-#> iter  10 value 763.779105
-#> final  value 763.779105 
+#> iter   2 value 815.623636
+#> iter   3 value 802.757357
+#> iter   4 value 800.768673
+#> iter   5 value 764.276430
+#> iter   6 value 755.754107
+#> iter   7 value 754.402132
+#> iter   8 value 754.373606
+#> iter   9 value 754.373562
+#> iter   9 value 754.373551
+#> iter   9 value 754.373545
+#> final  value 754.373545 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   6220 -38300   7075 
+#>   6620 -38900   6025 
 #> initial  value 998.131940 
-#> iter   2 value 819.588712
-#> iter   3 value 807.433292
-#> iter   4 value 806.008649
-#> iter   5 value 768.413213
-#> iter   6 value 759.953773
-#> iter   7 value 758.595271
-#> iter   8 value 758.567182
-#> iter   9 value 758.567137
-#> iter  10 value 758.567124
-#> iter  10 value 758.567115
-#> iter  10 value 758.567114
-#> final  value 758.567114 
+#> iter   2 value 815.994858
+#> iter   3 value 806.153552
+#> iter   4 value 804.395555
+#> iter   5 value 768.518125
+#> iter   6 value 759.936308
+#> iter   7 value 758.360035
+#> iter   8 value 758.320822
+#> iter   9 value 758.320725
+#> iter  10 value 758.320713
+#> iter  10 value 758.320710
+#> iter  10 value 758.320705
+#> final  value 758.320705 
 #> converged
-#> start_estimation: 0.16 sec elapsed
+#> start_estimation: 0.212 sec elapsed
 #> 
 #> Summary table:
 #> 
 #> 
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
-#> \                 vars    n   mean    sd  median    min    max  range   skew  kurtosis    se
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
-#> est_bpreis           1    4   0.00  0.00    0.00  -0.01   0.00   0.00   0.06     -2.20  0.00
-#> est_blade            2    4  -0.01  0.00   -0.01  -0.01  -0.01   0.00  -0.13     -1.93  0.00
-#> est_bwarte           3    4   0.01  0.00    0.01   0.00   0.01   0.00  -0.11     -2.28  0.00
-#> rob_pval0_bpreis     4    4   0.12  0.12    0.09   0.02   0.28   0.27   0.37     -2.02  0.06
-#> rob_pval0_blade      5    4   0.00  0.00    0.00   0.00   0.00   0.00   0.72     -1.71  0.00
-#> rob_pval0_bwarte     6    4   0.00  0.00    0.00   0.00   0.00   0.00   0.73     -1.70  0.00
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  ====  ========  ====
+#> \                 vars    n   mean    sd  median    min    max  range  skew  kurtosis    se
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  ====  ========  ====
+#> est_bpreis           1    4  -0.01  0.00   -0.01  -0.01   0.00   0.00  0.38     -2.01  0.00
+#> est_blade            2    4  -0.01  0.00   -0.01  -0.02  -0.01   0.00  0.11     -1.89  0.00
+#> est_bwarte           3    4   0.01  0.00    0.01   0.01   0.01   0.00  0.15     -1.88  0.00
+#> rob_pval0_bpreis     4    4   0.05  0.04    0.03   0.02   0.11   0.09  0.69     -1.72  0.02
+#> rob_pval0_blade      5    4   0.00  0.00    0.00   0.00   0.00   0.00  0.75     -1.69  0.00
+#> rob_pval0_bwarte     6    4   0.00  0.00    0.00   0.00   0.00   0.00  0.75     -1.69  0.00
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  ====  ========  ====
 #> 
 #> Power results:
 #> 
 #> FALSE  TRUE 
-#>    50    50 
+#>    25    75 
 #> 'simple' is deprecated and will be removed in the future. Use 'exact' instead.
 #> bcoeff_lookup already exists; skipping modification.
 #> 
@@ -390,107 +388,145 @@ sedrive <- sim_all(
 #> $u1
 #> $u1$v1
 #> V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3
-#> <environment: 0x63bad241d1a8>
+#> <environment: 0x5fd28c1b5a60>
 #> 
 #> $u1$v2
 #> V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
-#> <environment: 0x63bad23f94d8>
+#> <environment: 0x5fd28c199d60>
 #> 
 #> 
 #> $u2
 #> $u2$v1
 #> V.1 ~ bpreis * alt1.x1
-#> <environment: 0x63bad23c9550>
+#> <environment: 0x5fd28c16e850>
 #> 
 #> $u2$v2
 #> V.2 ~ bpreis * alt2.x1
-#> <environment: 0x63bad2379c20>
+#> <environment: 0x5fd28c14bb58>
 #> 
 #> 
 #> 'destype' is deprecated. Please use 'designtype' instead.
 #> New names:
+#> assign keys for bcoeff): 0.001 sec elapsed
+#> user entered manipulations: 0.011 sec elapsed
+#> split dataframe into groups: 0.006 sec elapsed
+#> for each group calculate utility: 0.966 sec elapsed
+#> add random component: 0.057 sec elapsed
+#> whole simulate choices: 1.053 sec elapsed
+#> 
+#>  No preprocess function provided. Proceeding without additional preprocessing.
+#> 
+#> 
+#>  dataset preprossed_data exists: FALSE
+#> 
+#> 
+#>  decisiongroups exists: TRUE
+#> 
+#> Group counts:
+#> 
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been created 
+#> 
+#> 
+#> First few observations of the dataset
+#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
+#> 1  1               12      60      25       0      20     200     100     1
+#> 2  1               16      20     100      50      40      50       0     1
+#> 3  1               17      20     200       0      80     100     100     1
+#> 4  1               25      60      50     100      20     200      50     1
+#> 5  1               29      20      50     100      80      50       0     1
+#> 6  1               32      40     100      25      80      25      50     1
+#>   group    V_1    V_2        e_1        e_2        U_1        U_2 CHOICE
+#> 1     1  -2.35 -12.20  0.7348289  2.8760442  -1.615171  -9.323956      1
+#> 2     1  -6.20  -3.90 -0.4325068 -1.1036864  -6.632507  -5.003686      2
+#> 3     1 -14.20  -5.80 -0.6013954 -0.6508939 -14.801395  -6.450894      2
+#> 4     1  -2.10 -13.20 -0.7730537  2.5897688  -2.873054 -10.610231      1
+#> 5     1  -1.70  -4.30 -0.8569517  2.3587195  -2.556952  -1.941280      2
+#> 6     1  -6.90  -1.55  1.9317262 -1.4418899  -4.968274  -2.991890      2
+#> assign keys for bcoeff): 0 sec elapsed
+#> user entered manipulations: 0.012 sec elapsed
+#> split dataframe into groups: 0.005 sec elapsed
+#> for each group calculate utility: 1.133 sec elapsed
+#> add random component: 0.056 sec elapsed
+#> whole simulate choices: 1.217 sec elapsed
+#> 
+#>  No preprocess function provided. Proceeding without additional preprocessing.
+#> 
+#> 
+#>  dataset preprossed_data exists: FALSE
+#> 
+#> 
+#>  decisiongroups exists: TRUE
+#> 
+#> Group counts:
+#> 
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been created 
+#> 
+#> 
+#> First few observations of the dataset
+#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
+#> 1  1               12      60      25       0      20     200     100     1
+#> 2  1               16      20     100      50      40      50       0     1
+#> 3  1               17      20     200       0      80     100     100     1
+#> 4  1               25      60      50     100      20     200      50     1
+#> 5  1               29      20      50     100      80      50       0     1
+#> 6  1               32      40     100      25      80      25      50     1
+#>   group    V_1    V_2        e_1         e_2         U_1        U_2 CHOICE
+#> 1     1  -2.35 -12.20 -1.3863937  0.01166719  -3.7363937 -12.188333      1
+#> 2     1  -6.20  -3.90 -0.7563038  0.81627154  -6.9563038  -3.083728      2
+#> 3     1 -14.20  -5.80 -0.8547753  0.83640581 -15.0547753  -4.963594      2
+#> 4     1  -2.10 -13.20  0.1376063 -0.20383194  -1.9623937 -13.403832      1
+#> 5     1  -1.70  -4.30  0.8143902  0.31880374  -0.8856098  -3.981196      1
+#> 6     1  -6.90  -1.55  0.7225187 -0.56312651  -6.1774813  -2.113127      2
+#> assign keys for bcoeff): 0 sec elapsed
+#> user entered manipulations: 0.011 sec elapsed
+#> split dataframe into groups: 0.007 sec elapsed
+#> for each group calculate utility: 1.184 sec elapsed
+#> add random component: 0.052 sec elapsed
+#> whole simulate choices: 1.266 sec elapsed
+#> 
+#>  No preprocess function provided. Proceeding without additional preprocessing.
+#> 
+#> 
+#>  dataset preprossed_data exists: FALSE
+#> 
+#> 
+#>  decisiongroups exists: TRUE
+#> 
+#> Group counts:
+#> 
+#>    1    2 
+#> 1007  433 
+#> 
+#>  data has been created 
+#> 
+#> 
+#> First few observations of the dataset
+#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
+#> 1  1               12      60      25       0      20     200     100     1
+#> 2  1               16      20     100      50      40      50       0     1
+#> 3  1               17      20     200       0      80     100     100     1
+#> 4  1               25      60      50     100      20     200      50     1
+#> 5  1               29      20      50     100      80      50       0     1
+#> 6  1               32      40     100      25      80      25      50     1
+#>   group    V_1    V_2         e_1        e_2         U_1        U_2 CHOICE
+#> 1     1  -2.35 -12.20  0.06710733  0.1285654  -2.2828927 -12.071435      1
+#> 2     1  -6.20  -3.90 -1.32075517  2.0607289  -7.5207552  -1.839271      2
+#> 3     1 -14.20  -5.80 -0.72258548 -0.1480184 -14.9225855  -5.948018      2
+#> 4     1  -2.10 -13.20  2.27096778  1.1434050   0.1709678 -12.056595      1
+#> 5     1  -1.70  -4.30  0.91051706 -0.4674794  -0.7894829  -4.767479      1
+#> 6     1  -6.90  -1.55  1.53679884  3.0082291  -5.3632012   1.458229      2
 #> assign keys for bcoeff): 0 sec elapsed
 #> user entered manipulations: 0.009 sec elapsed
-#> split dataframe into groups: 0.004 sec elapsed
-#> for each group calculate utility: 0.82 sec elapsed
-#> add random component: 0.068 sec elapsed
-#> whole simulate choices: 0.911 sec elapsed
-#> 
-#>  No preprocess function provided. Proceeding without additional preprocessing.
-#> 
-#> 
-#>  dataset preprossed_data exists: FALSE
-#> 
-#> 
-#>  decisiongroups exists: TRUE
-#> 
-#> Group counts:
-#> 
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been created 
-#> 
-#> 
-#> First few observations of the dataset
-#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60      25       0      20     200     100     1
-#> 2  1               16      20     100      50      40      50       0     1
-#> 3  1               17      20     200       0      80     100     100     1
-#> 4  1               25      60      50     100      20     200      50     1
-#> 5  1               29      20      50     100      80      50       0     1
-#> 6  1               32      40     100      25      80      25      50     1
-#>   group    V_1    V_2        e_1         e_2         U_1          U_2 CHOICE
-#> 1     1  -2.35 -12.20  1.9420822  1.90063031  -0.4079178 -10.29936969      1
-#> 2     1  -6.20  -3.90  0.2804252  0.03381737  -5.9195748  -3.86618263      2
-#> 3     1 -14.20  -5.80  0.2034918  1.83367128 -13.9965082  -3.96632872      2
-#> 4     1  -2.10 -13.20  2.5693145  0.01175361   0.4693145 -13.18824639      1
-#> 5     1  -1.70  -4.30 -0.2707180 -0.50768644  -1.9707180  -4.80768644      1
-#> 6     1  -6.90  -1.55 -1.2228834  1.58936404  -8.1228834   0.03936404      2
-#> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.014 sec elapsed
-#> split dataframe into groups: 0.005 sec elapsed
-#> for each group calculate utility: 1.6 sec elapsed
-#> add random component: 0.054 sec elapsed
-#> whole simulate choices: 1.686 sec elapsed
-#> 
-#>  No preprocess function provided. Proceeding without additional preprocessing.
-#> 
-#> 
-#>  dataset preprossed_data exists: FALSE
-#> 
-#> 
-#>  decisiongroups exists: TRUE
-#> 
-#> Group counts:
-#> 
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been created 
-#> 
-#> 
-#> First few observations of the dataset
-#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60      25       0      20     200     100     1
-#> 2  1               16      20     100      50      40      50       0     1
-#> 3  1               17      20     200       0      80     100     100     1
-#> 4  1               25      60      50     100      20     200      50     1
-#> 5  1               29      20      50     100      80      50       0     1
-#> 6  1               32      40     100      25      80      25      50     1
-#>   group    V_1    V_2        e_1        e_2        U_1         U_2 CHOICE
-#> 1     1  -2.35 -12.20  1.2047383  0.1718643  -1.145262 -12.0281357      1
-#> 2     1  -6.20  -3.90 -0.8002397 -0.4729363  -7.000240  -4.3729363      2
-#> 3     1 -14.20  -5.80  1.3213734  1.4146832 -12.878627  -4.3853168      2
-#> 4     1  -2.10 -13.20  0.9161737  1.4936751  -1.183826 -11.7063249      1
-#> 5     1  -1.70  -4.30 -0.5110998  3.6067836  -2.211100  -0.6932164      2
-#> 6     1  -6.90  -1.55 -1.1648678  2.7963566  -8.064868   1.2463566      2
-#> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.013 sec elapsed
-#> split dataframe into groups: 0.006 sec elapsed
-#> for each group calculate utility: 1.331 sec elapsed
+#> split dataframe into groups: 0.003 sec elapsed
+#> for each group calculate utility: 1.052 sec elapsed
 #> add random component: 0.044 sec elapsed
-#> whole simulate choices: 1.407 sec elapsed
+#> whole simulate choices: 1.118 sec elapsed
 #> 
 #>  No preprocess function provided. Proceeding without additional preprocessing.
 #> 
@@ -516,51 +552,13 @@ sedrive <- sim_all(
 #> 4  1               25      60      50     100      20     200      50     1
 #> 5  1               29      20      50     100      80      50       0     1
 #> 6  1               32      40     100      25      80      25      50     1
-#>   group    V_1    V_2        e_1        e_2         U_1        U_2 CHOICE
-#> 1     1  -2.35 -12.20  2.0032051  0.3086138  -0.3467949 -11.891386      1
-#> 2     1  -6.20  -3.90  1.2224954  2.2071028  -4.9775046  -1.692897      2
-#> 3     1 -14.20  -5.80  0.7560365 -0.1188132 -13.4439635  -5.918813      2
-#> 4     1  -2.10 -13.20  0.2343899  1.7534618  -1.8656101 -11.446538      1
-#> 5     1  -1.70  -4.30 -0.3385826  3.0051161  -2.0385826  -1.294884      2
-#> 6     1  -6.90  -1.55 -1.6895331 -0.7702983  -8.5895331  -2.320298      2
-#> assign keys for bcoeff): 0 sec elapsed
-#> user entered manipulations: 0.018 sec elapsed
-#> split dataframe into groups: 0.009 sec elapsed
-#> for each group calculate utility: 0.908 sec elapsed
-#> add random component: 0.045 sec elapsed
-#> whole simulate choices: 0.994 sec elapsed
-#> 
-#>  No preprocess function provided. Proceeding without additional preprocessing.
-#> 
-#> 
-#>  dataset preprossed_data exists: FALSE
-#> 
-#> 
-#>  decisiongroups exists: TRUE
-#> 
-#> Group counts:
-#> 
-#>    1    2 
-#> 1007  433 
-#> 
-#>  data has been created 
-#> 
-#> 
-#> First few observations of the dataset
-#>   ID Choice_situation alt1_x1 alt1_x2 alt1_x3 alt2_x1 alt2_x2 alt2_x3 Block
-#> 1  1               12      60      25       0      20     200     100     1
-#> 2  1               16      20     100      50      40      50       0     1
-#> 3  1               17      20     200       0      80     100     100     1
-#> 4  1               25      60      50     100      20     200      50     1
-#> 5  1               29      20      50     100      80      50       0     1
-#> 6  1               32      40     100      25      80      25      50     1
-#>   group    V_1    V_2          e_1        e_2         U_1        U_2 CHOICE
-#> 1     1  -2.35 -12.20 -0.178070683  1.1831270  -2.5280707 -11.016873      1
-#> 2     1  -6.20  -3.90 -0.009572434  0.8830952  -6.2095724  -3.016905      2
-#> 3     1 -14.20  -5.80  1.994978870 -0.5183966 -12.2050211  -6.318397      2
-#> 4     1  -2.10 -13.20  0.403642911  0.1355700  -1.6963571 -13.064430      1
-#> 5     1  -1.70  -4.30  1.816434647  1.0686647   0.1164346  -3.231335      1
-#> 6     1  -6.90  -1.55  0.305666955  0.4342626  -6.5943330  -1.115737      2
+#>   group    V_1    V_2         e_1       e_2        U_1        U_2 CHOICE
+#> 1     1  -2.35 -12.20 -1.28989396 0.9484000 -3.6398940 -11.251600      1
+#> 2     1  -6.20  -3.90  0.74918818 0.1249138 -5.4508118  -3.775086      2
+#> 3     1 -14.20  -5.80  5.69606611 1.1375340 -8.5039339  -4.662466      2
+#> 4     1  -2.10 -13.20  2.90516321 0.2937650  0.8051632 -12.906235      1
+#> 5     1  -1.70  -4.30  2.77751745 1.5906729  1.0775174  -2.709327      1
+#> 6     1  -6.90  -1.55 -0.01728414 3.3229082 -6.9172841   1.772908      2
 #> 
 #> 
 #> 
@@ -569,117 +567,115 @@ sedrive <- sim_all(
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   5000 -37550   7750 
+#>   5360 -37200   7650 
 #> initial  value 998.131940 
-#> iter   2 value 837.113333
-#> iter   3 value 824.201723
-#> iter   4 value 823.114947
-#> iter   5 value 783.250406
-#> iter   6 value 774.775521
-#> iter   7 value 773.333944
-#> iter   8 value 773.274803
-#> iter   9 value 773.273733
-#> iter  10 value 773.273537
-#> iter  11 value 773.273321
-#> iter  12 value 773.273149
-#> iter  12 value 773.273149
-#> iter  12 value 773.273149
-#> final  value 773.273149 
+#> iter   2 value 842.455891
+#> iter   3 value 830.557321
+#> iter   4 value 830.235796
+#> iter   5 value 790.231947
+#> iter   6 value 781.816563
+#> iter   7 value 780.429591
+#> iter   8 value 780.381041
+#> iter   9 value 780.380266
+#> iter  10 value 780.380038
+#> iter  11 value 780.379732
+#> iter  12 value 780.379533
+#> iter  12 value 780.379533
+#> iter  12 value 780.379533
+#> final  value 780.379533 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   5080 -36850   7700 
+#>   4100 -37475   7400 
 #> initial  value 998.131940 
-#> iter   2 value 846.837796
-#> iter   3 value 834.476514
-#> iter   4 value 833.888196
-#> iter   5 value 792.919185
-#> iter   6 value 784.663682
-#> iter   7 value 783.261505
-#> iter   8 value 783.212429
-#> iter   9 value 783.211636
-#> iter  10 value 783.211420
-#> iter  11 value 783.211144
-#> iter  12 value 783.210967
-#> iter  12 value 783.210967
-#> iter  12 value 783.210967
-#> final  value 783.210967 
+#> iter   2 value 839.617713
+#> iter   3 value 834.663927
+#> iter   4 value 829.106636
+#> iter   5 value 778.893518
+#> iter   6 value 769.219181
+#> iter   7 value 767.652744
+#> iter   8 value 767.626805
+#> iter   9 value 767.626779
+#> iter  10 value 767.626763
+#> iter  10 value 767.626761
+#> iter  10 value 767.626757
+#> final  value 767.626757 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   4160 -37300   7875 
+#>   4760 -37675   8175 
 #> initial  value 998.131940 
-#> iter   2 value 839.322514
-#> iter   3 value 836.419091
-#> iter   4 value 831.884234
-#> iter   5 value 779.975314
-#> iter   6 value 770.477811
-#> iter   7 value 768.940431
-#> iter   8 value 768.916574
-#> iter   9 value 768.916429
-#> iter  10 value 768.916344
-#> iter  10 value 768.916344
-#> iter  11 value 768.916327
-#> iter  11 value 768.916318
-#> iter  11 value 768.916318
-#> final  value 768.916318 
+#> iter   2 value 832.730149
+#> iter   3 value 832.267432
+#> iter   4 value 830.145207
+#> iter   5 value 778.690334
+#> iter   6 value 769.072881
+#> iter   7 value 767.565134
+#> iter   8 value 767.540015
+#> iter   9 value 767.539640
+#> iter  10 value 767.539493
+#> iter  11 value 767.539455
+#> iter  12 value 767.539374
+#> iter  12 value 767.539374
+#> iter  12 value 767.539374
+#> final  value 767.539374 
 #> converged
 #> Initial function value: -998.1319 
 #> Initial gradient value:
 #> bpreis  blade bwarte 
-#>   4640 -36400   8675 
+#>   4840 -37450   8225 
 #> initial  value 998.131940 
-#> iter   2 value 846.465631
-#> iter   3 value 830.772590
-#> iter   4 value 830.350134
-#> iter   5 value 789.366558
-#> iter   6 value 781.509014
-#> iter   7 value 780.563045
-#> iter   8 value 780.531727
-#> iter   9 value 780.531215
-#> iter  10 value 780.531031
-#> iter  11 value 780.530771
-#> iter  12 value 780.530616
-#> iter  12 value 780.530616
-#> iter  12 value 780.530616
-#> final  value 780.530616 
+#> iter   2 value 835.537197
+#> iter   3 value 821.095140
+#> iter   4 value 820.186712
+#> iter   5 value 780.436158
+#> iter   6 value 772.106098
+#> iter   7 value 770.910821
+#> iter   8 value 770.861700
+#> iter   9 value 770.860779
+#> iter  10 value 770.860582
+#> iter  11 value 770.860346
+#> iter  12 value 770.860168
+#> iter  12 value 770.860168
+#> iter  12 value 770.860168
+#> final  value 770.860168 
 #> converged
-#> start_estimation: 0.114 sec elapsed
+#> start_estimation: 0.128 sec elapsed
 #> 
 #> Summary table:
 #> 
 #> 
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ===
-#> \                 vars    n   mean    sd  median    min    max  range   skew  kurtosis   se
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ===
-#> est_bpreis           1    4  -0.01  0.00   -0.01  -0.01  -0.01   0.01  -0.66     -1.75    0
-#> est_blade            2    4  -0.01  0.00   -0.01  -0.01  -0.01   0.00  -0.39     -2.01    0
-#> est_bwarte           3    4   0.01  0.00    0.01   0.00   0.01   0.00   0.02     -1.90    0
-#> rob_pval0_bpreis     4    4   0.00  0.01    0.00   0.00   0.01   0.01   0.07     -2.33    0
-#> rob_pval0_blade      5    4   0.00  0.00    0.00   0.00   0.00   0.00   0.01     -2.42    0
-#> rob_pval0_bwarte     6    4   0.00  0.00    0.00   0.00   0.00   0.00   0.75     -1.69    0
-#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ===
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
+#> \                 vars    n   mean    sd  median    min    max  range   skew  kurtosis    se
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
+#> est_bpreis           1    4  -0.01  0.00   -0.01  -0.01   0.00   0.01  -0.37     -1.85  0.00
+#> est_blade            2    4  -0.01  0.00   -0.01  -0.01  -0.01   0.00  -0.17     -1.92  0.00
+#> est_bwarte           3    4   0.01  0.00    0.01   0.00   0.01   0.00  -0.73     -1.70  0.00
+#> rob_pval0_bpreis     4    4   0.02  0.03    0.00   0.00   0.07   0.07   0.75     -1.69  0.02
+#> rob_pval0_blade      5    4   0.00  0.00    0.00   0.00   0.00   0.00   0.66     -1.74  0.00
+#> rob_pval0_bwarte     6    4   0.00  0.00    0.00   0.00   0.00   0.00   0.75     -1.69  0.00
+#> ================  ====  ===  =====  ====  ======  =====  =====  =====  =====  ========  ====
 #> 
 #> Power results:
 #> 
-#> TRUE 
-#>  100
-#> total time for simulation and estimation: 15.901 sec elapsed
+#> FALSE  TRUE 
+#>    25    75
+#> total time for simulation and estimation: 18.547 sec elapsed
 #> $tic
 #> elapsed 
-#>   0.957 
+#>   1.131 
 #> 
 #> $toc
 #> elapsed 
-#>  16.858 
+#>  19.678 
 #> 
 #> $msg
 #> [1] "total time for simulation and estimation"
 #> 
 #> $callback_msg
-#> [1] "total time for simulation and estimation: 15.901 sec elapsed"
+#> [1] "total time for simulation and estimation: 18.547 sec elapsed"
 #> 
 #> Trying tidyr::pivot_longer for reshaping...
 ```
