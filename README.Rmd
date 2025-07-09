@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/simulateDCE)](https://CRAN.R-project.org/package=simulateDCE)
 
+[![R-CMD-check](https://github.com/sagebiej/simulatedce/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sagebiej/simulatedce/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of simulateDCE is to make it easy to simulate choice experiment datasets using designs from NGENE, `idefix` or `spdesign`. You have to store the design file(s) in a subfolder and need to specify certain parameters and the utility functions for the data generating process. The package is useful for:
