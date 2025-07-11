@@ -11,7 +11,6 @@ simulate_choices(
   bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
-  estimate,
   preprocess_function = NULL
 )
 }
@@ -27,8 +26,6 @@ simulate_choices(
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 
 \item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
-
-\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is true}
 
 \item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
 }
@@ -56,6 +53,6 @@ ut <- list(
     v2 = V.2 ~ 0
   )
 )
-simulate_choices(example_df, ut, setspp = 4, bcoeff = beta, estimate = FALSE)
+simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
 
 }

@@ -6,7 +6,6 @@
 #' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
-#' @param estimate If TRUE models will be estimated. If false only a dataset will be simulated. Default is true
 #' @param preprocess_function = NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.
 #' @return a data.frame that includes simulated choices and a design
 #' @export
@@ -29,9 +28,9 @@
 #'     v2 = V.2 ~ 0
 #'   )
 #' )
-#' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta, estimate = FALSE)
+#' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
 #'
-simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(), estimate, preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
 
   if (!is.null(preprocess_function)) {
     if (!is.function(preprocess_function)) {
