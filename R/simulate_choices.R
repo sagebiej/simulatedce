@@ -49,13 +49,13 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
 
   tictoc::tic("whole simulate choices")
 
-  tictoc::tic("assign keys for bcoeff)")
+  tictoc::tic("assign keys for bcoeff")
   ### unpack the bcoeff list so variables are accessible
   for (key in names(bcoeff)) {
     assign(key, bcoeff[[key]])
   }
 
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
 
   by_formula <- function(equation) { # used to take formulas as inputs in simulation utility function
@@ -98,7 +98,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   data <- data %>%
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!!manipulations)
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   #   browser()
   #
@@ -112,7 +112,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   ## split dataframe into groups
   subsets <- split(data, data$group)
 
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   tictoc::tic("for each group calculate utility")
   ## for each group calculate utility
@@ -123,7 +123,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
 
   ## put data from eachgroup together again
   data <- dplyr::bind_rows(subsets)
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   tictoc::tic("add random component")
   ## add random component and calculate total utility
@@ -139,9 +139,9 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     as.data.frame()
 
 
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
-  tictoc::toc()
+  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   message("\n data has been created \n")
 
