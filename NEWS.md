@@ -1,5 +1,6 @@
 # simulateDCE 0.3.1
 
+ * speed improvements to simulate_choices function, which affects the sim_all function as well.
 
 # Development version
 
