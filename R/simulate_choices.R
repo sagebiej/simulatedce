@@ -57,6 +57,23 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
 
   message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
+### new functions to calculate utility
+  compile_one <- function(fm) {
+    name <- as.character(formula.tools::lhs(fm))
+    rhs  <- formula.tools::rhs(fm)
+    fn   <- eval(bquote(function(d) with(d, .(rhs))))
+    list(name = name, fun = compiler::cmpfun(fn))
+  }
+
+  compile_utility_list <- function(u) {
+    lapply(u, function(fl) {
+      tmp <- lapply(fl, compile_one)
+      setNames(lapply(tmp, `[[`, "fun"),
+               vapply(tmp, `[[`, "", "name"))
+    })
+  }
+
+
 
   by_formula <- function(equation) { # used to take formulas as inputs in simulation utility function
     dplyr::pick(dplyr::everything()) |>
@@ -108,6 +125,12 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   tictoc::tic("for each group calculate utility")
+
+
+  ufuns <- compile_utility_list(utility)
+
+  dt <- data.table::as.data.table(data)
+
   ## for each group calculate utility
   subsets <- purrr::map2(
     .x = seq_along(utility), .y = subsets,
