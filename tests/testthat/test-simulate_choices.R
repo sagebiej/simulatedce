@@ -182,3 +182,103 @@ test_that("decisiongroups produces correct group labels", {
 
 #––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
 
+
+### MORE GROUP SPECIFIC TESTS
+
+
+test_that("utilities are applied correctly by group", {
+  # 10 rows, alternating prices and qualities
+  df10 <- data.frame(
+    ID      = 1:10,
+    price   = rep(c(10, 20), 5),
+    quality = rep(c(1,  2), 5)
+  )
+
+  beta <- list(
+    bprice   = -1,
+    bquality =  2
+  )
+
+  ut <- list(
+    g1 = list(
+      v1 = V.1 ~ bprice * price + bquality * quality,  # group 1
+      v2 = V.2 ~ 0
+    ),
+    g2 = list(
+      v1 = V.1 ~ bprice * price + 2 * bquality * quality,  # group 2 → stronger quality
+      v2 = V.2 ~ 0
+    )
+  )
+
+  res <- simulate_choices(
+    df10,
+    utility = ut,
+    setspp  = 2,
+    bcoeff  = beta,
+    decisiongroups = c(0, 0.5, 1)  # → 2 groups of 5
+  )
+
+  # extract utilities
+  res1 <- res[res$group == 1, ]
+  res2 <- res[res$group == 2, ]
+
+  # expected: V_1 = -1 * price + (2 * quality)
+  v1_g1_expected <- with(res1, -1 * price + 2 * quality)
+  expect_equal(res1$V_1, v1_g1_expected)
+
+  # group 2 has double quality weight: V_1 = -1 * price + 4 * quality
+  v1_g2_expected <- with(res2, -1 * price + 4 * quality)
+  expect_equal(res2$V_1, v1_g2_expected)
+})
+
+
+test_that("missing utility group throws error", {
+  df10 <- data.frame(
+    ID = 1:10,
+    price   = rep(c(10, 20), 5),
+    quality = rep(c(1,  2), 5)
+  )
+
+  beta <- list(bprice = -1, bquality = 2)
+
+  ut <- list(only_one = list(
+    v1 = V.1 ~ bprice * price + bquality * quality,
+    v2 = V.2 ~ 0
+  ))
+
+  expect_error(
+    simulate_choices(df10, ut, setspp = 2, bcoeff = beta,
+                     decisiongroups = c(0, 0.5, 1)),
+    "Length of `utility`.*does not match.*decision groups"
+  )
+})
+
+
+test_that("group in data not covered by utility triggers error", {
+  df10 <- data.frame(
+    ID = 1:10,
+    price   = rep(c(10, 20), 5),
+    quality = rep(c(1,  2), 5)
+  )
+
+  beta <- list(bprice = -1, bquality = 2)
+
+  ut <- list(
+    g1 = list(
+      v1 = V.1 ~ bprice * price + bquality * quality,
+      v2 = V.2 ~ 0
+    ),
+    g2 = list(
+      v1 = V.1 ~ bprice * price + bquality * quality,
+      v2 = V.2 ~ 0
+    )
+  )
+
+  # corrupt the decision group vector
+  expect_error(
+    simulate_choices(df10, ut, setspp = 2, bcoeff = beta,
+                     decisiongroups = c(0, 0.4, 0.8, 1)),  # 3 breaks but only 2 utils
+    "Length of `utility`.*does not match.*decision groups"
+  )
+})
+
