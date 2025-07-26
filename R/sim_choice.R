@@ -276,7 +276,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
               data = sim_data[[.x]]
             )
           )
-        message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+        message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
         chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
 
@@ -320,7 +320,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
           data = .x
         )
       )
-      message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+      message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
     }
 
 

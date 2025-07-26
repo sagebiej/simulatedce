@@ -1,8 +1,9 @@
 # simulateDCE 0.3.1
 
+
+## Major Changes:
  * speed improvements to simulate_choices function, which affects the sim_all function as well.
 
-# Development version
 
 ## Bug fixes
  * removed 'estimate' argument from simulate_choices as it was not used.
