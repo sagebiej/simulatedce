@@ -1,3 +1,5 @@
+library(rlang)
+
 designpath <- system.file("extdata", "Rbook", package = "simulateDCE")
 
 design <- system.file("extdata", "Rbook", "design1.RDS", package = "simulateDCE")
@@ -62,10 +64,6 @@ test_that("random values are unique", {
 
 
 #### more simple tests
-
-
-library(testthat)
-library(dplyr)
 
 # assume your simulate_choices() is already loaded
 
