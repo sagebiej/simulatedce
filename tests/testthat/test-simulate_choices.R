@@ -36,8 +36,12 @@ ul <- list(u1 = list(
 formattedes <- readdesign(design = design, designtype = "spdesign")
 data <- simulateDCE::createDataset(formattedes, respondents = resps)
 
-test_that("no error", {
-  expect_no_error(simulate_choices(data = data, bcoeff = bcoeff, u = ul))
+
+test_that("simulate_choices() does not error", {
+  expect_error(
+    simulate_choices(data = data, bcoeff = bcoeff, u = ul),
+    regexp = NA  # ← this is key: expect *no* error
+  )
 })
 
 ds <- simulate_choices(data = data, bcoeff = bcoeff, u = ul)
@@ -55,3 +59,117 @@ test_that("random values are unique", {
   expect_equal(length(unique(ds$ID)), 40)
   expect_equal(length(unique(ds$group)), 1)
 })
+
+
+#### more simple tests
+
+
+library(testthat)
+library(dplyr)
+
+# assume your simulate_choices() is already loaded
+
+#–– 1) small toy dataset & simple utility for testing ––#
+df_small <- data.frame(
+  ID      = rep(1:5, each = 2),
+  price   = rep(c(10, 20), 5),
+  quality = rep(c(1,  2), 5)
+)
+
+beta <- list(
+  bprice   = -1,
+  bquality =  2
+)
+
+# note: use V.1 / V.2 so that rename_with("\\.", "_") => V_1/V_2
+ut <- list(
+  u1 = list(
+    v1 = V.1 ~ bprice * price + bquality * quality,
+    v2 = V.2 ~ 0
+  )
+)
+
+#––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
+
+test_that("basic output: columns, types, and deterministic V", {
+  res <- simulate_choices(
+    data = df_small,
+    utility = ut,
+    setspp = 2,
+    bcoeff = beta
+  )
+
+  # must be a data.frame
+  expect_s3_class(res, "data.frame")
+
+  # must contain the original columns + group + V_*/e_*/U_*/CHOICE
+  expect_true(all(
+    c("price","quality","V_1","V_2","e_1","e_2","U_1","U_2","CHOICE")
+    %in% names(res)
+  ))
+
+  # since V_1 = -1*price + 2*quality, V_2 = 0
+  # and these are created *before* the random error is added,
+  # they must match exactly:
+  expect_equal(res$V_1, -1 * res$price + 2 * res$quality)
+  expect_equal(res$V_2, rep(0, nrow(res)))
+})
+
+test_that("CHOICE always in {1,2} for two alternatives", {
+  res <- simulate_choices(df_small, ut, setspp = 2, bcoeff = beta)
+  expect_true(all(res$CHOICE %in% c(1L, 2L)))
+})
+
+test_that("preprocess_function must be a function", {
+  expect_error(
+    simulate_choices(df_small, ut, setspp = 2, bcoeff = beta,
+                     preprocess_function = 123),
+    "`preprocess_function` must be a function"
+  )
+})
+
+test_that("preprocess_function merges back on ID", {
+  # create a df with explicit ID
+  df2 <- df_small
+  df2$ID <- 1:nrow(df2)
+
+  # preprocessing returns only ID=1 with extra column
+  prep <- function() data.frame(ID = 1, extra = 99)
+
+  res <- simulate_choices(df2, ut, setspp = 2, bcoeff = beta,
+                          preprocess_function = prep)
+
+  expect_true("extra" %in% names(res))
+  expect_equal(res$extra[1], 99)
+  expect_true(all(is.na(res$extra[-1])))
+})
+
+test_that("manipulations are applied before utility", {
+  # e.g. triple the price
+  manip <- list(price = expr(price * 3))
+
+  res <- simulate_choices(df_small, ut, setspp = 2,
+                          bcoeff = beta, manipulations = manip)
+
+  # price in result should be three times the original
+  expect_equal(res$price, df_small$price * 3)
+
+  # and V_1 = -1 * (price*3) + 2*quality
+  expect_equal(res$V_1, -1 * res$price + 2 * res$quality)
+})
+
+test_that("decisiongroups produces correct group labels", {
+  # 10 rows → break at 50% → two groups of 5 each
+  dg   <- c(0, .5, 1)
+  df10 <- df_small[1:10, ]
+  df10$ID <- 1:10
+
+  res <- simulate_choices(df10, ut, setspp = 2,
+                          bcoeff = beta, decisiongroups = dg)
+
+  # first 5 rows group==1, next 5 group==2
+  expect_equal(res$group, rep(1:2, each = 5))
+})
+
+#––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
+

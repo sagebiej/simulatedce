@@ -100,13 +100,6 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     dplyr::mutate(!!!manipulations)
   message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
-  #   browser()
-  #
-  # d2 <- as.data.table(data)
-  #
-  # lhs <- as.character(formula.tools::lhs(utility$u1$v1))
-  # rhs <- as.character(formula.tools::rhs(utility$u1$v1))
-  # d2<- d2[, (lhs) := eval(parse(text = rhs))]
 
   tictoc::tic("split dataframe into groups")
   ## split dataframe into groups
