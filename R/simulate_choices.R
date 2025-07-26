@@ -64,7 +64,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     assign(key, bcoeff[[key]])
   }
 
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
 ### new functions to calculate utility
   compile_one <- function(fm) {
@@ -77,7 +77,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   compile_utility_list <- function(u) {
     lapply(u, function(fl) {
       tmp <- lapply(fl, compile_one)
-      setNames(lapply(tmp, `[[`, "fun"),
+      stats::setNames(lapply(tmp, `[[`, "fun"),
                vapply(tmp, `[[`, "", "name"))
     })
   }
@@ -124,7 +124,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   data <- data %>%
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!!manipulations)
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
 
   tictoc::tic("for each group calculate utility")
@@ -168,9 +168,9 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     dplyr::mutate(CHOICE = max.col(.[, grep("U_", names(.))]))
 
 
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
   message("\n data has been created \n")
 

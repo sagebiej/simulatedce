@@ -30,7 +30,8 @@ Imports:
     future,
     furrr,
     qs,
-    data.table
+    data.table,
+    glue
 Suggests: 
     knitr,
     testthat (>= 3.0.0),
