@@ -47,6 +47,15 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     message("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
   }
 
+
+  # Check 1: user specified multiple decision groups
+  if (length(decisiongroups) > 2 && length(utility) != (length(decisiongroups) - 1)) {
+    stop(glue::glue(
+      "Length of `utility` ({length(utility)}) does not match number of decision groups ",
+      "defined by `decisiongroups` ({length(decisiongroups) - 1})."
+    ))
+  }
+
   tictoc::tic("whole simulate choices")
 
   tictoc::tic("assign keys for bcoeff")
@@ -73,12 +82,6 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     })
   }
 
-
-
-  by_formula <- function(equation) { # used to take formulas as inputs in simulation utility function
-    dplyr::pick(dplyr::everything()) |>
-      dplyr::transmute(!!formula.tools::lhs(equation) := !!formula.tools::rhs(equation))
-  }
 
 
 
@@ -109,6 +112,12 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     data$group <- 1
   }
 
+  ### give an error if things did not work out
+
+  if (any(!unique(data$group) %in% seq_along(utility))) {
+    stop("Mismatch: data includes group IDs not covered by the utility list.")
+  }
+
   tictoc::tic("user entered manipulations")
 
   ## Do user entered manipulations to choice set
@@ -118,12 +127,6 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
 
 
-  tictoc::tic("split dataframe into groups")
-  ## split dataframe into groups
-  subsets <- split(data, data$group)
-
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
-
   tictoc::tic("for each group calculate utility")
 
 
@@ -131,28 +134,38 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
 
   dt <- data.table::as.data.table(data)
 
-  ## for each group calculate utility
-  subsets <- purrr::map2(
-    .x = seq_along(utility), .y = subsets,
-    ~ dplyr::mutate(.y, purrr::map_dfc(utility[[.x]], by_formula))
-  )
 
-  ## put data from eachgroup together again
-  data <- dplyr::bind_rows(subsets)
-  message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+
+  all_vars <- unique(unlist(lapply(utility, function(fl) {
+    unlist(lapply(fl, function(fm) all.vars(formula.tools::rhs(fm))))
+  })))
+  sdcols <- intersect(all_vars, names(dt))
+
+
+  varn <- names(ufuns[[1]])
+
+  dt[
+    ,
+    (varn) := lapply(ufuns[[.GRP]], function(f) f(.SD)),
+    by = group,
+    .SDcols = sdcols
+  ]
+
+
+
+
 
   tictoc::tic("add random component")
   ## add random component and calculate total utility
-  data <- data %>%
+  data <- dt %>%
     dplyr::ungroup() %>%
     dplyr::rename_with(~ stringr::str_replace_all(., pattern = "\\.", "_"), tidyr::everything()) %>%
     dplyr::mutate(
       dplyr::across(.cols = dplyr::all_of(n), .fns = ~ evd::rgumbel(dplyr::n(), loc = 0, scale = 1), .names = "{'e'}_{n}"),
       dplyr::across(dplyr::starts_with("V_"), .names = "{'U'}_{n}") + dplyr::across(dplyr::starts_with("e_"))
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(CHOICE = max.col(.[, grep("U_", names(.))])) %>%
-    as.data.frame()
+    )  %>%
+    as.data.frame() %>%
+    dplyr::mutate(CHOICE = max.col(.[, grep("U_", names(.))]))
 
 
   message( capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )

@@ -158,11 +158,22 @@ test_that("manipulations are applied before utility", {
 
 test_that("decisiongroups produces correct group labels", {
   # 10 rows → break at 50% → two groups of 5 each
+
+  ut2 <- list(
+    u1 = list(
+      v1 = V.1 ~ bprice * price + bquality * quality,
+      v2 = V.2 ~ 0
+    ),
+    u2 = list(
+      v1 = V.1 ~ bprice * price + bquality * quality * 1.5,
+      v2 = V.2 ~ 0
+    )
+  )
   dg   <- c(0, .5, 1)
   df10 <- df_small[1:10, ]
   df10$ID <- 1:10
 
-  res <- simulate_choices(df10, ut, setspp = 2,
+  res <- simulate_choices(df10, ut2, setspp = 2,
                           bcoeff = beta, decisiongroups = dg)
 
   # first 5 rows group==1, next 5 group==2
