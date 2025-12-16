@@ -2,7 +2,7 @@
 #'
 #' @param data a dataframe that includes a design repeated for the number of observations
 #' @param utility a list with the utility functions, one utility function for each alternatives
-#' @param setspp an integer, the number of choice sets per person
+#' @param setspp  Deprecated. Ignored and retained for backward compatibility.
 #' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
@@ -30,7 +30,7 @@
 #' )
 #' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
 #'
-simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp=NULL, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
 
   if (!is.null(preprocess_function)) {
     if (!is.function(preprocess_function)) {

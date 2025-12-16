@@ -93,7 +93,6 @@ test_that("basic output: columns, types, and deterministic V", {
   res <- simulate_choices(
     data = df_small,
     utility = ut,
-    setspp = 2,
     bcoeff = beta
   )
 
@@ -114,13 +113,13 @@ test_that("basic output: columns, types, and deterministic V", {
 })
 
 test_that("CHOICE always in {1,2} for two alternatives", {
-  res <- simulate_choices(df_small, ut, setspp = 2, bcoeff = beta)
+  res <- simulate_choices(df_small, ut, bcoeff = beta)
   expect_true(all(res$CHOICE %in% c(1L, 2L)))
 })
 
 test_that("preprocess_function must be a function", {
   expect_error(
-    simulate_choices(df_small, ut, setspp = 2, bcoeff = beta,
+    simulate_choices(df_small, ut,  bcoeff = beta,
                      preprocess_function = 123),
     "`preprocess_function` must be a function"
   )
@@ -134,7 +133,7 @@ test_that("preprocess_function merges back on ID", {
   # preprocessing returns only ID=1 with extra column
   prep <- function() data.frame(ID = 1, extra = 99)
 
-  res <- simulate_choices(df2, ut, setspp = 2, bcoeff = beta,
+  res <- simulate_choices(df2, ut, bcoeff = beta,
                           preprocess_function = prep)
 
   expect_true("extra" %in% names(res))
@@ -146,7 +145,7 @@ test_that("manipulations are applied before utility", {
   # e.g. triple the price
   manip <- list(price = expr(price * 3))
 
-  res <- simulate_choices(df_small, ut, setspp = 2,
+  res <- simulate_choices(df_small, ut,
                           bcoeff = beta, manipulations = manip)
 
   # price in result should be three times the original
@@ -173,7 +172,7 @@ test_that("decisiongroups produces correct group labels", {
   df10 <- df_small[1:10, ]
   df10$ID <- 1:10
 
-  res <- simulate_choices(df10, ut2, setspp = 2,
+  res <- simulate_choices(df10, ut2,
                           bcoeff = beta, decisiongroups = dg)
 
   # first 5 rows group==1, next 5 group==2
@@ -213,7 +212,6 @@ test_that("utilities are applied correctly by group", {
   res <- simulate_choices(
     df10,
     utility = ut,
-    setspp  = 2,
     bcoeff  = beta,
     decisiongroups = c(0, 0.5, 1)  # → 2 groups of 5
   )
@@ -247,7 +245,7 @@ test_that("missing utility group throws error", {
   ))
 
   expect_error(
-    simulate_choices(df10, ut, setspp = 2, bcoeff = beta,
+    simulate_choices(df10, ut,  bcoeff = beta,
                      decisiongroups = c(0, 0.5, 1)),
     "Length of `utility`.*does not match.*decision groups"
   )
@@ -276,7 +274,7 @@ test_that("group in data not covered by utility triggers error", {
 
   # corrupt the decision group vector
   expect_error(
-    simulate_choices(df10, ut, setspp = 2, bcoeff = beta,
+    simulate_choices(df10, ut, bcoeff = beta,
                      decisiongroups = c(0, 0.4, 0.8, 1)),  # 3 breaks but only 2 utils
     "Length of `utility`.*does not match.*decision groups"
   )

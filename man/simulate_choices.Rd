@@ -7,7 +7,7 @@
 simulate_choices(
   data,
   utility,
-  setspp,
+  setspp = NULL,
   bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
@@ -19,7 +19,7 @@ simulate_choices(
 
 \item{utility}{a list with the utility functions, one utility function for each alternatives}
 
-\item{setspp}{an integer, the number of choice sets per person}
+\item{setspp}{Deprecated. Ignored and retained for backward compatibility.}
 
 \item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
 
