@@ -39,6 +39,18 @@ formattedes <- readdesign(design = design, designtype = "spdesign")
 data <- simulateDCE::createDataset(formattedes, respondents = resps)
 
 
+test_that("simulate_choices() warns when deprecated setspp is used", {
+  expect_warning(
+    simulate_choices(
+      data   = data,
+      utility = ul,
+      setspp = 4,
+      bcoeff = bcoeff
+    ),
+    regexp = "is deprecated and ignored"
+  )
+})
+
 test_that("simulate_choices() does not error", {
   expect_error(
     simulate_choices(data = data, bcoeff = bcoeff, u = ul),

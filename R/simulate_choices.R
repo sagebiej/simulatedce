@@ -30,7 +30,17 @@
 #' )
 #' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
 #'
-simulate_choices <- function(data, utility, setspp=NULL, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
+
+
+
+  if (!missing(setspp)) {
+    warning(
+      "`setspp` is deprecated and ignored. ",
+      "The number of choice sets per respondent is inferred from `data`.",
+      call. = FALSE
+    )
+  }
 
   if (!is.null(preprocess_function)) {
     if (!is.function(preprocess_function)) {

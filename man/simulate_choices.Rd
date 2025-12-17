@@ -7,7 +7,7 @@
 simulate_choices(
   data,
   utility,
-  setspp = NULL,
+  setspp,
   bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
