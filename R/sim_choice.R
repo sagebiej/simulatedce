@@ -280,7 +280,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
 
         chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
 
-        qs::qsave(output, chunkfilename, preset = "fast")
+        qs2::qs_save(output, chunkfilename)
         rm(output)
 
         gc()

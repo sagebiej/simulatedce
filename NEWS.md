@@ -2,7 +2,7 @@
 
 ## Bug fixes
  * removed 'setspp' argument from simulate_choices as it was not used.
- * switched to `qs2` to store data efficiently as `qs` 
+ * switched to `qs2` to store data efficiently as `qs` was removed from CRAN.
 
 
 # simulateDCE 0.3.1
