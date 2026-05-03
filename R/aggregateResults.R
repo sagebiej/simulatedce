@@ -12,7 +12,7 @@ aggregateResults <- function(all_designs, fromfolder = NULL) {
 
     designs <- list.files(path = fromfolder, pattern = "*.qs", full.names = TRUE)
 
-    purrr::map(designs, qs::qread) %>% stats::setNames(basename(designs))
+    purrr::map(designs, qs2::qs_read) %>% stats::setNames(basename(designs))
   }
 
 

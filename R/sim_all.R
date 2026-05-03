@@ -223,7 +223,7 @@ sim_all <- function(nosim = 2,
     )
     gc()
 
-    all_designs <- purrr::map(list.files(dirname(savefile), full.names = TRUE), qs::qread) %>%
+    all_designs <- purrr::map(list.files(dirname(savefile), full.names = TRUE), qs2::qs_read) %>%
       stats::setNames(designname)
   }
 

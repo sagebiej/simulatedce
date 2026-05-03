@@ -108,7 +108,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
         dir.create(save_dir, recursive = TRUE)
         message("Directory created: ", save_dir)
       }
-      qs::qsave(object, paste0(savefile, "_", basename(designname), ".qs"), preset = "fast")
+      qs2::qs_save(object, paste0(savefile, "_", basename(designname), ".qs"))
       message("Output saved to: ", paste0(savefile, "_", basename(designname), ".qs"))
     }
   }
@@ -303,7 +303,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
       for (i in seq_along(1:chunks)) {
         # Load each RDS file
         chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
-        file_content <- qs::qread(chunkfilename)
+        file_content <- qs2::qs_read(chunkfilename)
         file.remove(chunkfilename)
 
         # Append the contents of each file to the all_outputs list
