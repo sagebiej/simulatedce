@@ -1,3 +1,10 @@
+# simulateDCE 0.3.2
+
+## Bug fixes
+ * removed 'setspp' argument from simulate_choices as it was not used.
+ * switched to `qs2` to store data efficiently as `qs` 
+
+
 # simulateDCE 0.3.1
 
 
