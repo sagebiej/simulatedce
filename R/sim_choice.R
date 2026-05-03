@@ -164,7 +164,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   }
 
 
-  sim_data <- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, setspp = setpp, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, preprocess_function = preprocess_function), mode = mode)
+  sim_data <- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, preprocess_function = preprocess_function), mode = mode)
 
 
   ### start estimation
