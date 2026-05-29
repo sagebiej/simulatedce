@@ -1,13 +1,11 @@
 #' Generate random parameter draws from simple distribution specifications
 #'
 #' @description
-#' A convenience wrapper that generates individual-level random coefficients
-#' from a simple list of distribution specifications.
-#' Unlike \code{\link{draw_rand_params}}, which uses an apollo-style formula
-#' interface, this function lets you specify each parameter's distribution
-#' and moments directly.
+#' Generates individual-level random coefficients from a simple list of
+#' distribution specifications. Used internally by \code{\link{simulate_choices}}
+#' when any element of \code{bcoeff} is a distribution spec list.
 #'
-#' @param bcoef Named list of parameter specifications.
+#' @param bcoeff Named list of parameter specifications.
 #'   Each element is either:
 #'   \describe{
 #'     \item{A numeric scalar}{Represents a fixed coefficient (same for all respondents).}
@@ -34,26 +32,24 @@
 #'   \code{ID} column. Defaults to \code{1:n_resp}.
 #'
 #' @return A data frame with \code{n_resp} rows and columns \code{ID} plus
-#'   one column per parameter in \code{bcoef}.
+#'   one column per parameter in \code{bcoeff}.
 #'
-#' @seealso \code{\link{draw_rand_params}} for a more flexible, formula-based
-#'   interface.
 #' @export
 #'
 #' @examples
-#' bcoef <- list(
+#' bcoeff <- list(
 #'   bprice = list(dist = "normal", mean = -0.5, sd = 0.2),
 #'   bqual  = 0.8
 #' )
 #'
 #' set.seed(42)
-#' draws <- make_rand_params(bcoef, n_resp = 100)
+#' draws <- make_rand_params(bcoeff, n_resp = 100)
 #' head(draws)
 #'
-make_rand_params <- function(bcoef, n_resp, respondent_ids = NULL) {
+make_rand_params <- function(bcoeff, n_resp, respondent_ids = NULL) {
 
   # ── validate inputs ──────────────────────────────────────────────────────────
-  if (!is.list(bcoeff <- bcoef) || is.null(names(bcoeff)) || any(names(bcoeff) == ""))
+  if (!is.list(bcoeff) || is.null(names(bcoeff)) || any(names(bcoeff) == ""))
     stop("`bcoeff` must be a fully named list.")
 
   if (!is.numeric(n_resp) || length(n_resp) != 1L ||

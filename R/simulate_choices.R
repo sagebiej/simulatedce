@@ -3,7 +3,7 @@
 #' @param data a dataframe that includes a design repeated for the number of observations
 #' @param utility a list with the utility functions, one utility function for each alternatives
 #' @param setspp  Deprecated. Ignored and retained for backward compatibility.
-#' @param bcoeff List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions
+#' @inheritParams make_rand_params
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #' @param preprocess_function = NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.
@@ -69,9 +69,18 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   tictoc::tic("whole simulate choices")
 
   tictoc::tic("assign keys for bcoeff")
-  ### unpack the bcoeff list so variables are accessible
-  for (key in names(bcoeff)) {
-    assign(key, bcoeff[[key]])
+
+  if (all(sapply(bcoeff, is.numeric))) {
+    ### Fixed parameters only: unpack into local environment for use in with()
+    for (key in names(bcoeff)) {
+      assign(key, bcoeff[[key]])
+    }
+
+  } else {
+    ### Mixed parameters: draw respondent-level coefficients and merge into data
+    respondent_ids <- unique(data$ID)
+    rand_params <- make_rand_params(bcoeff, n_resp = length(respondent_ids), respondent_ids = respondent_ids)
+    data <- dplyr::left_join(data, rand_params, by = "ID")
   }
 
   message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )

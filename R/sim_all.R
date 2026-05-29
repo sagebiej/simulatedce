@@ -124,10 +124,37 @@ sim_all <- function(nosim = 2,
   }
 
 
-  # Check if values in bcoeff are numeric
-  if (!all(sapply(bcoeff, is.numeric))) {
-    stop("Values in 'bcoeff' must be numeric.")
+  # Check if values in bcoeff are numeric scalars or valid random distribution specs
+  valid_coeff <- sapply(bcoeff, function(x) {
+    is.numeric(x) || (is.list(x) && "dist" %in% names(x))
+  })
+  if (!all(valid_coeff)) {
+    stop("Values in 'bcoeff' must be numeric or a distribution spec list with a 'dist' element.")
   }
+
+  # Summarise parameter specifications for the user
+  param_lines <- vapply(names(bcoeff), function(nm) {
+    spec <- bcoeff[[nm]]
+    if (is.numeric(spec)) {
+      sprintf("  %-20s fixed       (value = %g)", nm, spec)
+    } else {
+      dist <- spec$dist
+      detail <- switch(dist,
+        normal       = sprintf("mean = %g, sd = %g",      spec$mean,    spec$sd),
+        lognormal    = sprintf("meanlog = %g, sdlog = %g", spec$meanlog, spec$sdlog),
+        neg_lognormal = sprintf("meanlog = %g, sdlog = %g", spec$meanlog, spec$sdlog),
+        uniform      = sprintf("min = %g, max = %g",      spec$min,     spec$max),
+        triangular   = sprintf("lower = %g, upper = %g, mode = %g", spec$lower, spec$upper, spec$mode),
+        sprintf("(see spec)")
+      )
+      sprintf("  %-20s %-12s (%s)", nm, dist, detail)
+    }
+  }, character(1))
+
+  message(
+    "\nParameter specification:\n",
+    paste(param_lines, collapse = "\n"), "\n"
+  )
 
   #### check that all the coefficients in utility function have a corresponding value in bcoeff ####
   # Extract coefficients from utility function starting with "b"
