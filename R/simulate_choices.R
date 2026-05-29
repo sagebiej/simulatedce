@@ -7,7 +7,6 @@
 #' @param decisiongroups A vector showing how decision groups are numerically distributed
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #' @param preprocess_function = NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.
-#' @return a data.frame that includes simulated choices and a design
 #' @param verbose Integer controlling how much progress information is printed
 #'   to the console (via \code{message()}). Levels are cumulative: each level
 #'   also prints everything emitted by the levels below it.
@@ -23,6 +22,7 @@
 #'       internal state checks (e.g. dataset creation and decision-group setup).}
 #'   }
 #'   Defaults to \code{1}.
+#' @return a data.frame that includes simulated choices and a design
 #' @export
 #' @import data.table
 #' @examples
