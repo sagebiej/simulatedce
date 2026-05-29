@@ -19,7 +19,8 @@ sim_choice(
   utility_transform_type = "simple",
   mode = c("parallel", "sequential"),
   preprocess_function = NULL,
-  savefile = NULL
+  savefile = NULL,
+  verbose = 1
 )
 }
 \arguments{

@@ -76,7 +76,8 @@ sim_all <- function(nosim = 2,
                     reshape_type = "auto",
                     mode = c("parallel", "sequential"),
                     preprocess_function = NULL,
-                    savefile = NULL) {
+                    savefile = NULL,
+                    verbose = 1) {
   #################################################
   ########## Input Validation Test ###############
   #################################################
@@ -151,7 +152,7 @@ sim_all <- function(nosim = 2,
     }
   }, character(1))
 
-  message(
+  vmsg(verbose, 1,
     "\nParameter specification:\n",
     paste(param_lines, collapse = "\n"), "\n"
   )
@@ -226,7 +227,8 @@ sim_all <- function(nosim = 2,
       utility_transform_type = utility_transform_type,
       mode = mode,
       preprocess_function = preprocess_function,
-      savefile = NULL
+      savefile = NULL,
+      verbose = verbose
     ) %>% ## iterate simulation over all designs
       stats::setNames(designname)
   } else {
@@ -246,7 +248,8 @@ sim_all <- function(nosim = 2,
       utility_transform_type = utility_transform_type,
       mode = mode,
       preprocess_function = preprocess_function,
-      savefile = savefile
+      savefile = savefile,
+      verbose = verbose
     )
     gc()
 
@@ -256,7 +259,7 @@ sim_all <- function(nosim = 2,
 
   time <- tictoc::toc()
 
-  message(paste(utils::capture.output(print(time)), collapse = "\n"))
+  vmsg(verbose, 1, paste(utils::capture.output(print(time)), collapse = "\n"))
 
 
   all_designs[["time"]] <- time

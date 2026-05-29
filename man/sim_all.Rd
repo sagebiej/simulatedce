@@ -21,7 +21,8 @@ sim_all(
   reshape_type = "auto",
   mode = c("parallel", "sequential"),
   preprocess_function = NULL,
-  savefile = NULL
+  savefile = NULL,
+  verbose = 1
 )
 }
 \arguments{

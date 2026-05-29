@@ -1,31 +1,23 @@
 ---
-title: "csa-vignette"
+title: "Simulating Discrete Choice Experiments with simulateDCE"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{csa-vignette}
+  %\VignetteIndexEntry{Simulating Discrete Choice Experiments with simulateDCE}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-<!-- There is an issue when creating these vignettes using usethis::use_vignette and 
-devtools::build_vignettes() where the compilied vignette HTML files are placed in /doc
-rather than inst/doc
-
-Best Practice is to follow these steps
+<!-- Build instructions
 1. Create vignette using usethis::use_vignette("my-vignette")
-2. After making changes, then run devtools::build_vignettes()
+2. After making changes, run devtools::build_vignettes()
 3. Rebuild using devtools::install(build_vignettes = TRUE)
-4. Check that it is in the vignette environment using browseVignettes()
+4. Check with browseVignettes()
 
-If vignette does not appear in gitHub, it is possibly due to a file heirarchy problem where rendered files 
-appear in /doc instead of /inst/doc
-
-To avoid this run:
-tools::buildVignettes(dir = ".", tangle=TRUE)
-dir.create("inst/doc")
-file.copy(dir("vignettes", full.names=TRUE), "inst/doc", overwrite=TRUE)
-
-More info here: https://community.rstudio.com/t/browsevignettes-mypackage-saying-no-vignettes-found/68656/7
+If the vignette does not appear on GitHub, rendered files may have landed in /doc
+instead of /inst/doc. To fix:
+  tools::buildVignettes(dir = ".", tangle = TRUE)
+  dir.create("inst/doc")
+  file.copy(dir("vignettes", full.names = TRUE), "inst/doc", overwrite = TRUE)
 -->
 
 ```{r, include = FALSE}
@@ -34,9 +26,18 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
 # Introduction
 
-This vignette demonstrates how to use the `simulateDCE` package to simulate discrete choice experiments (DCEs). We will use a sample dataset and utility functions to generate simulated data and analyze the results.
+The `simulateDCE` package provides a workflow for simulating discrete choice
+experiment (DCE) datasets. The intended use is to evaluate the statistical
+power of a proposed experimental design *before* collecting real data: by
+simulating many artificial datasets from a design and estimating a model on
+each one, you can judge whether your design and sample size are likely to
+recover the parameters you care about.
+
+This vignette walks through the full workflow using a community-supported
+agriculture (CSA) example design that ships with the package.
 
 ```{r setup}
 library(simulateDCE)
@@ -44,11 +45,25 @@ library(rlang)
 library(formula.tools)
 ```
 
-# Inititalize Variables
+---
 
-sim_all is the highest level function in the package and will run simulations for all designs contained in the specified design folder. Accordingly, this is generally the function the user will want to call. To prepare for using this function, a hypothesized utility function with corresponding beta coefficients representing the weight of each term must be declared in R like so:
+# Step 1 — Specify the utility functions and beta coefficients
+
+A DCE asks respondents to choose between alternatives that differ on
+a set of attributes. The analyst postulates a **utility function** for
+each alternative — a linear combination of attributes weighted by beta
+coefficients. The simulation uses these functions to calculate the
+deterministic part of utility; a Gumbel-distributed error term is then
+added to generate actual choices.
+
+Utility functions are written as R formulas. The left-hand side names the
+utility term (`V.1`, `V.2`, …); the right-hand side is an expression in
+the design attributes and beta coefficients. All beta names must start
+with `b` by convention, and they must match the names in the `bcoeff` list
+exactly.
 
 ```{r initialize}
+# Beta coefficients: hypothesised true parameter values
 bcoeff <- list(
   bx1 = -0.1,
   bx2 = -0.1,
@@ -56,69 +71,177 @@ bcoeff <- list(
   bx4 = -0.025
 )
 
-# place your utility functions here
+# Utility functions — one sub-list per decision group (here just one group)
 ul <- list(u1 = list(
   v1 = V.1 ~ bx1 * alt1.x1 + bx2 * alt1.x2 + bx3 * alt1.x3 + bx4 * alt1.x4,
   v2 = V.2 ~ bx1 * alt2.x1 + bx2 * alt2.x2 + bx3 * alt2.x3 + bx4 * alt2.x4,
-  v3 = V.3 ~ -5
+  v3 = V.3 ~ -5   # opt-out alternative with fixed utility
 ))
 ```
-# Other parameters
 
-Besides these arguments the user must also specify the number of respondents in the simulated survey and the number of times to run the model. The number of respondents (resps) should be selected based on experimental design parameters, while the number of simulations (nosim) should be large enough to glean statistically significant data. It is best to use a small number for this while learning to use the package and a large number (at least 500) once the other parameters have been settled.
+The `bcoeff` list maps each coefficient name to a **fixed scalar** — the same
+value is used for every simulated respondent. This corresponds to a standard
+multinomial logit (MNL) model. See the section on random parameters below for
+the mixed logit extension.
 
-The simulation can be ran using spdesign or NGENE design files which will be contained in the design path. The design path and design type, must also be specified as strings: 
+---
+
+# Step 2 — Point to the experimental design
+
+`sim_all()` reads one or more design files from a folder and runs the
+simulation for each design it finds. You need to tell it:
+
+- **`designpath`**: the folder containing the design file(s).
+- **`designtype`**: the software used to create the design (`"spdesign"` or
+  `"ngene"`). If you omit this, the package will try to detect it
+  automatically.
 
 ```{r other}
 designpath <- system.file("extdata", "CSA", "linear", package = "simulateDCE")
-## can also be specified using relative path eg. designpath<- "Projects/CSA/Designs/"
+# For your own designs, use the folder path directly, e.g.:
+# designpath <- "Projects/CSA/Designs/"
 
-# notes <- "This design consists of different heuristics. One group did not attend the methan attribute, another group only decided based on the payment"
-
-notes <- "No Heuristics"
-
-resps <- 240 # number of respondents
-nosim <- 2 # number of simulations to run (about 500 is minimum)
-
-## design type must be either 'spdesign' or 'ngene'
-destype <- "spdesign"
+notes    <- "No Heuristics"
+resps    <- 240   # number of respondents per simulated dataset
+nosim    <- 2     # number of simulation runs (use >= 500 for real analyses)
+destype  <- "spdesign"
 ```
-# Randomness
 
-As several part of the simulation rely on random values within experimentally defined bounds, the output of a given simulation call using sim_all will vary each time it is called. Unless the seed for R's randome number generator is set like so:
+The `resps` argument controls how large each simulated sample is. The
+`nosim` argument controls how many independent datasets are generated and
+estimated; the summary statistics across those replications tell you about
+the expected performance of your design. For exploratory use a small number
+is fine; for publication-quality power analyses use at least 500.
+
+---
+
+# Step 3 — Set a random seed (optional but recommended)
+
+Several steps in the simulation draw random numbers — Gumbel errors, and
+any random parameters you specify. Setting a seed makes results
+reproducible.
 
 ```{r random}
 set.seed(3393)
 ```
 
-# Output
+---
 
-The sim_all function returns a multidimensional R list containing graphs, simulated observations and a dataframe containing sumaries of estimated b coefficients. In general these will be printed to the console, but the entire results can also be assigned to an r list object.
+# Step 4 — Run the simulation
+
+`sim_all()` ties everything together. It reads every design file in
+`designpath`, expands it across `resps` respondents, simulates choices
+`nosim` times, and (by default) estimates a logit model on each replicated
+dataset.
 
 ```{r output}
 csa <- simulateDCE::sim_all(
-  nosim = nosim, resps = resps, designtype = destype,
-  designpath = designpath, u = ul, bcoeff = bcoeff
+  nosim      = nosim,
+  resps      = resps,
+  designtype = destype,
+  designpath = designpath,
+  u          = ul,
+  bcoeff     = bcoeff
 )
 ```
 
-# Accessing the Output in R
+---
 
-The beta cofficients for each simulation are contained in a dataframe called coeffs within within a nested list structure output. A summary table showing the beta coefficient statistics is also made within each experimental design.
+# Step 5 — Inspect the results
 
-You can also save the results to disk using saveRDS(csa,file = "tests/manual-tests/csa.RDS")
+`sim_all()` returns a nested list. The top-level names correspond to each
+design file found in `designpath`. Inside each design, the key elements are:
 
+| Element | Contents |
+|---------|----------|
+| `coefs` | Data frame of estimated coefficients from every simulation run |
+| `summary` | Summary statistics (mean, SD, % significant) across runs |
 
 ```{r accessOutput}
+# Names of the design-level results
 topLevelResults <- names(csa[sapply(csa, is.list)])
-
 print(topLevelResults)
 
-## saves and prints the key results of the first expreimental design
+# Coefficients and summary for the first design
 simulationCoeff <- csa[[1]]$coefs
-coeffSummary <- csa[[1]]$summary
+coeffSummary    <- csa[[1]]$summary
 
 print(simulationCoeff)
 print(coeffSummary)
-## saveRDS(csa,file = "tests/manual-tests/csa.RDS")
 ```
+
+The `summary` table is the main diagnostic. Look at the `mean` column to
+check that the estimated coefficients are close to the true values you
+specified in `bcoeff`, and at the `% significant` column to assess power.
+
+You can persist the results with:
+```r
+saveRDS(csa, file = "results/csa_simulation.RDS")
+```
+
+---
+
+# Extension — Random parameters (mixed logit)
+
+The fixed-coefficient MNL model above assumes all respondents share the
+same preferences. In reality, preferences vary. A **mixed logit** model
+accounts for this by drawing each respondent's coefficients from a
+distribution rather than using a single value.
+
+In `simulateDCE`, you switch to random parameters simply by replacing a
+scalar in `bcoeff` with a named list that specifies the distribution.
+Supported distributions are:
+
+| `dist` value | Required parameters | Notes |
+|---|---|---|
+| `"normal"` | `mean`, `sd` | Unbounded; suitable for most attributes |
+| `"lognormal"` | `meanlog`, `sdlog` | Always positive |
+| `"neg_lognormal"` | `meanlog`, `sdlog` | Always negative; useful for cost |
+| `"uniform"` | `min`, `max` | Bounded |
+| `"triangular"` | `min`, `max`, `mode` | Bounded with a peak |
+
+Fixed and random parameters can be mixed freely within `bcoeff`.
+
+```{r random-params}
+bcoeff_mixed <- list(
+  bx1 = list(dist = "normal", mean = -0.1, sd = 0.05),  # random: normally distributed
+  bx2 = list(dist = "normal", mean = -0.1, sd = 0.05),  # random: normally distributed
+  bx3 = -0.05,                                           # fixed: same for all respondents
+  bx4 = -0.025                                           # fixed: same for all respondents
+)
+```
+
+Pass this mixed `bcoeff` to `sim_all()` exactly as before. The function
+will automatically detect the random parameters, draw respondent-level
+values from the specified distributions, and merge them into the dataset
+before computing utilities. The parameter summary printed at startup
+confirms how each coefficient has been interpreted:
+
+```{r run-mixed, eval = FALSE}
+set.seed(3393)
+
+csa_mixed <- simulateDCE::sim_all(
+  nosim      = nosim,
+  resps      = resps,
+  designtype = destype,
+  designpath = designpath,
+  u          = ul,
+  bcoeff     = bcoeff_mixed
+)
+```
+
+> **Note:** When using random parameters, the output dataset will contain an
+> extra column for each random coefficient (one draw per respondent). These
+> columns are visible in the raw simulated data but are not part of the
+> estimated model output.
+
+You can also call `make_rand_params()` directly to inspect the draws
+before running a full simulation:
+
+```{r make-rand}
+draws <- make_rand_params(bcoeff_mixed, n_resp = 10)
+print(draws)
+```
+
+Each row is one respondent. Fixed parameters repeat the same value;
+random parameters vary across rows according to the chosen distribution.

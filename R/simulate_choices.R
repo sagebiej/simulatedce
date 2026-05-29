@@ -30,7 +30,7 @@
 #' )
 #' simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
 #'
-simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(),  preprocess_function = NULL) { # the part in dataset that needs to be repeated in each run
+simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1), manipulations = list(), preprocess_function = NULL, verbose = 1) {
 
 
 
@@ -51,10 +51,8 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
       if (!is.null(prepro_data) && (!is.data.frame(prepro_data) || !"ID" %in% names(prepro_data))) {
         stop("The output of `preprocess_function` must be a data.frame with a column named 'ID'.")
       }
-      message("\n Preprocess function has been executed.\n")
+      vmsg(verbose, 2, "\n Preprocess function has been executed.\n")
     }
-  } else {
-    message("\n No preprocess function provided. Proceeding without additional preprocessing.\n")
   }
 
 
@@ -83,7 +81,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     data <- dplyr::left_join(data, rand_params, by = "ID")
   }
 
-  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+  vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
 
 ### new functions to calculate utility
   compile_one <- function(fm) {
@@ -109,11 +107,11 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   n <- seq_along(1:length(utility[[1]])) # number of utility functions
 
 
-  message("\n dataset preprossed_data exists: ", exists("prepro_data"), "\n")
+  vmsg(verbose, 3, "\n dataset preprossed_data exists: ", exists("prepro_data"), "\n")
 
   if (exists("prepro_data")) data <- dplyr::left_join(data, prepro_data, by = "ID")
 
-  message("\n decisiongroups exists: ", length(decisiongroups) > 2)
+  vmsg(verbose, 3, "\n decisiongroups exists: ", length(decisiongroups) > 2)
 
   if (length(decisiongroups) > 2) { ### create a new variable to classify decision groups.
 
@@ -123,7 +121,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
       include.lowest = TRUE
     )))
 
-    message(
+    vmsg(verbose, 3,
       "\nGroup counts:\n",
       paste(utils::capture.output(print(table(data$group))), collapse = "\n")
     )
@@ -143,8 +141,7 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   data <- data %>%
     dplyr::group_by(ID) %>%
     dplyr::mutate(!!!manipulations)
-  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
-
+  vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
 
   tictoc::tic("for each group calculate utility")
 
@@ -187,13 +184,10 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     dplyr::mutate(CHOICE = max.col(.[, grep("U_", names(.))]))
 
 
-  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
-
-  message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
-
-  message("\n data has been created \n")
-
-  message(
+  vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
+  vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
+  vmsg(verbose, 3, "\n data has been created \n")
+  vmsg(verbose, 3,
     "\nFirst few observations of the dataset\n",
     paste(utils::capture.output(utils::head(data)), collapse = "\n"),
     "\n\n"

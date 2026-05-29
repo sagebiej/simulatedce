@@ -55,7 +55,8 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
                        decisiongroups = c(0, 1), manipulations = list(), estimate, chunks = 1,
                        utility_transform_type = "simple", mode = c("parallel", "sequential"),
                        preprocess_function = NULL,
-                       savefile = NULL) {
+                       savefile = NULL,
+                       verbose = 1) {
   mode <- match.arg(mode)
 
   #################################################
@@ -106,10 +107,10 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
       save_dir <- dirname(savefile)
       if (!dir.exists(save_dir)) {
         dir.create(save_dir, recursive = TRUE)
-        message("Directory created: ", save_dir)
+        vmsg(verbose, 2, "Directory created: ", save_dir)
       }
       qs2::qs_save(object, paste0(savefile, "_", basename(designname), ".qs"))
-      message("Output saved to: ", paste0(savefile, "_", basename(designname), ".qs"))
+      vmsg(verbose, 2, "Output saved to: ", paste0(savefile, "_", basename(designname), ".qs"))
     }
   }
 
@@ -121,7 +122,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   #### Print some messages ####
 
   ## one-liner ---------------------------------------------------------------
-  message(
+  vmsg(verbose, 2,
     "\nUtility function used in simulation (true utility):\n",
     paste(utils::capture.output(print(u)), collapse = "\n")
   )
@@ -164,7 +165,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   }
 
 
-  sim_data <- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, preprocess_function = preprocess_function), mode = mode)
+  sim_data <- 1:no_sim %>% switchmap(~ simulate_choices(datadet, utility = u, bcoeff = bcoeff, decisiongroups = decisiongroups, manipulations = manipulations, preprocess_function = preprocess_function, verbose = verbose), mode = mode)
 
 
   ### start estimation
@@ -228,8 +229,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
       stop("Invalid utility_transform_type. Use 'simple' or 'exact'.")
     )
 
-    ## message-based version ---------------------------------------------------
-    message(
+    vmsg(verbose, 2,
       "\nTransformed utility function (type: ", utility_transform_type, "):\n",
       paste(utils::capture.output(print(mnl_U)), collapse = "\n")
     )
@@ -276,7 +276,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
               data = sim_data[[.x]]
             )
           )
-        message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+        vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
 
         chunkfilename <- paste0(dname, "_tmp_", i, ".qs")
 
@@ -285,8 +285,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
 
         gc()
 
-        ## message-based progress note --------------------------------------------
-        message(sprintf("Results for chunk %s from %s to %s", i, start_point, end_point))
+        vmsg(verbose, 2, sprintf("Results for chunk %s from %s to %s", i, start_point, end_point))
 
 
         # Update the start point for the next chunk
@@ -320,7 +319,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
           data = .x
         )
       )
-      message( utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)) )
+      vmsg(verbose, 3, utils::capture.output(tictoc::toc(log = FALSE, quiet = TRUE)))
     }
 
 
@@ -343,7 +342,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
 
 
     ## ----- summary table -----------------------------------------------------
-    message(
+    vmsg(verbose, 1,
       "\nSummary table:\n",
       paste(
         utils::capture.output(
@@ -354,7 +353,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
     )
 
     ## ----- power results -----------------------------------------------------
-    message(
+    vmsg(verbose, 1,
       "\nPower results:\n",
       paste(
         utils::capture.output(print(output[["power"]])),

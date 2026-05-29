@@ -1,3 +1,12 @@
+#' Conditionally emit a message based on verbose level
+#' @param verbose Current verbose setting (integer 0–3)
+#' @param level Minimum verbose level required to print this message
+#' @param ... Arguments passed to message()
+#' @noRd
+vmsg <- function(verbose, level, ...) {
+  if (verbose >= level) message(...)
+}
+
 plot_multi_histogram <- function(df, feature, label_column, hist = FALSE) { # function to create nice multi histograms, taken somewhere from the web
   plt <- ggplot2::ggplot(df, ggplot2::aes(x = eval(parse(text = feature)), fill = eval(parse(text = label_column)))) +
     ggplot2::geom_density(alpha = 0.5) +

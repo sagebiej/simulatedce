@@ -11,7 +11,8 @@ simulate_choices(
   bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
-  preprocess_function = NULL
+  preprocess_function = NULL,
+  verbose = 1
 )
 }
 \arguments{
