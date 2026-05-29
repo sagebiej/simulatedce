@@ -8,6 +8,21 @@
 #' @param manipulations A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups
 #' @param preprocess_function = NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.
 #' @return a data.frame that includes simulated choices and a design
+#' @param verbose Integer controlling how much progress information is printed
+#'   to the console (via \code{message()}). Levels are cumulative: each level
+#'   also prints everything emitted by the levels below it.
+#'   \describe{
+#'     \item{\code{0}}{Silent. No progress messages are emitted.}
+#'     \item{\code{1}}{Key results only: the parameter specification summary and
+#'       total run time, plus the final summary and power tables when models are
+#'       estimated.}
+#'     \item{\code{2}}{Adds informational progress: the true and transformed
+#'       utility functions, per-chunk progress, notification that a preprocess
+#'       function ran, and the paths where results are saved.}
+#'     \item{\code{3}}{Adds low-level debugging detail: step-by-step timings and
+#'       internal state checks (e.g. dataset creation and decision-group setup).}
+#'   }
+#'   Defaults to \code{1}.
 #' @export
 #' @import data.table
 #' @examples
