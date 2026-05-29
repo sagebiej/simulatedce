@@ -264,6 +264,76 @@ test_that("missing utility group throws error", {
 })
 
 
+#––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––#
+### RANDOM PARAMETER TESTS
+
+df_rand <- data.frame(
+  ID      = rep(1:20, each = 4),
+  price   = rep(c(10, 10, 20, 20), 20),
+  quality = rep(c(1, 2, 1, 2), 20)
+)
+
+ut_rand <- list(
+  u1 = list(
+    v1 = V.1 ~ bprice * price + bquality * quality,
+    v2 = V.2 ~ 0
+  )
+)
+
+beta_mixed <- list(
+  bprice   = list(dist = "normal", mean = -0.5, sd = 0.2),
+  bquality = 0.8
+)
+
+test_that("mixed bcoeff runs without error", {
+  expect_no_error(
+    simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  )
+})
+
+test_that("mixed path returns a data.frame with expected columns", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expect_s3_class(res, "data.frame")
+  expect_true(all(c("ID", "price", "quality", "bprice", "bquality","V_1", "V_2", "CHOICE") %in% names(res)))
+})
+
+test_that("random parameter column is present and numeric", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expect_true("bprice" %in% names(res))
+  expect_type(res$bprice, "double")
+})
+
+test_that("random parameter varies across respondents", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  # one draw per respondent — values should not all be identical
+  draws_per_resp <- tapply(res$bprice, res$ID, function(x) x[1])
+  expect_gt(length(unique(draws_per_resp)), 1)
+})
+
+test_that("random parameter is constant within a respondent", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  # all rows for the same ID should share the same bprice draw
+  all_constant <- tapply(res$bprice, res$ID, function(x) length(unique(x)) == 1)
+  expect_true(all(all_constant))
+})
+
+test_that("fixed parameter in mixed bcoeff is identical for all respondents", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expect_true("bquality" %in% names(res))
+  expect_true(all(res$bquality == 0.8))
+})
+
+test_that("V_1 matches manual calculation using per-row bprice and bquality", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expected_V1 <- with(res, bprice * price + bquality * quality)
+  expect_equal(res$V_1, expected_V1)
+})
+
+test_that("CHOICE is in valid range for mixed path", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expect_true(all(res$CHOICE %in% c(1L, 2L)))
+})
+
 test_that("group in data not covered by utility triggers error", {
   df10 <- data.frame(
     ID = 1:10,
@@ -292,3 +362,40 @@ test_that("group in data not covered by utility triggers error", {
   )
 })
 
+
+#── additional random parameter tests ──────────────────────────────────────────
+
+test_that("all-random bcoeff runs without error", {
+  beta_all_rand <- list(
+    bprice   = list(dist = "normal",      mean = -0.5, sd = 0.2),
+    bquality = list(dist = "neg_lognormal", meanlog = 0, sdlog = 0.3)
+  )
+  expect_no_error(simulate_choices(df_rand, ut_rand, bcoeff = beta_all_rand))
+})
+
+test_that("neg_lognormal random param is always negative", {
+  beta <- list(
+    bprice   = list(dist = "neg_lognormal", meanlog = 0, sdlog = 0.3),
+    bquality = 0.8
+  )
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta)
+  expect_true(all(res$bprice < 0))
+})
+
+test_that("number of unique random draws equals number of respondents", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  n_unique_draws <- length(unique(tapply(res$bprice, res$ID, `[`, 1)))
+  expect_equal(n_unique_draws, length(unique(res$ID)))
+})
+
+test_that("fixed-only bcoeff does not add coefficient columns to output", {
+  beta_fixed <- list(bprice = -0.5, bquality = 0.8)
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_fixed)
+  expect_false("bprice"   %in% names(res))
+  expect_false("bquality" %in% names(res))
+})
+
+test_that("output row count matches input for mixed bcoeff", {
+  res <- simulate_choices(df_rand, ut_rand, bcoeff = beta_mixed)
+  expect_equal(nrow(res), nrow(df_rand))
+})

@@ -35,7 +35,27 @@ sim_choice(
 
 \item{destype}{Deprecated. Use designtype instead.}
 
-\item{bcoeff}{List of initial coefficients for the utility function. List content/length can vary based on application. I ideally begins (but does not have to) with b and need be the same as those entered in the utility functions}
+\item{bcoeff}{Named list of parameter specifications.
+Each element is either:
+\describe{
+\item{A numeric scalar}{Represents a fixed coefficient (same for all respondents).}
+\item{A named list}{Defines a random distribution. Must contain a \code{dist} element.}
+}
+For random distributions, use:
+\describe{
+\item{\code{"normal"}}{\code{mean}, \code{sd}:
+draws from \eqn{N(\mu, \sigma)}.}
+\item{\code{"lognormal"}}{\code{meanlog}, \code{sdlog}:
+draws from \eqn{\exp(N(\mu_{log}, \sigma_{log}))}.
+All values are positive.}
+\item{\code{"neg_lognormal"}}{\code{meanlog}, \code{sdlog}:
+draws from \eqn{-\exp(N(\mu_{log}, \sigma_{log}))}.
+All values are negative. Useful for price coefficients.}
+\item{\code{"uniform"}}{\code{min}, \code{max}:
+draws from \eqn{U(\min, \max)}.}
+\item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
+draws from a triangular distribution with given bounds and mode.}
+}}
 
 \item{decisiongroups}{A vector showing how decision groups are numerically distributed}
 

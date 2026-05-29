@@ -31,8 +31,7 @@ Imports:
     furrr,
     qs2,
     data.table,
-    glue,
-    randtoolbox
+    glue
 Suggests: 
     knitr,
     testthat (>= 3.0.0),

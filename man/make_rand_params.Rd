@@ -4,37 +4,16 @@
 \alias{make_rand_params}
 \title{Generate random parameter draws from simple distribution specifications}
 \usage{
-make_rand_params(bcoef, n_resp, respondent_ids = NULL)
+make_rand_params(bcoeff, n_resp, respondent_ids = NULL)
 }
 \arguments{
-\item{bcoef}{Named list of parameter specifications.
-Each element is itself a named list with:
+\item{bcoeff}{Named list of parameter specifications.
+Each element is either:
 \describe{
-\item{\code{dist}}{Character. Distribution type: \code{"normal"},
-\code{"lognormal"}, \code{"neg_lognormal"}, \code{"uniform"},
-\code{"triangular"}, or \code{"fixed"}.}
-\item{\code{...}}{Distribution-specific moment parameters (see Details).}
-}}
-
-\item{n_resp}{Positive integer. Number of respondents.}
-
-\item{respondent_ids}{Optional vector of length \code{n_resp} for the
-\code{ID} column. Defaults to \code{1:n_resp}.}
+\item{A numeric scalar}{Represents a fixed coefficient (same for all respondents).}
+\item{A named list}{Defines a random distribution. Must contain a \code{dist} element.}
 }
-\value{
-A data frame with \code{n_resp} rows and columns \code{ID} plus
-one column per parameter in \code{bcoef}.
-}
-\description{
-A convenience wrapper that generates individual-level random coefficients
-from a simple list of distribution specifications.
-Unlike \code{draw_rand_params}, which uses an apollo-style formula
-interface, this function lets you specify each parameter's distribution
-and moments directly.
-}
-\details{
-Supported distributions and their required moment parameters:
-
+For random distributions, use:
 \describe{
 \item{\code{"normal"}}{\code{mean}, \code{sd}:
 draws from \eqn{N(\mu, \sigma)}.}
@@ -48,23 +27,30 @@ All values are negative. Useful for price coefficients.}
 draws from \eqn{U(\min, \max)}.}
 \item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
 draws from a triangular distribution with given bounds and mode.}
-\item{\code{"fixed"}}{\code{value}: no heterogeneity;
-every respondent gets the same value.}
+}}
+
+\item{n_resp}{Positive integer. Number of respondents.}
+
+\item{respondent_ids}{Optional vector of length \code{n_resp} for the
+\code{ID} column. Defaults to \code{1:n_resp}.}
 }
+\value{
+A data frame with \code{n_resp} rows and columns \code{ID} plus
+one column per parameter in \code{bcoeff}.
+}
+\description{
+Generates individual-level random coefficients from a simple list of
+distribution specifications. Used internally by \code{\link{simulate_choices}}
+when any element of \code{bcoeff} is a distribution spec list.
 }
 \examples{
-bcoef <- list(
+bcoeff <- list(
   bprice = list(dist = "normal", mean = -0.5, sd = 0.2),
-  bqual  = list(dist = "lognormal", meanlog = -1, sdlog = 0.3),
-  benv   = list(dist = "fixed", value = 0.5)
+  bqual  = 0.8
 )
 
 set.seed(42)
-draws <- make_rand_params(bcoef, n_resp = 100)
+draws <- make_rand_params(bcoeff, n_resp = 100)
 head(draws)
 
-}
-\seealso{
-\code{draw_rand_params} for a more flexible, formula-based
-interface.
 }

@@ -308,3 +308,89 @@ ul <- list(
 )
 
 ## comprehensive_design_test(nosim=nosim, resps=resps, destype=destype, designpath=designpath, ul = ul, bcoeff = bcoeff, decisiongroups = dgFeed)
+
+#── random parameter tests for sim_all ────────────────────────────────────────
+
+designpath_rbook <- system.file("extdata", "Rbook", package = "simulateDCE")
+
+bcoeff_mixed <- list(
+  bsq       = 0.00,
+  bredkite  = list(dist = "normal", mean = -0.05, sd = 0.1),
+  bdistance = 0.50,
+  bcost     = list(dist = "neg_lognormal", meanlog = -3, sdlog = 0.3),
+  bfarm2    = 0.25,
+  bfarm3    = 0.50,
+  bheight2  = 0.25,
+  bheight3  = 0.50
+)
+
+ul_rbook <- list(u1 = list(
+  v1 = V.1 ~ bsq * alt1.sq,
+  v2 = V.2 ~ bfarm2 * alt2.farm2 + bfarm3 * alt2.farm3 + bheight2 * alt2.height2 +
+             bheight3 * alt2.height3 + bredkite * alt2.redkite +
+             bdistance * alt2.distance + bcost * alt2.cost,
+  v3 = V.3 ~ bfarm2 * alt3.farm2 + bfarm3 * alt3.farm3 + bheight2 * alt3.height2 +
+             bheight3 * alt3.height3 + bredkite * alt3.redkite +
+             bdistance * alt3.distance + bcost * alt3.cost
+))
+
+test_that("sim_all accepts mixed bcoeff without error", {
+  expect_no_error(
+    sim_all(
+      nosim = 2, resps = 20, designtype = "spdesign",
+      designpath = designpath_rbook,
+      u = ul_rbook, bcoeff = bcoeff_mixed,
+      estimate = FALSE
+    )
+  )
+})
+
+test_that("sim_all rejects bcoeff element that is a list without dist", {
+  bad_bcoeff <- list(
+    bsq      = 0,
+    bredkite = list(mean = -0.05, sd = 0.1),  # missing dist
+    bdistance = 0.5, bcost = -0.05, bfarm2 = 0.25,
+    bfarm3 = 0.5, bheight2 = 0.25, bheight3 = 0.5
+  )
+  expect_error(
+    sim_all(
+      nosim = 2, resps = 20, designtype = "spdesign",
+      designpath = designpath_rbook,
+      u = ul_rbook, bcoeff = bad_bcoeff, estimate = FALSE
+    ),
+    "dist"
+  )
+})
+
+test_that("sim_all emits parameter summary message", {
+  expect_message(
+    sim_all(
+      nosim = 2, resps = 20, designtype = "spdesign",
+      designpath = designpath_rbook,
+      u = ul_rbook, bcoeff = bcoeff_mixed,
+      estimate = FALSE
+    ),
+    "Parameter specification"
+  )
+})
+
+test_that("sim_all parameter message labels fixed and random correctly", {
+  expect_message(
+    sim_all(
+      nosim = 2, resps = 20, designtype = "spdesign",
+      designpath = designpath_rbook,
+      u = ul_rbook, bcoeff = bcoeff_mixed,
+      estimate = FALSE
+    ),
+    "fixed"
+  )
+  expect_message(
+    sim_all(
+      nosim = 2, resps = 20, designtype = "spdesign",
+      designpath = designpath_rbook,
+      u = ul_rbook, bcoeff = bcoeff_mixed,
+      estimate = FALSE
+    ),
+    "normal"
+  )
+})

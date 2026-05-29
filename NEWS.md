@@ -1,3 +1,24 @@
+# simulateDCE 0.3.3
+
+## Major changes
+* **Mixed logit / random parameters**: `bcoeff` in `simulate_choices()`, `sim_choice()`,
+  and `sim_all()` now accepts random distribution specifications alongside fixed scalars.
+  Each parameter can be a numeric scalar (fixed) or a named list with a `dist` element
+  (`"normal"`, `"lognormal"`, `"neg_lognormal"`, `"uniform"`, `"triangular"`).
+  Respondent-level draws are generated via the new `make_rand_params()` function and
+  merged into the dataset before utility calculation.
+
+## New functions
+* `make_rand_params()`: generates a respondent-level data frame of parameter draws from
+  a `bcoeff` specification list.
+
+## Other changes
+* `sim_all()` now prints a parameter summary at startup listing each coefficient with its
+  type and moments (fixed value, or distribution name and parameters).
+* Removed unused `randtoolbox` dependency.
+* Documentation for `bcoeff` is now centralised in `make_rand_params()` and inherited
+  by `simulate_choices()`, `sim_choice()`, and `sim_all()` via `@inheritParams`.
+
 # simulateDCE 0.3.2
 
 ## Bug fixes
