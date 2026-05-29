@@ -340,6 +340,12 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
 
     output[["metainfo"]] <- c(Path = designfile, NoSim = no_sim, NoResp = respondents)
 
+    ## Persist the information aggregateResults() needs so that saved files are
+    ## self-describing. This allows aggregateResults(fromfolder = ) to merge
+    ## results from independent runs (e.g. designs simulated at different times).
+    output[["bcoeff"]] <- bcoeff
+    output[["designname"]] <- basename(designname)
+
 
     ## ----- summary table -----------------------------------------------------
     vmsg(verbose, 1,

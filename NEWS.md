@@ -12,6 +12,13 @@
 * `make_rand_params()`: generates a respondent-level data frame of parameter draws from
   a `bcoeff` specification list.
 
+## Bug fixes
+* `aggregateResults(fromfolder = )` now works as documented: it reads the saved `.qs`
+  design outputs from a folder and merges them. Previously the loaded files were
+  discarded. Saved design outputs are now self-describing (each stores its `bcoeff` and
+  `designname`), so results from independent runs can be combined later (e.g. simulate
+  three designs now and add a fourth afterwards).
+
 ## Other changes
 * `sim_all()` now prints a parameter summary at startup listing each coefficient with its
   type and moments (fixed value, or distribution name and parameters).

@@ -7,9 +7,9 @@
 aggregateResults(all_designs, fromfolder = NULL)
 }
 \arguments{
-\item{all_designs}{A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice}
+\item{all_designs}{A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice. Ignored when \code{fromfolder} is supplied.}
 
-\item{fromfolder}{A folder from where to read simulations. If provided, the function will read all .qs files from the folder and process them. The files are usually saved by your earlier work and should be qs files as they are more efficient that rds files.}
+\item{fromfolder}{A folder from where to read simulations. If provided, the function reads all \code{.qs} files from the folder (each one a single design output saved by \code{sim_choice()}/\code{sim_all()} via \code{savefile}) and merges them. This is useful to combine results from independent runs, e.g. when you simulated three designs earlier and now want to add a fourth. Each saved file stores its own \code{designname} and \code{bcoeff}, so the folder is self-describing.}
 }
 \value{
 A list with aggregated results including summary, coefficients, graphs, and power.

@@ -2,17 +2,44 @@
 #'
 #' Processes the simulation results to extract summaries, coefficients, and graphs.
 #'
-#' @param all_designs A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice
-#' @param fromfolder A folder from where to read simulations. If provided, the function will read all .qs files from the folder and process them. The files are usually saved by your earlier work and should be qs files as they are more efficient that rds files.
+#' @param all_designs A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice. Ignored when `fromfolder` is supplied.
+#' @param fromfolder A folder from where to read simulations. If provided, the function reads all `.qs` files from the folder (each one a single design output saved by `sim_choice()`/`sim_all()` via `savefile`) and merges them. This is useful to combine results from independent runs, e.g. when you simulated three designs earlier and now want to add a fourth. Each saved file stores its own `designname` and `bcoeff`, so the folder is self-describing.
 #' @return A list with aggregated results including summary, coefficients, graphs, and power.
 #' @export
 aggregateResults <- function(all_designs, fromfolder = NULL) {
   if (!is.null(fromfolder)) {
     if (!dir.exists(fromfolder)) stop("Folder from where to read simulations does not exist.")
 
-    designs <- list.files(path = fromfolder, pattern = "*.qs", full.names = TRUE)
+    designs <- list.files(path = fromfolder, pattern = "\\.qs$", full.names = TRUE)
+    if (length(designs) == 0) {
+      stop("No '.qs' files found in '", fromfolder, "'.")
+    }
 
-    purrr::map(designs, qs2::qs_read) %>% stats::setNames(basename(designs))
+    all_designs <- purrr::map(designs, qs2::qs_read)
+
+    ## Each saved design output stores its own `designname` and `bcoeff`
+    ## (see sim_choice()), so a folder of independent runs is self-describing.
+    ## Fall back to the file name for designs saved before this was added.
+    designname <- purrr::imap_chr(all_designs, function(d, i) {
+      if (!is.null(d[["designname"]])) d[["designname"]] else stringr::str_remove(basename(designs[[i]]), "\\.qs$")
+    })
+    all_designs <- stats::setNames(all_designs, designname)
+
+    bcoeff <- purrr::detect(all_designs, ~ !is.null(.x[["bcoeff"]]))[["bcoeff"]]
+    if (is.null(bcoeff)) {
+      warning(
+        "None of the saved files contain `bcoeff`; the `truepar` column will be NA. ",
+        "Re-run the simulation with a newer version of the package to store it."
+      )
+    }
+
+    ## Rebuild the metadata aggregateResults() expects further down so that the
+    ## fromfolder path behaves like the in-memory path used by sim_all().
+    all_designs[["arguements"]] <- list(
+      "Beta values" = bcoeff,
+      "Reshape Type" = "auto",
+      "designname"   = unname(designname)
+    )
   }
 
 
