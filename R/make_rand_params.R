@@ -69,17 +69,16 @@ make_rand_params <- function(bcoef, n_resp, respondent_ids = NULL) {
   }
 
   supported <- c("normal", "lognormal", "neg_lognormal",
-                  "uniform", "triangular")
+                  "uniform", "triangular", "fixed")
 
   out <- data.frame(ID = respondent_ids)
 
   for (nm in names(bcoeff)) {
     spec <- bcoeff[[nm]]
 
-    # Handle fixed numeric parameters
-    if (is.numeric(spec) && length(spec) == 1) {
-      out[[nm]] <- rep(spec, n_resp)
-      next
+    # 1. Standardize: If it's a scalar, wrap it into a list so the switch works
+    if (!is.list(spec)) {
+      spec <- list(dist = "fixed", value = spec)
     }
 
     if (!is.list(spec) || is.null(spec[["dist"]]))
@@ -95,6 +94,11 @@ make_rand_params <- function(bcoef, n_resp, respondent_ids = NULL) {
       ))
 
     out[[nm]] <- switch(dist,
+
+      "fixed" = {
+        rep(spec[["value"]], n_resp)
+        },
+
       "normal" = {
         check_moments(spec, nm, c("mean", "sd"))
         stats::rnorm(n_resp, mean = spec[["mean"]], sd = spec[["sd"]])
