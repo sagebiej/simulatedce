@@ -48,6 +48,7 @@ plain_mnl <- function(data, spec) {
   list(
     coefficients = stats::setNames(fit$par, mm$terms),
     pvalues = stats::setNames(2 * stats::pnorm(-abs(fit$par / se)), mm$terms),
+    se = stats::setNames(se, mm$terms),
     converged = fit$convergence == 0,
     model = fit
   )
@@ -215,7 +216,7 @@ test_that("a from-scratch conditional logit agrees with the mixl backend", {
 
   a <- with_mixl$summaryall
   b <- with_own$summaryall
-  keep <- !grepl("^rob_pval0_", a$parname)
+  keep <- a$quantity == "estimate"
 
   expect_equal(a$parname, b$parname)
   expect_equal(a$d.mean[keep], b$d.mean[keep], tolerance = 1e-4)

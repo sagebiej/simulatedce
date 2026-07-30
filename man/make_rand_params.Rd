@@ -4,7 +4,7 @@
 \alias{make_rand_params}
 \title{Generate random parameter draws from simple distribution specifications}
 \usage{
-make_rand_params(bcoeff, n_resp, respondent_ids = NULL)
+make_rand_params(bcoeff, n_resp, respondent_ids = NULL, correlation = NULL)
 }
 \arguments{
 \item{bcoeff}{Named list of parameter specifications.
@@ -39,6 +39,20 @@ mean and standard deviation each specification implies.}
 
 \item{respondent_ids}{Optional vector of length \code{n_resp} for the
 \code{ID} column. Defaults to \code{1:n_resp}.}
+
+\item{correlation}{Optional correlation matrix over some or all of the random
+coefficients, with row and column names saying which. \code{\link[=correlate]{correlate()}} builds one
+from pairwise values. Coefficients it does not mention are drawn independently
+as before.
+
+Correlation is imposed with a Gaussian copula: correlated standard normals are
+drawn, turned into uniforms, and pushed through each coefficient's own
+marginal. That works whatever the marginals are, so a lognormal price
+coefficient can be correlated with a triangular quality coefficient. The
+number you give is the correlation of the underlying normals. For normal
+marginals that is exactly the correlation of the coefficients; for the others
+it is close but not identical, because the transformation is not linear. The
+rank correlation is preserved exactly in every case.}
 }
 \value{
 A data frame with \code{n_resp} rows and columns \code{ID} plus

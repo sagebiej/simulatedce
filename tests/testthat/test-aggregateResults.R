@@ -126,12 +126,56 @@ test_that("summaryall has one row per estimated quantity and a truepar per coeff
 
   expect_s3_class(sa, "data.frame")
   expect_true(all(c("parname", "truepar") %in% names(sa)))
-  # one row per coefficient plus one per robust p value
-  expect_equal(nrow(sa), 2 * length(bcoeff))
-  # the coefficient rows carry the true value, the p value rows do not
-  coef_rows <- !grepl("^rob_pval0_", sa$parname)
-  expect_false(any(is.na(sa$truepar[coef_rows])))
+  # one row per coefficient, one per robust p value, one per standard error
+  expect_equal(nrow(sa), 3 * length(bcoeff))
+
+  # only the coefficient rows carry a true value and the accuracy measures
+  coef_rows <- sa$quantity == "estimate"
   expect_setequal(sa$parname[coef_rows], c("bpreis", "blade", "bwarte"))
+  expect_false(any(is.na(sa$truepar[coef_rows])))
+  expect_false(any(is.na(sa$bayeffdesignconstr.bias[coef_rows])))
+  expect_true(all(is.na(sa$bayeffdesignconstr.bias[!coef_rows])))
+})
+
+test_that("bias, rmse and coverage are reported for every coefficient", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 30, resps = 200, designpath = designpath,
+    u = ul, bcoeff = bcoeff, mode = "sequential", estimate = TRUE,
+    seed = 5, verbose = 0
+  ))
+  sa <- res[["summaryall"]]
+  coef_rows <- sa$quantity == "estimate"
+
+  for (d in res[["arguments"]][["designname"]]) {
+    bias <- sa[[paste0(d, ".bias")]][coef_rows]
+    rmse <- sa[[paste0(d, ".rmse")]][coef_rows]
+    cover <- sa[[paste0(d, ".coverage")]][coef_rows]
+
+    # an unbiased estimator: the bias should be small relative to the spread
+    expect_true(all(abs(bias) < rmse), info = d)
+    expect_true(all(rmse > 0), info = d)
+    # coverage of a 95% interval, allowing for 30 runs of Monte Carlo error
+    expect_true(all(cover > 70 & cover <= 100), info = d)
+  }
+})
+
+test_that("the mean standard error is close to the spread of the estimates", {
+  skip_on_cran()
+  ## If the two disagree badly the reported standard errors are not to be trusted,
+  ## which is a thing worth being able to see.
+  res <- suppressMessages(sim_all(
+    nosim = 40, resps = 250, designpath = designpath,
+    u = ul, bcoeff = bcoeff, mode = "sequential", estimate = TRUE,
+    seed = 6, verbose = 0
+  ))
+  s <- res[["effconstrsmall"]][["summary"]]
+
+  for (p in c("bpreis", "blade", "bwarte")) {
+    spread <- s[paste0("est_", p), "sd"]
+    reported <- s[paste0("se_", p), "mean"]
+    expect_equal(reported, spread, tolerance = 0.25, info = p)
+  }
 })
 
 test_that("truepar matches the beta values that were fed in", {

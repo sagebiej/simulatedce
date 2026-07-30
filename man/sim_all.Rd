@@ -18,6 +18,7 @@ sim_all(
   estimate = TRUE,
   chunks = 1,
   model = c("mnl", "mixed"),
+  correlation = NULL,
   estimator = "mixl",
   n_draws = 200,
   sets_per_resp = NULL,
@@ -116,6 +117,12 @@ logit can express are supported: \code{normal}, \code{lognormal} and \code{neg_l
 Note that the estimated parameters are then the distribution's own parameters
 rather than its moments, so a \code{lognormal} reports \code{meanlog} and \code{sdlog}.
 \code{truepar} follows suit.}
+
+\item{correlation}{Optional correlation matrix over the random coefficients. See
+\code{\link[=make_rand_params]{make_rand_params()}} and \code{\link[=correlate]{correlate()}}. The correlation enters the data
+generating process; estimating it is a separate matter, and \code{model = "mixed"}
+fits independent random parameters whatever \code{correlation} says, so the gap
+between the two is exactly what you would be measuring.}
 
 \item{estimator}{Which model fitter to use. \code{"mixl"} by default, which handles
 both \code{model} settings. Pass a function of your own to fit something else and

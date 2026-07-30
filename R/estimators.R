@@ -16,6 +16,10 @@
 #'   \item{`pvalues`}{A named numeric vector of two-sided p values, with the same
 #'     names as `coefficients`. Use `NA` where you have none; power will then be
 #'     reported as if the coefficient were not significant.}
+#'   \item{`se`}{Optional. A named numeric vector of standard errors. Supply it and
+#'     you get coverage, the share of runs whose 95% interval contains the true
+#'     value, alongside bias and root mean squared error. Leave it out and coverage
+#'     is reported as `NA`.}
 #'   \item{`converged`}{A single `TRUE` or `FALSE`. A run that reports `FALSE`, or
 #'     that returns any non-finite estimate, is left out of the summaries and
 #'     counted in `$convergence`.}
@@ -72,6 +76,7 @@
 #'   list(
 #'     coefficients = stats::setNames(fit$par, mm$terms),
 #'     pvalues = stats::setNames(2 * stats::pnorm(-abs(fit$par / se)), mm$terms),
+#'     se = stats::setNames(se, mm$terms),
 #'     converged = fit$convergence == 0,
 #'     model = fit
 #'   )
@@ -153,7 +158,7 @@ estimator_mixl <- function(data, spec) {
   table <- tryCatch(summary(fit)[["coefTable"]], error = function(e) NULL)
   if (is.null(table) || nrow(table) == 0) {
     return(list(
-      coefficients = numeric(0), pvalues = numeric(0),
+      coefficients = numeric(0), pvalues = numeric(0), se = numeric(0),
       converged = FALSE, model = fit
     ))
   }
@@ -161,6 +166,8 @@ estimator_mixl <- function(data, spec) {
   list(
     coefficients = stats::setNames(table[["est"]], rownames(table)),
     pvalues = stats::setNames(table[["rob_pval0"]], rownames(table)),
+    ## the robust standard error, to match the robust p value above
+    se = stats::setNames(table[["robse"]], rownames(table)),
     converged = isTRUE(as.integer(fit[["code"]]) == 0L),
     model = fit
   )
@@ -286,6 +293,24 @@ check_estimator_result <- function(res, run) {
       call. = FALSE
     )
   }
+  if (!is.null(res$se)) {
+    if (!is.numeric(res$se) || is.null(names(res$se))) {
+      stop(
+        "`se` from the estimator must be a named numeric vector, or absent, not ",
+        describe_value(res$se), where, ".",
+        call. = FALSE
+      )
+    }
+    if (!all(names(res$coefficients) %in% names(res$se))) {
+      stop(
+        "`se` from the estimator is missing ",
+        and_list(paste0("`", setdiff(names(res$coefficients), names(res$se)), "`")),
+        where, ". Give one standard error per coefficient, or leave `se` out.",
+        call. = FALSE
+      )
+    }
+  }
+
   if (!is.logical(res$converged) || length(res$converged) != 1L) {
     stop(
       "`converged` from the estimator must be a single TRUE or FALSE, not ",

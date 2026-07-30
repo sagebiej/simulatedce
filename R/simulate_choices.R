@@ -60,7 +60,7 @@
 #'
 simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0, 1),
                              manipulations = list(), preprocess_function = NULL,
-                             keep_utilities = TRUE, verbose = 1) {
+                             correlation = NULL, keep_utilities = TRUE, verbose = 1) {
   if (!missing(setspp)) {
     warning(
       "`setspp` is deprecated and ignored. ",
@@ -86,6 +86,14 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   ## global environment, so user-defined helper functions keep working.
   coef_env <- new.env(parent = globalenv())
 
+  if (!is.null(correlation) && !has_random_params(bcoeff)) {
+    stop(
+      "`correlation` was given but every entry of `bcoeff` is a fixed number. ",
+      "Only random coefficients can be correlated.",
+      call. = FALSE
+    )
+  }
+
   if (has_random_params(bcoeff)) {
     clash <- intersect(names(bcoeff), names(data))
     if (length(clash) > 0) {
@@ -100,7 +108,8 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
     respondent_ids <- unique(data$ID)
     rand_params <- make_rand_params(bcoeff,
       n_resp = length(respondent_ids),
-      respondent_ids = respondent_ids
+      respondent_ids = respondent_ids,
+      correlation = correlation
     )
     data <- dplyr::left_join(data, rand_params, by = "ID")
   } else {

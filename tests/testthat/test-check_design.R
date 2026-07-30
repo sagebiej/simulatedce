@@ -189,13 +189,19 @@ test_that("a mistyped column is caught when bcoeff says which names are coeffici
   )
 })
 
-test_that("without bcoeff a mistyped column shows up as a term with no variation", {
+test_that("without bcoeff a mistyped column is still flagged, as a non-linearity", {
+  ## With no `bcoeff` to say which names are coefficients, a mistyped column is
+  ## taken for one, so `bprice * alt1.nonexistent` looks like two coefficients
+  ## multiplied together. The verdict is "this is not linear in the coefficients"
+  ## rather than "not identified", but either way it does not pass silently.
   ul_bad <- list(u1 = list(
     v1 = V.1 ~ bprice * alt1.nonexistent,
     v2 = V.2 ~ bprice * alt2.price
   ))
   res <- check_design(well_conditioned, u = ul_bad)
-  expect_false(res$identified)
+  expect_false(res$linear_in_coefficients)
+  expect_true(is.na(res$identified))
+  expect_gt(length(res$problems), 0)
 })
 
 test_that("the result prints as a readable report", {

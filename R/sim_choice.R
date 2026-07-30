@@ -25,6 +25,11 @@
 #'   Note that the estimated parameters are then the distribution's own parameters
 #'   rather than its moments, so a `lognormal` reports `meanlog` and `sdlog`.
 #'   `truepar` follows suit.
+#' @param correlation Optional correlation matrix over the random coefficients. See
+#'   [make_rand_params()] and [correlate()]. The correlation enters the data
+#'   generating process; estimating it is a separate matter, and `model = "mixed"`
+#'   fits independent random parameters whatever `correlation` says, so the gap
+#'   between the two is exactly what you would be measuring.
 #' @param estimator Which model fitter to use. `"mixl"` by default, which handles
 #'   both `model` settings. Pass a function of your own to fit something else and
 #'   still get the simulation, aggregation and power machinery around it. See
@@ -112,6 +117,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
                        decisiongroups = c(0, 1), manipulations = list(),
                        estimate = TRUE, chunks = 1,
                        model = c("mnl", "mixed"),
+                       correlation = NULL,
                        estimator = "mixl",
                        n_draws = 200,
                        sets_per_resp = NULL,
@@ -197,7 +203,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
     check_design(design, u = strip_compiled(u), bcoeff = bcoeff),
     error = function(e) NULL
   )
-  if (!is.null(diagnosis) && !isTRUE(diagnosis$identified)) {
+  if (!is.null(diagnosis) && isFALSE(diagnosis$identified)) {
     warning(
       "Design '", designname, "' cannot identify the model you asked for. ",
       paste(diagnosis$problems, collapse = " "),
@@ -223,7 +229,7 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
     simulate_choices(
       data = dat, utility = u, bcoeff = bcoeff,
       decisiongroups = decisiongroups, manipulations = manipulations,
-      preprocess_function = preprocess_function,
+      preprocess_function = preprocess_function, correlation = correlation,
       keep_utilities = keep_utilities,
       verbose = if (i == 1L) verbose else min(verbose, 2)
     )
@@ -538,10 +544,13 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
     if (length(r$coefficients) == 0) {
       return(NULL)
     }
+    nms <- names(r$coefficients)
     data.frame(
       est = unname(r$coefficients),
-      rob_pval0 = unname(r$pvalues[names(r$coefficients)]),
-      row.names = names(r$coefficients)
+      rob_pval0 = unname(r$pvalues[nms]),
+      ## an estimator need not report standard errors; without them coverage is NA
+      se = if (is.null(r$se)) NA_real_ else unname(r$se[nms]),
+      row.names = nms
     )
   })
 
@@ -584,7 +593,7 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
       tibble::rownames_to_column() %>%
       tidyr::pivot_wider(
         names_from = "rowname",
-        values_from = c("est", "rob_pval0")
+        values_from = c("est", "rob_pval0", "se")
       )
   }) %>%
     dplyr::bind_rows(.id = "run")
@@ -603,7 +612,10 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
   results <- if (isTRUE(keep_models)) lapply(output, function(r) r$model) else list()
 
   results[["coefs"]] <- coefs
-  results[["summary"]] <- describe_coefs(coefs[, -1, drop = FALSE])
+  results[["summary"]] <- add_accuracy(
+    describe_coefs(coefs[, -1, drop = FALSE]),
+    coefs, bcoeff_table(bcoeff, model)
+  )
 
   pvals <- coefs %>% dplyr::select(dplyr::starts_with("rob_pval0"))
   results[["power"]] <- joint_power(pvals)
@@ -761,4 +773,54 @@ check_verbose <- function(verbose) {
     )
   }
   as.integer(verbose)
+}
+
+
+#' Attach bias, root mean squared error and coverage to a summary table
+#'
+#' Bias and RMSE need only the estimates and the truth. Coverage, the share of runs
+#' whose 95 percent interval contains the true value, needs the standard errors too,
+#' and is `NA` when the estimator did not report any. Coverage is the diagnostic
+#' that catches a design whose intervals are too narrow, which power alone will not
+#' show.
+#' @noRd
+add_accuracy <- function(summary_tab, coefs, truth) {
+  n <- nrow(summary_tab)
+  summary_tab$bias <- NA_real_
+  summary_tab$rmse <- NA_real_
+  summary_tab$coverage <- NA_real_
+
+  if (n == 0 || nrow(truth) == 0) {
+    return(summary_tab)
+  }
+
+  for (i in seq_len(n)) {
+    row <- rownames(summary_tab)[i]
+    if (!startsWith(row, "est_")) next
+
+    par <- sub("^est_", "", row)
+    hit <- truth$parname == par
+    if (!any(hit)) next
+
+    true_value <- truth$truepar[hit][1]
+    est <- coefs[[row]]
+    est <- est[is.finite(est)]
+    if (length(est) == 0) next
+
+    summary_tab$bias[i] <- mean(est) - true_value
+    summary_tab$rmse[i] <- sqrt(mean((est - true_value)^2))
+
+    se_col <- paste0("se_", par)
+    if (se_col %in% names(coefs)) {
+      se <- coefs[[se_col]]
+      keep <- is.finite(coefs[[row]]) & is.finite(se) & se > 0
+      if (any(keep)) {
+        half <- stats::qnorm(0.975) * se[keep]
+        inside <- abs(coefs[[row]][keep] - true_value) <= half
+        summary_tab$coverage[i] <- 100 * mean(inside)
+      }
+    }
+  }
+
+  summary_tab
 }

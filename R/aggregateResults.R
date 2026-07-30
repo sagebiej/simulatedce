@@ -81,10 +81,14 @@ aggregateResults <- function(all_designs, fromfolder = NULL, print_plots = FALSE
   summaryall <- as.data.frame(purrr::map(estimated, ~ .x$summary)) %>%
     dplyr::select(!dplyr::ends_with("vars")) %>%
     tibble::rownames_to_column("parname") %>%
+    ## `quantity` says what each row is, so nothing downstream has to know the
+    ## naming scheme in order to pick out the coefficients.
+    dplyr::mutate(quantity = quantity_of(.data$parname)) %>%
     dplyr::mutate(parname = stringr::str_remove(.data$parname, "^est_")) %>%
     dplyr::left_join(bcoeff_table(bcoeff, model = model), by = "parname") %>%
-    dplyr::relocate("parname", dplyr::ends_with(c(
-      ".n", "truepar", "truesd", "mean", "median", "sd", "min", "max", "range", "se"
+    dplyr::relocate("parname", "quantity", dplyr::ends_with(c(
+      ".n", "truepar", "truesd", "mean", "median", "bias", "rmse", "coverage",
+      "sd", "min", "max", "range", "se"
     )))
 
   ## ---- one long table of estimates, tagged by design -----------------------
@@ -214,4 +218,17 @@ read_saved_designs <- function(fromfolder) {
   designs[["arguements"]] <- designs[["arguments"]]
 
   designs
+}
+
+
+#' Say what each row of a summary table holds
+#'
+#' The rows of a summary carry a prefix saying whether they describe an estimate,
+#' its p value or its standard error. Turning that into a column means no caller
+#' needs to know the prefixes, and adding another kind of row later breaks nothing.
+#' @noRd
+quantity_of <- function(parname) {
+  ifelse(startsWith(parname, "rob_pval0_"), "pvalue",
+    ifelse(startsWith(parname, "se_"), "se", "estimate")
+  )
 }

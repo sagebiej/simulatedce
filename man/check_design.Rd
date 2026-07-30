@@ -32,7 +32,7 @@ tools.}
 \value{
 An object of class \code{dce_design_check}, which prints as a report. As a
 list it contains \code{identified}, \code{rank}, \code{n_terms}, \code{aliased}, \code{terms},
-\code{situations}, \code{blocks}, \code{sets_per_block}, \code{alternatives},
+\code{linear_in_coefficients}, \code{situations}, \code{blocks}, \code{sets_per_block}, \code{alternatives},
 \code{distinct_patterns}, \code{max_correlation}, \code{correlations}, \code{no_variation},
 \code{identical_alternatives}, \code{dominated}, and \code{problems}.
 }

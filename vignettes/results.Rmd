@@ -108,7 +108,7 @@ yourself.
 
 ```{r summaryall}
 sa <- result$summaryall
-coef_rows <- !grepl("^rob_pval0_", sa$parname)
+coef_rows <- sa$quantity == "estimate"
 
 round(
   data.frame(
@@ -121,6 +121,38 @@ round(
   ),
   4
 )
+```
+
+Three columns say how well the design does rather than merely what it produced:
+
+```{r accuracy}
+round(
+  data.frame(
+    truepar  = sa$truepar[coef_rows],
+    bias     = sa$designA.bias[coef_rows],
+    rmse     = sa$designA.rmse[coef_rows],
+    coverage = sa$designA.coverage[coef_rows],
+    row.names = sa$parname[coef_rows]
+  ),
+  4
+)
+```
+
+**Bias** is the average estimate minus the truth. **RMSE** combines bias and
+variability into one number, and is the usual thing to minimise when choosing
+between designs. **Coverage** is the share of runs whose 95% interval contained
+the true value, and it should come out near 95.
+
+Coverage is worth more attention than it usually gets. Power tells you how often
+you would reject a false null; coverage tells you whether the intervals you report
+mean what they say. A design can be well powered and still produce intervals that
+are too narrow, and only coverage shows that.
+
+The `quantity` column says what each row holds, which is how the filter above
+picks out the coefficients:
+
+```{r quantity}
+table(sa$quantity)
 ```
 
 `summaryall` also carries a `median` column per design. If the mean and the median

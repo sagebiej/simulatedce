@@ -106,7 +106,7 @@ every design side by side:
 
 ```{r results}
 sa <- sedrive$summaryall
-coef_rows <- !grepl("^rob_pval0_", sa$parname)
+coef_rows <- sa$quantity == "estimate"
 
 round(
   data.frame(
@@ -164,6 +164,15 @@ drawn <- draw_sets(design, respondents = 100, sets_per_resp = 5)
 table(table(drawn$Choice.situation))
 ```
 
+## Checking a design before you use it
+
+A design whose attributes always move together will still converge and still fill
+in a summary table. The numbers will just be wrong. `check_design()` says so first:
+
+```{r check-design}
+check_design(design)
+```
+
 ## Vignettes
 
 | Vignette | Covers |
@@ -175,3 +184,4 @@ table(table(drawn$Choice.situation))
 | `manipulations` | Changing attributes before utilities are computed |
 | `unblocked-designs` | Drawing choice sets at random per respondent |
 | `results` | The output, and running large simulations |
+| `estimators` | Availability, mixed logit, WTP space, and fitting your own model |

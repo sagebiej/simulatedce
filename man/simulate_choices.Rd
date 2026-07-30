@@ -12,6 +12,7 @@ simulate_choices(
   decisiongroups = c(0, 1),
   manipulations = list(),
   preprocess_function = NULL,
+  correlation = NULL,
   keep_utilities = TRUE,
   verbose = 1
 )
@@ -65,6 +66,20 @@ changing a term for one group only.}
 \item{preprocess_function}{A function that reads in external data (e.g. GIS
 coordinates) to be merged with the simulated dataset. It must return either
 \code{NULL} or a data.frame with a column called \code{ID} used for matching.}
+
+\item{correlation}{Optional correlation matrix over some or all of the random
+coefficients, with row and column names saying which. \code{\link[=correlate]{correlate()}} builds one
+from pairwise values. Coefficients it does not mention are drawn independently
+as before.
+
+Correlation is imposed with a Gaussian copula: correlated standard normals are
+drawn, turned into uniforms, and pushed through each coefficient's own
+marginal. That works whatever the marginals are, so a lognormal price
+coefficient can be correlated with a triangular quality coefficient. The
+number you give is the correlation of the underlying normals. For normal
+marginals that is exactly the correlation of the coefficients; for the others
+it is close but not identical, because the transformation is not linear. The
+rank correlation is preserved exactly in every case.}
 
 \item{keep_utilities}{Keep the \code{V_}, \code{e_} and \code{U_} columns in the result.
 \code{TRUE} by default. Setting it to \code{FALSE} roughly halves the size of the

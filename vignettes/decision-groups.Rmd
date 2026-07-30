@@ -226,7 +226,7 @@ res <- sim_all(
   mode = "sequential", verbose = 0
 )
 sa <- res$summaryall
-round(sa$design.mean[!grepl("^rob_pval0_", sa$parname)], 3)
+round(sa$design.mean[sa$quantity == "estimate"], 3)
 ```
 
 With 20% of the sample choosing at random, all three coefficients shrink by

@@ -20,6 +20,10 @@ with four elements:
 \item{\code{pvalues}}{A named numeric vector of two-sided p values, with the same
 names as \code{coefficients}. Use \code{NA} where you have none; power will then be
 reported as if the coefficient were not significant.}
+\item{\code{se}}{Optional. A named numeric vector of standard errors. Supply it and
+you get coverage, the share of runs whose 95\% interval contains the true
+value, alongside bias and root mean squared error. Leave it out and coverage
+is reported as \code{NA}.}
 \item{\code{converged}}{A single \code{TRUE} or \code{FALSE}. A run that reports \code{FALSE}, or
 that returns any non-finite estimate, is left out of the summaries and
 counted in \verb{$convergence}.}
@@ -77,6 +81,7 @@ default backend:
   list(
     coefficients = stats::setNames(fit$par, mm$terms),
     pvalues = stats::setNames(2 * stats::pnorm(-abs(fit$par / se)), mm$terms),
+    se = stats::setNames(se, mm$terms),
     converged = fit$convergence == 0,
     model = fit
   )

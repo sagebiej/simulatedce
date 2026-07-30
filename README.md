@@ -99,26 +99,36 @@ sedrive <- sim_all(
 #>   blade                fixed            value = -0.07
 #>   bwarte               fixed            value = 0.02
 #> New names:
-#> Summary table: n mean median sd min max range se est_bpreis 10 -0.010 -0.010
-#> 0.002 -0.014 -0.007 0.007 0.001 est_blade 10 -0.050 -0.051 0.008 -0.059 -0.037
-#> 0.022 0.002 est_bwarte 10 0.010 0.013 0.009 -0.006 0.025 0.031 0.003
-#> rob_pval0_bpreis 10 0.000 0.000 0.001 0.000 0.003 0.003 0.000 rob_pval0_blade
-#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.371 0.245
-#> 0.327 0.014 0.972 0.957 0.103
+#> Summary table: n mean median sd min max range se bias rmse est_bpreis 10 -0.010
+#> -0.009 0.002 -0.012 -0.007 0.005 0.001 0.000 0.002 est_blade 10 -0.047 -0.048
+#> 0.005 -0.056 -0.038 0.018 0.002 0.023 0.023 est_bwarte 10 0.015 0.013 0.011
+#> 0.003 0.033 0.030 0.003 -0.005 0.012 rob_pval0_bpreis 10 0.000 0.000 0.000
+#> 0.000 0.001 0.001 0.000 NA NA rob_pval0_blade 10 0.000 0.000 0.000 0.000 0.000
+#> 0.000 0.000 NA NA rob_pval0_bwarte 10 0.335 0.266 0.324 0.003 0.799 0.796 0.102
+#> NA NA se_bpreis 10 0.002 0.002 0.000 0.002 0.002 0.000 0.000 NA NA se_blade 10
+#> 0.008 0.008 0.001 0.007 0.010 0.002 0.000 NA NA se_bwarte 10 0.011 0.011 0.001
+#> 0.010 0.012 0.002 0.000 NA NA coverage est_bpreis 100 est_blade 10 est_bwarte
+#> 100 rob_pval0_bpreis NA rob_pval0_blade NA rob_pval0_bwarte NA se_bpreis NA
+#> se_blade NA se_bwarte NA
 #> Power results:
 #> 
-#> FALSE TRUE 90 10
+#> FALSE TRUE 70 30
 #> New names:
-#> Summary table: n mean median sd min max range se est_bpreis 10 -0.011 -0.011
-#> 0.002 -0.016 -0.008 0.007 0.001 est_blade 10 -0.050 -0.049 0.009 -0.069 -0.038
-#> 0.031 0.003 est_bwarte 10 0.018 0.021 0.015 -0.007 0.036 0.043 0.005
-#> rob_pval0_bpreis 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_blade
-#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.170 0.053
-#> 0.228 0.001 0.585 0.584 0.072
+#> Summary table: n mean median sd min max range se bias rmse est_bpreis 10 -0.010
+#> -0.010 0.002 -0.013 -0.007 0.006 0.000 0.000 0.001 est_blade 10 -0.049 -0.049
+#> 0.005 -0.056 -0.042 0.013 0.001 0.021 0.022 est_bwarte 10 0.011 0.013 0.008
+#> 0.000 0.020 0.020 0.003 -0.009 0.011 rob_pval0_bpreis 10 0.000 0.000 0.001
+#> 0.000 0.002 0.002 0.000 NA NA rob_pval0_blade 10 0.000 0.000 0.000 0.000 0.000
+#> 0.000 0.000 NA NA rob_pval0_bwarte 10 0.370 0.211 0.362 0.034 0.996 0.962 0.115
+#> NA NA se_bpreis 10 0.002 0.002 0.000 0.002 0.002 0.000 0.000 NA NA se_blade 10
+#> 0.007 0.008 0.000 0.007 0.008 0.001 0.000 NA NA se_bwarte 10 0.010 0.010 0.001
+#> 0.009 0.011 0.002 0.000 NA NA coverage est_bpreis 100 est_blade 10 est_bwarte
+#> 90 rob_pval0_bpreis NA rob_pval0_blade NA rob_pval0_bwarte NA se_bpreis NA
+#> se_blade NA se_bwarte NA
 #> Power results:
 #> 
-#> FALSE TRUE 50 50
-#> total time for simulation and estimation: 8.866 sec elapsed
+#> FALSE TRUE 80 20
+#> total time for simulation and estimation: 8.951 sec elapsed
 #> • `Choice situation` -> `Choice.situation`
 #> • `` -> `...10`
 ```
@@ -129,7 +139,7 @@ every design side by side:
 
 ``` r
 sa <- sedrive$summaryall
-coef_rows <- !grepl("^rob_pval0_", sa$parname)
+coef_rows <- sa$quantity == "estimate"
 
 round(
   data.frame(
@@ -143,9 +153,9 @@ round(
   4
 )
 #>        truepar   small small_sd bayesian bay_sd
-#> bpreis   -0.01 -0.0109   0.0025  -0.0101 0.0021
-#> blade    -0.07 -0.0500   0.0094  -0.0499 0.0075
-#> bwarte    0.02  0.0179   0.0151   0.0104 0.0093
+#> bpreis   -0.01 -0.0097   0.0015  -0.0096 0.0019
+#> blade    -0.07 -0.0488   0.0046  -0.0472 0.0052
+#> bwarte    0.02  0.0114   0.0079   0.0149 0.0110
 ```
 
 Power is reported per design and per coefficient:
@@ -155,11 +165,11 @@ Power is reported per design and per coefficient:
 sedrive$powa_by_par
 #> $bayeffdesignconstr
 #> bpreis  blade bwarte 
-#>    100    100     10 
+#>    100    100     30 
 #> 
 #> $effconstrsmall
 #> bpreis  blade bwarte 
-#>    100    100     50
+#>    100    100     20
 ```
 
 ## Random parameters
@@ -208,6 +218,25 @@ table(table(drawn$Choice.situation))
 #> 20
 ```
 
+## Checking a design before you use it
+
+A design whose attributes always move together will still converge and still fill
+in a summary table. The numbers will just be wrong. `check_design()` says so first:
+
+
+``` r
+check_design(design)
+#> Design check
+#> ------------------------------------------------------------ 
+#>   20 choice situation(s), 2 alternative(s), 1 block(s)
+#>   1 term(s) from the column names: x1
+#>   identifying variation: rank 1 of 1, 5 distinct pattern(s)
+#>   4 situation(s) offer identical alternatives
+#> ------------------------------------------------------------ 
+#>   ! 4 choice situation(s) offer two identical alternatives. Those choices
+#>       are coin flips and carry no information.
+```
+
 ## Vignettes
 
 | Vignette | Covers |
@@ -219,3 +248,4 @@ table(table(drawn$Choice.situation))
 | `manipulations` | Changing attributes before utilities are computed |
 | `unblocked-designs` | Drawing choice sets at random per respondent |
 | `results` | The output, and running large simulations |
+| `estimators` | Availability, mixed logit, WTP space, and fitting your own model |

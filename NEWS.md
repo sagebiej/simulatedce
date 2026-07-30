@@ -1,3 +1,56 @@
+# simulateDCE 0.6.0
+
+## Bug fixes
+
+* **`check_design()` gave wrong advice on any utility that is not linear in its
+  coefficients**, which 0.5.0 introduced. A specification in willingness-to-pay
+  space, `-blambda * (cost - bwtp * qual)`, was reported as "not identified,
+  `bwtp` has no variation, no sample size will fix this; the design has to
+  change". All of it was false: the design is fine and the model estimates
+  perfectly well. The method reads each coefficient's regressor off the utility by
+  setting that coefficient to 1 and the rest to 0, which only works when the
+  utility is linear in the coefficients, and it did not check. It now does, reports
+  `linear_in_coefficients = FALSE` and `identified = NA`, says what that means, and
+  `sim_all()` no longer warns.
+* Each regressor is now the *change* in utility as its coefficient goes from 0 to
+  1, rather than the level. A constant in a utility that carries no coefficient no
+  longer leaks into every regressor.
+
+## New features
+
+* **Willingness-to-pay space works and is documented.** The utility may multiply
+  two coefficients together, so willingness to pay can be a parameter with its own
+  standard error rather than a ratio of two estimates that inherits the error of
+  both. This was already possible and nothing said so; now it is tested and has a
+  vignette section.
+* **Bias, RMSE and coverage.** Standard errors are kept from the estimation rather
+  than discarded, so `summaryall` and the per-design `summary` now report the bias,
+  the root mean squared error, and the coverage, the share of runs whose 95%
+  interval contained the true value. Coverage is the diagnostic power does not
+  give you: a design can be well powered and still produce intervals that are too
+  narrow. Comparing the mean reported standard error against the spread of the
+  estimates across runs says whether the standard errors are honest.
+* **Correlated random parameters.** `correlation` on `make_rand_params()`,
+  `simulate_choices()`, `sim_choice()` and `sim_all()` takes a correlation matrix
+  over some or all of the random coefficients, and `correlate()` builds one from
+  pairwise values. Correlation is imposed with a Gaussian copula, so any marginal
+  can be correlated with any other: a lognormal price coefficient with a triangular
+  quality coefficient, for instance. With normal marginals the realised correlation
+  is exactly what you asked for; with others the rank correlation is exact and the
+  Pearson correlation close. The correlation enters the data generating process;
+  `model = "mixed"` still fits independent random parameters, which is what makes
+  the comparison interesting.
+* **`to_long()`** reshapes a simulated dataset to one row per alternative for
+  `mlogit`, `gmnl` and `survival::clogit`. `apollo` and `mixl` take the wide format
+  the package already returns, so they need nothing. Availability becomes a single
+  logical column, an alternative with no attributes of its own keeps its row, and
+  the respondent-level coefficient draws are carried through.
+* **A `quantity` column** on `summaryall`, saying whether each row is an
+  `"estimate"`, a `"pvalue"` or an `"se"`. Nothing downstream has to know the row
+  naming scheme in order to pick out the coefficients.
+* An estimator may now return `se` alongside `coefficients` and `pvalues`. Supply
+  it and you get coverage; leave it out and coverage is `NA`. See `?estimators`.
+
 # simulateDCE 0.5.0
 
 Six additions, all of them things the package could not do before.

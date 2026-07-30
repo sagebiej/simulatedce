@@ -24,6 +24,7 @@ dce_distributions <- list(
   fixed = list(
     args = "value",
     draw = function(n, spec) rep(spec[["value"]], n),
+    q    = function(u, spec) rep(spec[["value"]], length(u)),
     mean = function(spec) spec[["value"]],
     sd   = function(spec) 0,
     mixed = NULL
@@ -31,6 +32,7 @@ dce_distributions <- list(
   normal = list(
     args = c("mean", "sd"),
     draw = function(n, spec) stats::rnorm(n, mean = spec[["mean"]], sd = spec[["sd"]]),
+    q    = function(u, spec) stats::qnorm(u, mean = spec[["mean"]], sd = spec[["sd"]]),
     mean = function(spec) spec[["mean"]],
     sd   = function(spec) spec[["sd"]],
     mixed = list(
@@ -41,6 +43,7 @@ dce_distributions <- list(
   lognormal = list(
     args = c("meanlog", "sdlog"),
     draw = function(n, spec) exp(stats::rnorm(n, mean = spec[["meanlog"]], sd = spec[["sdlog"]])),
+    q    = function(u, spec) exp(stats::qnorm(u, mean = spec[["meanlog"]], sd = spec[["sdlog"]])),
     mean = function(spec) exp(spec[["meanlog"]] + spec[["sdlog"]]^2 / 2),
     sd   = function(spec) {
       s2 <- spec[["sdlog"]]^2
@@ -54,6 +57,9 @@ dce_distributions <- list(
   neg_lognormal = list(
     args = c("meanlog", "sdlog"),
     draw = function(n, spec) -exp(stats::rnorm(n, mean = spec[["meanlog"]], sd = spec[["sdlog"]])),
+    ## the sign flip reverses the order, so the upper tail of u maps to the lower
+    ## tail of the coefficient
+    q    = function(u, spec) -exp(stats::qnorm(1 - u, mean = spec[["meanlog"]], sd = spec[["sdlog"]])),
     mean = function(spec) -exp(spec[["meanlog"]] + spec[["sdlog"]]^2 / 2),
     sd   = function(spec) {
       s2 <- spec[["sdlog"]]^2
@@ -67,12 +73,14 @@ dce_distributions <- list(
   uniform = list(
     args = c("min", "max"),
     draw = function(n, spec) stats::runif(n, min = spec[["min"]], max = spec[["max"]]),
+    q    = function(u, spec) stats::qunif(u, min = spec[["min"]], max = spec[["max"]]),
     mean = function(spec) (spec[["min"]] + spec[["max"]]) / 2,
     sd   = function(spec) (spec[["max"]] - spec[["min"]]) / sqrt(12)
   ),
   triangular = list(
     args = c("min", "max", "mode"),
     draw = function(n, spec) draw_triangular(n, spec[["min"]], spec[["max"]], spec[["mode"]]),
+    q    = function(u, spec) qtriangular(u, spec[["min"]], spec[["max"]], spec[["mode"]]),
     mean = function(spec) (spec[["min"]] + spec[["max"]] + spec[["mode"]]) / 3,
     sd   = function(spec) {
       a <- spec[["min"]]
@@ -85,6 +93,9 @@ dce_distributions <- list(
     args = c("mean", "sd", "min", "max"),
     draw = function(n, spec) {
       draw_truncated_normal(n, spec[["mean"]], spec[["sd"]], spec[["min"]], spec[["max"]])
+    },
+    q    = function(u, spec) {
+      qtruncnorm(u, spec[["mean"]], spec[["sd"]], spec[["min"]], spec[["max"]])
     },
     mean = function(spec) truncnorm_moments(spec)[["mean"]],
     sd   = function(spec) truncnorm_moments(spec)[["sd"]]
@@ -170,6 +181,15 @@ as_dist_spec <- function(spec, nm = "<unnamed>") {
 #' @noRd
 draw_from_spec <- function(spec, n) {
   dce_distributions[[spec[["dist"]]]]$draw(n, spec)
+}
+
+#' Map uniform numbers on (0, 1) to a spec's marginal distribution
+#'
+#' This is what makes correlated draws possible: correlate on the uniform scale,
+#' then push each one through its own marginal.
+#' @noRd
+quantile_from_spec <- function(spec, u) {
+  dce_distributions[[spec[["dist"]]]]$q(u, spec)
 }
 
 #' Population mean implied by a bcoeff element
@@ -407,9 +427,14 @@ mixed_start_values <- function(mnl_coefficients, beta_names, bcoeff, random) {
 #' Draw from a triangular distribution via the inverse CDF
 #' @noRd
 draw_triangular <- function(n, a, b, c) {
+  qtriangular(stats::runif(n), a, b, c)
+}
+
+#' Quantile function of a triangular distribution
+#' @noRd
+qtriangular <- function(u, a, b, c) {
   if (a >= b) stop("Triangular distribution requires min < max.", call. = FALSE)
   if (c < a || c > b) stop("Triangular distribution requires min <= mode <= max.", call. = FALSE)
-  u <- stats::runif(n)
   fc <- (c - a) / (b - a)
   ifelse(
     u < fc,
@@ -421,6 +446,12 @@ draw_triangular <- function(n, a, b, c) {
 #' Draw from a normal truncated to [lower, upper] via the inverse CDF
 #' @noRd
 draw_truncated_normal <- function(n, mean, sd, lower, upper) {
+  qtruncnorm(stats::runif(n), mean, sd, lower, upper)
+}
+
+#' Quantile function of a truncated normal
+#' @noRd
+qtruncnorm <- function(u, mean, sd, lower, upper) {
   if (lower >= upper) stop("Truncated normal requires min < max.", call. = FALSE)
   if (sd <= 0) stop("Truncated normal requires sd > 0.", call. = FALSE)
   p_lo <- stats::pnorm(lower, mean = mean, sd = sd)
@@ -428,7 +459,7 @@ draw_truncated_normal <- function(n, mean, sd, lower, upper) {
   if (p_hi - p_lo < .Machine$double.eps) {
     stop("Truncated normal has no probability mass between min and max.", call. = FALSE)
   }
-  stats::qnorm(stats::runif(n, p_lo, p_hi), mean = mean, sd = sd)
+  stats::qnorm(p_lo + u * (p_hi - p_lo), mean = mean, sd = sd)
 }
 
 #' Mean and sd of a truncated normal

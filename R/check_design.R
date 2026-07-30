@@ -37,7 +37,7 @@
 #'
 #' @return An object of class `dce_design_check`, which prints as a report. As a
 #'   list it contains `identified`, `rank`, `n_terms`, `aliased`, `terms`,
-#'   `situations`, `blocks`, `sets_per_block`, `alternatives`,
+#'   `linear_in_coefficients`, `situations`, `blocks`, `sets_per_block`, `alternatives`,
 #'   `distinct_patterns`, `max_correlation`, `correlations`, `no_variation`,
 #'   `identical_alternatives`, `dominated`, and `problems`.
 #'
@@ -80,6 +80,7 @@ check_design <- function(design, u = NULL, bcoeff = NULL, designtype = NULL) {
   mm <- design_model_matrix(design, u, bcoeff)
   terms <- mm$terms
   n_alt <- mm$n_alt
+  linear <- isTRUE(mm$linear)
   ## x is situations x alternatives x terms
   x <- mm$x
 
@@ -137,7 +138,20 @@ check_design <- function(design, u = NULL, bcoeff = NULL, designtype = NULL) {
   ## ---- plain-language problems ---------------------------------------------
 
   problems <- character(0)
-  if (rank < length(terms)) {
+
+  if (!linear) {
+    problems <- c(problems, paste0(
+      "This utility is not linear in its coefficients: at least one term depends ",
+      "on the value of another coefficient, as a specification in ",
+      "willingness-to-pay space does. Identification cannot be read off the design ",
+      "the way it can for a linear-in-parameters model, so the rank reported above ",
+      "says nothing about whether your model is estimable. It very well may be. ",
+      "Check it by simulating a large sample and seeing whether the coefficients ",
+      "come back."
+    ))
+  }
+
+  if (linear && rank < length(terms)) {
     problems <- c(problems, paste0(
       "Not identified: the identifying variation has rank ", rank, " for ",
       length(terms), " term(s). ",
@@ -152,7 +166,7 @@ check_design <- function(design, u = NULL, bcoeff = NULL, designtype = NULL) {
       }
     ))
   }
-  if (length(no_variation) > 0) {
+  if (linear && length(no_variation) > 0) {
     problems <- c(problems, paste0(
       "No variation within choice situations for ",
       and_list(paste0("`", no_variation, "`")),
@@ -160,7 +174,7 @@ check_design <- function(design, u = NULL, bcoeff = NULL, designtype = NULL) {
       "cannot be estimated."
     ))
   }
-  if (!is.na(max_correlation) && max_correlation > 0.9) {
+  if (linear && !is.na(max_correlation) && max_correlation > 0.9) {
     worst <- which(abs(correlations) == max_correlation & upper.tri(correlations),
       arr.ind = TRUE
     )[1, ]
@@ -197,7 +211,8 @@ check_design <- function(design, u = NULL, bcoeff = NULL, designtype = NULL) {
 
   structure(
     list(
-      identified = rank == length(terms) && length(no_variation) == 0,
+      identified = if (!linear) NA else rank == length(terms) && length(no_variation) == 0,
+      linear_in_coefficients = linear,
       rank = rank,
       n_terms = length(terms),
       aliased = aliased,
@@ -270,21 +285,46 @@ design_model_matrix <- function(design, u = NULL, bcoeff = NULL) {
   funs <- compile_utility_list(u)[[1]]
   n_alt <- length(funs)
 
-  x <- array(0, dim = c(nrow(design), n_alt, length(coefs)),
-             dimnames = list(NULL, names(funs), coefs))
+  ## The regressor belonging to coefficient j is the change in utility when j goes
+  ## from 0 to 1 with the others held where they are. Taking the difference rather
+  ## than the level means a constant in the utility that carries no coefficient
+  ## does not leak into every regressor.
+  regressors <- function(others) {
+    out <- array(0,
+      dim = c(nrow(design), n_alt, length(coefs)),
+      dimnames = list(NULL, names(funs), coefs)
+    )
+    for (j in seq_along(coefs)) {
+      env_on <- new.env(parent = globalenv())
+      env_off <- new.env(parent = globalenv())
+      for (i in seq_along(coefs)) {
+        assign(coefs[i], others[i], envir = env_on)
+        assign(coefs[i], others[i], envir = env_off)
+      }
+      assign(coefs[j], 1, envir = env_on)
+      assign(coefs[j], 0, envir = env_off)
 
-  for (j in seq_along(coefs)) {
-    env <- new.env(parent = globalenv())
-    for (cf in coefs) assign(cf, 0, envir = env)
-    assign(coefs[j], 1, envir = env)
-
-    for (k in seq_len(n_alt)) {
-      value <- funs[[k]](design, env)
-      x[, k, j] <- rep(as.numeric(value), length.out = nrow(design))
+      for (k in seq_len(n_alt)) {
+        on <- rep(as.numeric(funs[[k]](design, env_on)), length.out = nrow(design))
+        off <- rep(as.numeric(funs[[k]](design, env_off)), length.out = nrow(design))
+        out[, k, j] <- on - off
+      }
     }
+    out
   }
 
-  list(x = x, terms = coefs, n_alt = n_alt)
+  x <- regressors(rep(0, length(coefs)))
+
+  ## A logit is linear in its coefficients, and the whole idea of reading a term's
+  ## regressor off the utility only works if it is. When the utility multiplies two
+  ## coefficients together, as a specification in willingness-to-pay space does,
+  ## each regressor depends on the other coefficients and none of this applies.
+  ## Detect that by asking whether the regressors move when the other coefficients
+  ## do.
+  probe <- regressors(seq_along(coefs) / length(coefs) + 0.5)
+  linear <- isTRUE(all.equal(as.vector(x), as.vector(probe), tolerance = 1e-8))
+
+  list(x = x, terms = coefs, n_alt = n_alt, linear = linear)
 }
 
 #' Fall back on the alt<k>.<name> convention when no utility is given
@@ -318,7 +358,7 @@ design_model_matrix_from_names <- function(design) {
     }
   }
 
-  list(x = x, terms = attrs, n_alt = length(alts))
+  list(x = x, terms = attrs, n_alt = length(alts), linear = TRUE)
 }
 
 #' Count choice situations in which one alternative weakly dominates the rest
@@ -365,6 +405,9 @@ print.dce_design_check <- function(x, ...) {
     if (x$from_utility) "your utility functions" else "the column names",
     paste(x$terms, collapse = ", ")
   ))
+  if (isFALSE(x$linear_in_coefficients)) {
+    cat("  utility is NOT linear in the coefficients: the rank below does not apply\n")
+  }
   cat(sprintf(
     "  identifying variation: rank %d of %d, %d distinct pattern(s)\n",
     x$rank, x$n_terms, x$distinct_patterns
@@ -384,6 +427,10 @@ print.dce_design_check <- function(x, ...) {
   cat(strrep("-", 60), "\n")
   if (length(x$problems) == 0) {
     cat("  Looks fine: every term is identified.\n")
+  } else if (is.na(x$identified)) {
+    for (p in x$problems) {
+      cat(paste0("  ? ", paste(strwrap(p, width = 72, exdent = 4), collapse = "\n  ")), "\n")
+    }
   } else {
     for (p in x$problems) {
       cat(paste0("  ! ", paste(strwrap(p, width = 72, exdent = 4), collapse = "\n  ")), "\n")

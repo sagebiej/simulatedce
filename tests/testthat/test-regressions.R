@@ -374,7 +374,7 @@ test_that("designs whose names prefix one another aggregate correctly", {
   expect_setequal(unique(res[["estimates"]]$design), c("eff", "effconstr"))
   expect_setequal(names(res[["powa"]]), c("eff", "effconstr"))
   expect_false(anyNA(res[["summaryall"]]$truepar[
-    !grepl("^rob_pval0_", res[["summaryall"]]$parname)
+    res[["summaryall"]]$quantity == "estimate"
   ]))
 })
 

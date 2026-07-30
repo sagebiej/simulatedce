@@ -92,7 +92,7 @@ res <- sim_all(
 )
 
 sa <- res$summaryall
-keep <- !grepl("^rob_pval0_", sa$parname)
+keep <- sa$quantity == "estimate"
 round(
   data.frame(
     truepar = sa$truepar[keep], estimate = sa$d.mean[keep],
@@ -192,6 +192,60 @@ absolute value is reported, as every mixed logit package does.
 A mixed logit is warm-started from the multinomial fit, so it costs two models per
 run rather than one, on top of being a harder model. Budget accordingly.
 
+## Willingness-to-pay space
+
+The utility functions do not have to be linear in the coefficients. A
+specification in willingness-to-pay space multiplies two parameters together:
+
+$$V = -\lambda \, (\text{cost} - w \times \text{quality})$$
+
+so that $w$ is willingness to pay for quality, in money, rather than something you
+work out afterwards by dividing two coefficients. That is estimable, and the
+package handles it:
+
+```{r wtp}
+# the same design without the opt-out, since this example has two alternatives
+wtp_design <- design[, setdiff(names(design), c("av1", "av2", "av3"))]
+wtp_dir <- file.path(tempdir(), "wtp_designs")
+dir.create(wtp_dir, showWarnings = FALSE)
+saveRDS(wtp_design, file.path(wtp_dir, "d.rds"))
+
+ul_wtp <- list(u1 = list(
+  v1 = V.1 ~ -blambda * (alt1.price - bwtp * alt1.quality),
+  v2 = V.2 ~ -blambda * (alt2.price - bwtp * alt2.quality)
+))
+
+res_wtp <- sim_all(
+  nosim = 10, resps = 400, designpath = wtp_dir, u = ul_wtp,
+  bcoeff = list(blambda = 0.4, bwtp = 2),
+  mode = "sequential", seed = 4, verbose = 0
+)
+
+sa <- res_wtp$summaryall
+keep <- sa$quantity == "estimate"
+round(
+  data.frame(
+    truepar  = sa$truepar[keep],
+    estimate = sa$d.mean[keep],
+    coverage = sa$d.coverage[keep],
+    row.names = sa$parname[keep]
+  ),
+  3
+)
+```
+
+Willingness to pay comes back as a parameter with its own standard error and its
+own coverage, rather than as a ratio that inherits the error of both coefficients.
+
+One thing to know: `check_design()` cannot judge a specification like this. Its
+whole method is to read each coefficient's regressor off the utility, and that only
+works when the utility is linear in the coefficients. It says so rather than
+blaming the design:
+
+```{r wtp-check}
+check_design(wtp_design, u = ul_wtp)
+```
+
 ## Fitting your own model
 
 The estimation backend is `mixl`. If you want something else, pass a function to
@@ -249,7 +303,7 @@ built_in <- sim_all(
 
 a <- built_in$summaryall
 b <- own$summaryall
-keep <- !grepl("^rob_pval0_", a$parname)
+keep <- a$quantity == "estimate"
 
 round(
   data.frame(
@@ -292,3 +346,35 @@ be rebuilt inside the function. That is exactly why the default backend recompil
 its model once per worker rather than shipping one across.
 
 See `?estimators` for the full contract.
+
+## Handing the data to another package
+
+Which shape you need depends on the package:
+
+| Package | Format | What to do |
+|---|---|---|
+| `mixl`, `apollo` | wide, one row per choice occasion | nothing, that is what you get |
+| `mlogit`, `gmnl`, `survival::clogit` | long, one row per alternative | `to_long()` |
+
+```{r to-long}
+wide <- sim_all(
+  nosim = 1, resps = 50, designpath = design_dir, u = ul,
+  bcoeff = bcoeff, estimate = FALSE, mode = "sequential", seed = 3, verbose = 0
+)$d[[1]]
+
+long <- to_long(wide)
+head(long, 6)
+```
+
+Every alternative gets a row, `chosen` marks the one that was picked, and
+`available` carries the availability. The opt-out has no attributes of its own, so
+those are missing rather than invented:
+
+```{r to-long-optout}
+c(
+  wide_rows = nrow(wide),
+  long_rows = nrow(long),
+  alternatives = length(unique(long$alt)),
+  optout_attributes_missing = all(is.na(long$price[long$alt == 3]))
+)
+```

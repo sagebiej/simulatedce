@@ -140,7 +140,7 @@ column at a time:
 
 ```{r summary}
 sa <- result$summaryall
-coef_rows <- sa[!grepl("^rob_pval0_", sa$parname), ]
+coef_rows <- sa[sa$quantity == "estimate", ]
 
 round(
   data.frame(
