@@ -1,0 +1,294 @@
+---
+title: "Availability, mixed logit, and fitting your own model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Availability, mixed logit, and fitting your own model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(3141)
+```
+
+Three things about the estimation half of the package: how to say that an
+alternative was not always on offer, how to fit a mixed logit rather than a
+multinomial one, and how to put a model of your own in the loop.
+
+## A design with an opt-out
+
+```{r design}
+set.seed(3141)
+
+profiles <- expand.grid(price = c(2, 4, 6, 8), quality = c(0, 1))
+alt1 <- profiles[rep(seq_len(nrow(profiles)), 2), ]
+n <- nrow(alt1)
+repeat {
+  partner <- sample(n)
+  if (all(rowSums(abs(alt1 - alt1[partner, ])) > 0)) break
+}
+
+design <- data.frame(
+  Choice.situation = seq_len(n),
+  Block            = rep(1:2, each = n / 2),
+  alt1.price = alt1$price, alt1.quality = alt1$quality,
+  alt2.price = alt1$price[partner], alt2.quality = alt1$quality[partner],
+  # the opt-out is offered in every other choice situation
+  av1 = 1, av2 = 1, av3 = rep(c(1, 0), length.out = n)
+)
+
+design_dir <- file.path(tempdir(), "est_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "d.rds"))
+```
+
+A no-choice, opt-out or status-quo option is not a special kind of thing. It is an
+alternative whose utility has no attributes, only a constant:
+
+```{r utility}
+ul <- list(u1 = list(
+  v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+  v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality,
+  v3 = V.3 ~ bnone
+))
+
+bcoeff <- list(bprice = -0.3, bquality = 0.5, bnone = -1.5)
+```
+
+`bnone` is the utility of choosing nothing, measured against the normalisation
+that the other two alternatives carry no constant of their own.
+
+## Availability
+
+Columns named `av1`, `av2` and so on, holding 1 where the alternative was offered
+and 0 where it was not, are picked up automatically. `av.1` and `av_1` work too.
+With no such columns everything is available everywhere.
+
+Availability matters in both halves of the package. When simulating, an
+unavailable alternative cannot be chosen however high its utility comes out:
+
+```{r simulate}
+sim <- sim_all(
+  nosim = 1, resps = 300, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, estimate = FALSE,
+  mode = "sequential", seed = 1, verbose = 0
+)$d[[1]]
+
+table(offered = sim$av3, chosen = sim$CHOICE)
+```
+
+The zero in the top right is the point: the opt-out is never chosen in the choice
+situations where it was withheld.
+
+When estimating, the availability matrix goes to the model instead of a matrix of
+ones, so the choice probabilities are normalised over what was actually on offer:
+
+```{r estimate}
+res <- sim_all(
+  nosim = 20, resps = 400, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, mode = "sequential", seed = 2, verbose = 0
+)
+
+sa <- res$summaryall
+keep <- !grepl("^rob_pval0_", sa$parname)
+round(
+  data.frame(
+    truepar = sa$truepar[keep], estimate = sa$d.mean[keep],
+    row.names = sa$parname[keep]
+  ),
+  3
+)
+```
+
+`bnone` is recovered even though the opt-out was on offer only half the time. That
+is the check worth making: if the availability had been ignored, the model would
+have seen the opt-out chosen half as often relative to what it thought was
+available, and put `bnone` too low.
+
+## Mixed logit
+
+By default the package fits a multinomial logit. Given heterogeneous preferences
+that recovers roughly the mean of each coefficient's distribution, attenuated
+towards zero, and says nothing about the spread. See
+`vignette("random-parameters")` for how much that costs you.
+
+`model = "mixed"` fits the model that matches the data generating process
+instead. Each random entry of `bcoeff` gets its own respondent-level draw, so the
+location and the spread are both estimated.
+
+```{r mixed}
+bcoeff_random <- list(
+  bprice   = list(dist = "normal", mean = -0.4, sd = 0.25),
+  bquality = 0.5,
+  bnone    = -1.5
+)
+
+compare <- lapply(c("mnl", "mixed"), function(m) {
+  res <- sim_all(
+    nosim = 10, resps = 400, designpath = design_dir,
+    u = ul, bcoeff = bcoeff_random, model = m, n_draws = 200,
+    mode = "sequential", seed = 5, verbose = 0
+  )
+  sa <- res$summaryall
+  stats::setNames(sa$d.mean, sa$parname)
+})
+names(compare) <- c("mnl", "mixed")
+
+pars <- c("bprice", "sigma_bprice", "bquality", "bnone")
+round(
+  data.frame(
+    truepar = c(-0.4, 0.25, 0.5, -1.5),
+    mnl     = compare$mnl[pars],
+    mixed   = compare$mixed[pars],
+    row.names = pars
+  ),
+  3
+)
+```
+
+The multinomial logit has no `sigma_bprice` to report, so that cell is missing, and
+its `bprice` is pulled towards zero. The mixed logit recovers both the mean and the
+standard deviation of the price coefficient.
+
+### What the parameters mean
+
+A mixed logit estimates a distribution's own parameters, not its moments. For a
+`normal` those coincide: `bprice` is the mean and `sigma_bprice` the standard
+deviation. For a `lognormal` or `neg_lognormal` they do not: `bprice` estimates
+`meanlog` and `sigma_bprice` estimates `sdlog`, both on the log scale.
+`truepar` follows the same convention, so the comparison stays honest either way.
+
+```{r lognormal}
+res <- sim_all(
+  nosim = 10, resps = 400, designpath = design_dir,
+  u = ul,
+  bcoeff = list(
+    bprice   = list(dist = "neg_lognormal", meanlog = -1, sdlog = 0.4),
+    bquality = 0.5, bnone = -1.5
+  ),
+  model = "mixed", n_draws = 200,
+  mode = "sequential", seed = 8, verbose = 0
+)
+
+sa <- res$summaryall
+round(
+  data.frame(
+    truepar = sa$truepar[1:2], estimate = sa$d.mean[1:2],
+    row.names = sa$parname[1:2]
+  ),
+  3
+)
+```
+
+Two practical notes. Only `normal`, `lognormal` and `neg_lognormal` can be written
+as a mixed logit here; the bounded shapes cannot, and asking for them is an error
+rather than a silent approximation. And the sign of a scale parameter is not
+identified, because the likelihood sees only `sigma * draw` and the draws are
+symmetric about zero, so the optimiser lands on either sign with the same fit. The
+absolute value is reported, as every mixed logit package does.
+
+A mixed logit is warm-started from the multinomial fit, so it costs two models per
+run rather than one, on top of being a harder model. Budget accordingly.
+
+## Fitting your own model
+
+The estimation backend is `mixl`. If you want something else, pass a function to
+`estimator` and keep the simulation, aggregation and power machinery around it.
+
+An estimator takes the simulated `data` and a `spec` describing the model, and
+returns four things: `coefficients`, `pvalues`, `converged` and `model`. The most
+useful part of `spec` is `model_matrix()`, which hands you each coefficient's
+regressor for each alternative, so interactions and transformations are already
+worked out.
+
+Here is a conditional logit written from scratch:
+
+```{r own-estimator}
+plain_mnl <- function(data, spec) {
+  mm <- spec$model_matrix()
+  x <- mm$x # observations x alternatives x coefficients
+  av <- spec$availabilities
+  chosen <- cbind(seq_len(nrow(data)), data$CHOICE)
+
+  negll <- function(b) {
+    v <- apply(x, c(1, 2), function(r) sum(r * b))
+    v[av == 0] <- -Inf
+    -sum(v[chosen] - log(rowSums(exp(v))))
+  }
+
+  fit <- stats::optim(rep(0, length(mm$terms)), negll,
+    method = "BFGS", hessian = TRUE
+  )
+  se <- sqrt(diag(solve(fit$hessian)))
+
+  list(
+    coefficients = stats::setNames(fit$par, mm$terms),
+    pvalues = stats::setNames(2 * stats::pnorm(-abs(fit$par / se)), mm$terms),
+    converged = fit$convergence == 0,
+    model = fit
+  )
+}
+```
+
+Twenty lines, and it plugs straight in:
+
+```{r use-own}
+own <- sim_all(
+  nosim = 10, resps = 300, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, estimator = plain_mnl,
+  mode = "sequential", seed = 7, verbose = 0
+)
+
+built_in <- sim_all(
+  nosim = 10, resps = 300, designpath = design_dir,
+  u = ul, bcoeff = bcoeff,
+  mode = "sequential", seed = 7, verbose = 0
+)
+
+a <- built_in$summaryall
+b <- own$summaryall
+keep <- !grepl("^rob_pval0_", a$parname)
+
+round(
+  data.frame(
+    truepar   = a$truepar[keep],
+    mixl      = a$d.mean[keep],
+    own       = b$d.mean[keep],
+    difference = a$d.mean[keep] - b$d.mean[keep],
+    row.names = a$parname[keep]
+  ),
+  6
+)
+```
+
+On the same simulated data the two agree to within about a millionth, the rest
+being the difference between two optimisers' stopping rules. That is a reassuring
+thing to know about both of them, and writing a second estimator is a practical way
+to check the first.
+
+Everything downstream still works: power, convergence counts and the aggregated
+comparison across designs all read the standardised result rather than anything
+`mixl`-specific.
+
+```{r own-power}
+own$powa_by_par
+
+own$convergence$d[c("runs", "converged", "failed")]
+```
+
+### What to watch out for
+
+`keep_models = TRUE` returns whatever you put in `model`, untouched, in the
+numbered slots of the results. With the default backend that is a `mixl` object
+carrying its own copy of the data; with the estimator above it is what `optim()`
+returned.
+
+In parallel mode your function is sent to worker processes, so it has to be
+self-contained: use `::` for packages, and remember that anything holding an
+external pointer, such as a compiled model, does not survive the trip and has to
+be rebuilt inside the function. That is exactly why the default backend recompiles
+its model once per worker rather than shipping one across.
+
+See `?estimators` for the full contract.

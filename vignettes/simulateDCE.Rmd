@@ -31,6 +31,7 @@ individual features:
 | `vignette("manipulations")` | Changing attributes before utilities are computed |
 | `vignette("unblocked-designs")` | Drawing choice sets at random per respondent |
 | `vignette("results")` | What comes back, and how to work with it |
+| `vignette("estimators")` | Availability, mixed logit, and fitting your own model |
 
 ## A design to simulate from
 
@@ -49,6 +50,14 @@ design <- data.frame(
 )
 
 design
+```
+
+Before simulating anything, check that the design can actually identify the model
+you have in mind. A design whose attributes always move together will still
+converge and still fill in a summary table; the numbers will just be wrong.
+
+```{r check}
+check_design(design)
 ```
 
 Two conventions matter. `Choice.situation` numbers the rows. Attributes are
@@ -171,19 +180,18 @@ The reason to simulate is to answer that question before collecting data. Run th
 same design at several sample sizes and compare:
 
 ```{r power-curve}
-power_at <- function(n) {
-  set.seed(11)
-  res <- sim_all(
-    nosim = 40, resps = n, designpath = design_dir,
-    u = ul, bcoeff = bcoeff, mode = "sequential", verbose = 0
-  )
-  res$powa_by_par$efficient
-}
+curve <- power_curve(
+  resps      = c(60, 120, 240, 480),
+  nosim      = 40,
+  designpath = design_dir,
+  u          = ul,
+  bcoeff     = bcoeff,
+  mode       = "sequential",
+  seed       = 11,
+  verbose    = 0
+)
 
-sizes <- c(60, 120, 240, 480)
-curve <- t(vapply(sizes, power_at, numeric(2)))
-dimnames(curve) <- list(paste0("n = ", sizes), c("bprice", "bquality"))
-curve
+curve[curve$parameter != "(all)", c("parameter", "resps", "power", "se")]
 ```
 
 Price is already detected in nearly every run at 60 respondents. Quality needs

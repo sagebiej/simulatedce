@@ -133,16 +133,19 @@ check("the caller's future plan is handed back", identical(before, after))
 
 ## ---- 4. parallel actually pays off at scale --------------------------------
 
-message("\ntiming, 200 runs of 600 respondents")
-t_seq <- system.time(run(nosim = 200, resps = 600, mode = "sequential",
+## Enough runs that the worker startup cost is clearly amortised. Around 200 runs
+## of 600 respondents the two are within noise of each other on this machine, so a
+## check there would pass or fail depending on what else is running.
+message("\ntiming, 500 runs of 400 respondents")
+t_seq <- system.time(run(nosim = 500, resps = 400, mode = "sequential",
                          keep_models = FALSE, keep_utilities = FALSE))
-t_par <- system.time(run(nosim = 200, resps = 600, mode = "parallel", workers = 8,
+t_par <- system.time(run(nosim = 500, resps = 400, mode = "parallel", workers = 8,
                          keep_models = FALSE, keep_utilities = FALSE))
 message(sprintf(
   "  sequential %.1fs, parallel on 8 workers %.1fs, speedup %.2fx",
   t_seq[["elapsed"]], t_par[["elapsed"]], t_seq[["elapsed"]] / t_par[["elapsed"]]
 ))
-check("parallel is faster at 200 runs", t_par[["elapsed"]] < t_seq[["elapsed"]])
+check("parallel is faster at 500 runs", t_par[["elapsed"]] < t_seq[["elapsed"]])
 
 ## ---- 5. random parameters and chunks survive the trip to a worker ----------
 
@@ -169,5 +172,59 @@ ub <- sim_all(
   sets_per_resp = 8, estimate = TRUE, mode = "parallel", workers = 3, verbose = 0
 )
 check("random choice sets work in parallel", nrow(ub$unblocked$coefs) == 8)
+
+## ---- 7. the new features survive the trip to a worker ----------------------
+
+## a custom estimator is a closure sent to the workers
+plain_mnl <- function(data, spec) {
+  mm <- spec$model_matrix()
+  x <- mm$x
+  av <- spec$availabilities
+  chosen <- cbind(seq_len(nrow(data)), data$CHOICE)
+  negll <- function(b) {
+    v <- apply(x, c(1, 2), function(r) sum(r * b))
+    v[av == 0] <- -Inf
+    -sum(v[chosen] - log(rowSums(exp(v))))
+  }
+  fit <- stats::optim(rep(0, length(mm$terms)), negll, method = "BFGS", hessian = TRUE)
+  se <- sqrt(diag(solve(fit$hessian)))
+  list(
+    coefficients = stats::setNames(fit$par, mm$terms),
+    pvalues = stats::setNames(2 * stats::pnorm(-abs(fit$par / se)), mm$terms),
+    converged = fit$convergence == 0,
+    model = fit
+  )
+}
+
+own <- run(nosim = 8, resps = 200, mode = "parallel", workers = 3, estimator = plain_mnl)
+check("a custom estimator works in parallel", nrow(own$design$coefs) == 8)
+
+mixed_par <- run(
+  nosim = 6, resps = 300, mode = "parallel", workers = 3,
+  model = "mixed", n_draws = 100,
+  bcoeff = list(
+    bprice = list(dist = "normal", mean = -0.3, sd = 0.2),
+    bquality = 0.5, borigin = 0.4
+  )
+)
+check(
+  "a mixed logit works in parallel",
+  "sigma_bprice" %in% mixed_par$summaryall$parname &&
+    all(mixed_par$design$coefs$est_sigma_bprice > 0)
+)
+
+## availability columns must reach the workers too
+av_design <- design
+av_design$av1 <- 1
+av_design$av2 <- rep(c(1, 0), length.out = nrow(design))
+av_dir <- file.path(tempdir(), "parallel_av")
+dir.create(av_dir, showWarnings = FALSE)
+saveRDS(av_design, file.path(av_dir, "av.rds"))
+
+av_res <- sim_all(
+  nosim = 6, resps = 200, designpath = av_dir, u = ul, bcoeff = bcoeff,
+  estimate = TRUE, mode = "parallel", workers = 3, verbose = 0
+)
+check("availability works in parallel", nrow(av_res$av$coefs) == 6)
 
 message("\ndone")

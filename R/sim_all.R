@@ -81,6 +81,9 @@ sim_all <- function(nosim = 2,
                     manipulations = list(),
                     estimate = TRUE,
                     chunks = 1,
+                    model = c("mnl", "mixed"),
+                    estimator = "mixl",
+                    n_draws = 200,
                     sets_per_resp = NULL,
                     sample_sets = c("balanced", "random", "with_replacement"),
                     resample = TRUE,
@@ -92,6 +95,7 @@ sim_all <- function(nosim = 2,
                     keep_models = TRUE,
                     keep_utilities = TRUE,
                     workers = NULL,
+                    seed = NULL,
                     verbose = 1) {
   #################################################
   ########## Input Validation Test ###############
@@ -99,7 +103,15 @@ sim_all <- function(nosim = 2,
   mode <- match.arg(mode)
   sample_sets <- match.arg(sample_sets)
   utility_transform_type <- match.arg(utility_transform_type)
+  model <- match.arg(model)
   verbose <- check_verbose(verbose)
+
+  ## Set the seed here rather than asking the user to remember it outside, so a
+  ## script records how it was run. This also makes the parallel path
+  ## reproducible, since furrr derives its streams from the current RNG state.
+  if (!is.null(seed)) {
+    set.seed(check_count(seed, "seed", min = -.Machine$integer.max))
+  }
 
   ########### validate the utility function ########
   if (missing(u)) {
@@ -293,6 +305,9 @@ sim_all <- function(nosim = 2,
       manipulations = manipulations,
       estimate = estimate,
       chunks = chunks,
+      model = model,
+      estimator = estimator,
+      n_draws = n_draws,
       sets_per_resp = sets_per_resp,
       sample_sets = sample_sets,
       resample = resample,
@@ -348,7 +363,11 @@ sim_all <- function(nosim = 2,
     "mode" = mode,
     "designname" = designname,
     "Sets per respondent" = sets_per_resp,
-    "Set sampling" = if (is.null(sets_per_resp)) "blocks" else sample_sets
+    "Set sampling" = if (is.null(sets_per_resp)) "blocks" else sample_sets,
+    "Model" = model,
+    "Estimator" = if (is.function(estimator)) "custom" else estimator,
+    "Draws" = if (identical(model, "mixed")) n_draws else NA_integer_,
+    "Seed" = if (is.null(seed)) NA_integer_ else seed
   )
   ## Kept for backward compatibility: this element used to be misspelled.
   all_designs[["arguements"]] <- all_designs[["arguments"]]

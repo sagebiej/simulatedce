@@ -16,6 +16,9 @@ sim_choice(
   manipulations = list(),
   estimate = TRUE,
   chunks = 1,
+  model = c("mnl", "mixed"),
+  estimator = "mixl",
+  n_draws = 200,
   sets_per_resp = NULL,
   sample_sets = c("balanced", "random", "with_replacement"),
   resample = TRUE,
@@ -26,6 +29,7 @@ sim_choice(
   keep_models = TRUE,
   keep_utilities = TRUE,
   workers = NULL,
+  seed = NULL,
   verbose = 1
 )
 }
@@ -93,6 +97,28 @@ a safety measure against losing a long run. With \code{no_sim = 100} and
 100. The scratch files go to the session's temporary directory and are
 removed once everything has been read back.}
 
+\item{model}{Which model to estimate. \code{"mnl"}, the default, fits a multinomial
+logit, which recovers the mean of each coefficient's distribution and says
+nothing about its spread. \code{"mixed"} fits a mixed logit in which every random
+entry of \code{bcoeff} gets its own respondent-level draw, so both the location and
+the spread are estimated. A mixed logit is warm-started from the multinomial
+fit, which is why it is noticeably slower than one model per run.
+
+\code{"mixed"} needs at least one random coefficient, and only the shapes a mixed
+logit can express are supported: \code{normal}, \code{lognormal} and \code{neg_lognormal}.
+Note that the estimated parameters are then the distribution's own parameters
+rather than its moments, so a \code{lognormal} reports \code{meanlog} and \code{sdlog}.
+\code{truepar} follows suit.}
+
+\item{estimator}{Which model fitter to use. \code{"mixl"} by default, which handles
+both \code{model} settings. Pass a function of your own to fit something else and
+still get the simulation, aggregation and power machinery around it. See
+\link{estimators} for the contract and a worked example.}
+
+\item{n_draws}{Number of draws per respondent for a mixed logit. Ignored for
+\code{model = "mnl"}. 200 is enough to see whether a design works; use more for
+results you intend to publish.}
+
 \item{sets_per_resp}{Number of choice sets each respondent should see. Leave
 as \code{NULL} to use the design's own \code{Block} column, which is the usual case.
 When given, blocks are not used: each respondent instead receives a random
@@ -154,6 +180,12 @@ estimation does not need these columns.}
 \item{workers}{Number of parallel workers. Defaults to whatever \code{future}
 picks for this machine, which respects \code{SLURM_CPUS_PER_TASK} on a cluster.
 Ignored in sequential mode.}
+
+\item{seed}{Optional integer. Sets the random seed before anything is
+simulated, so a script records how it was run. This also makes the parallel
+path reproducible, because \code{furrr} derives its per-run streams from the
+current state of the generator. Note that it changes the session's generator
+state, exactly as calling \code{\link[=set.seed]{set.seed()}} yourself would.}
 
 \item{verbose}{Set to 0 to suppress the note saying which kind of design was
 detected. \code{\link[=sim_all]{sim_all()}} passes its own \code{verbose} down, so that note follows the

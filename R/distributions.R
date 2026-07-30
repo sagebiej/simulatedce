@@ -13,18 +13,30 @@
 #'     \item{`sd`}{`function(spec)` giving the population standard deviation}
 #'   }
 #' @noRd
+#' @details
+#' The `mixed` element says whether a mixed logit can be written for this shape in
+#' mixl, and if so which arguments its two estimated parameters correspond to.
+#' `wrap` turns the linear index `b + sigma * draw` into the coefficient. mixl's
+#' `draw_*` tokens are standard normal, so a normal parameter needs no wrapping and
+#' a lognormal one is the exponential of the index.
+#' @noRd
 dce_distributions <- list(
   fixed = list(
     args = "value",
     draw = function(n, spec) rep(spec[["value"]], n),
     mean = function(spec) spec[["value"]],
-    sd   = function(spec) 0
+    sd   = function(spec) 0,
+    mixed = NULL
   ),
   normal = list(
     args = c("mean", "sd"),
     draw = function(n, spec) stats::rnorm(n, mean = spec[["mean"]], sd = spec[["sd"]]),
     mean = function(spec) spec[["mean"]],
-    sd   = function(spec) spec[["sd"]]
+    sd   = function(spec) spec[["sd"]],
+    mixed = list(
+      location = "mean", scale = "sd",
+      wrap = function(index) paste0("(", index, ")")
+    )
   ),
   lognormal = list(
     args = c("meanlog", "sdlog"),
@@ -33,7 +45,11 @@ dce_distributions <- list(
     sd   = function(spec) {
       s2 <- spec[["sdlog"]]^2
       sqrt((exp(s2) - 1) * exp(2 * spec[["meanlog"]] + s2))
-    }
+    },
+    mixed = list(
+      location = "meanlog", scale = "sdlog",
+      wrap = function(index) paste0("(exp(", index, "))")
+    )
   ),
   neg_lognormal = list(
     args = c("meanlog", "sdlog"),
@@ -42,7 +58,11 @@ dce_distributions <- list(
     sd   = function(spec) {
       s2 <- spec[["sdlog"]]^2
       sqrt((exp(s2) - 1) * exp(2 * spec[["meanlog"]] + s2))
-    }
+    },
+    mixed = list(
+      location = "meanlog", scale = "sdlog",
+      wrap = function(index) paste0("(-exp(", index, "))")
+    )
   ),
   uniform = list(
     args = c("min", "max"),
@@ -214,22 +234,174 @@ describe_spec <- function(spec, nm) {
 #' Used by `aggregateResults()` to attach `truepar` and `truesd` to the summary.
 #' Dots in names become underscores, matching what mixl does to the coefficient
 #' names during estimation.
+#'
+#' With `model = "mnl"` there is one row per coefficient, and `truepar` is the mean
+#' of the mixing distribution, which is what a multinomial logit recovers. With
+#' `model = "mixed"` each random coefficient contributes two rows, because a mixed
+#' logit estimates the distribution's own parameters rather than its moments: for a
+#' normal that is the mean and the standard deviation, for a lognormal the `meanlog`
+#' and `sdlog` of the underlying normal.
 #' @noRd
-bcoeff_table <- function(bcoeff) {
+bcoeff_table <- function(bcoeff, model = c("mnl", "mixed")) {
+  model <- match.arg(model)
+  empty <- data.frame(
+    parname = character(0), truepar = numeric(0), truesd = numeric(0),
+    stringsAsFactors = FALSE
+  )
   if (is.null(bcoeff) || length(bcoeff) == 0) {
+    return(empty)
+  }
+
+  nms <- names(bcoeff)
+  clean <- stringr::str_replace_all(nms, "\\.", "_")
+
+  if (identical(model, "mnl")) {
     return(data.frame(
-      parname = character(0), truepar = numeric(0), truesd = numeric(0),
+      parname = clean,
+      truepar = vapply(nms, function(nm) spec_mean(bcoeff[[nm]], nm), numeric(1)),
+      truesd  = vapply(nms, function(nm) spec_sd(bcoeff[[nm]], nm), numeric(1)),
+      row.names = NULL,
       stringsAsFactors = FALSE
     ))
   }
+
+  rows <- list()
+  for (i in seq_along(nms)) {
+    spec <- as_dist_spec(bcoeff[[nms[i]]], nms[i])
+    mixed <- dce_distributions[[spec[["dist"]]]]$mixed
+
+    if (identical(spec[["dist"]], "fixed") || is.null(mixed)) {
+      ## a fixed coefficient, or a shape with no mixed form, is estimated as a
+      ## single number and compared against its mean
+      rows[[length(rows) + 1L]] <- data.frame(
+        parname = clean[i],
+        truepar = spec_mean(spec, nms[i]),
+        truesd = spec_sd(spec, nms[i]),
+        stringsAsFactors = FALSE
+      )
+      next
+    }
+
+    rows[[length(rows) + 1L]] <- data.frame(
+      parname = clean[i],
+      truepar = as.numeric(spec[[mixed$location]]),
+      truesd = NA_real_,
+      stringsAsFactors = FALSE
+    )
+    rows[[length(rows) + 1L]] <- data.frame(
+      parname = paste0("sigma_", clean[i]),
+      truepar = as.numeric(spec[[mixed$scale]]),
+      truesd = NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }
+
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
+}
+
+
+#' Which coefficients would a mixed logit treat as random?
+#' @noRd
+mixed_random_params <- function(bcoeff) {
   nms <- names(bcoeff)
-  data.frame(
-    parname = stringr::str_replace_all(nms, "\\.", "_"),
-    truepar = vapply(nms, function(nm) spec_mean(bcoeff[[nm]], nm), numeric(1)),
-    truesd  = vapply(nms, function(nm) spec_sd(bcoeff[[nm]], nm), numeric(1)),
-    row.names = NULL,
-    stringsAsFactors = FALSE
-  )
+  keep <- vapply(nms, function(nm) {
+    spec <- as_dist_spec(bcoeff[[nm]], nm)
+    !identical(spec[["dist"]], "fixed")
+  }, logical(1))
+  nms[keep]
+}
+
+#' Check that every random coefficient has a shape mixl can estimate
+#' @noRd
+check_mixed_supported <- function(bcoeff) {
+  random <- mixed_random_params(bcoeff)
+
+  if (length(random) == 0) {
+    stop(
+      'model = "mixed" needs at least one random coefficient, but every entry of ',
+      "`bcoeff` is a fixed number. Either give one of them a distribution, or use ",
+      'model = "mnl".',
+      call. = FALSE
+    )
+  }
+
+  supported <- names(Filter(function(d) !is.null(d$mixed), dce_distributions))
+  shapes <- vapply(random, function(nm) as_dist_spec(bcoeff[[nm]], nm)[["dist"]], character(1))
+  bad <- random[!shapes %in% supported]
+
+  if (length(bad) > 0) {
+    stop(
+      "A mixed logit cannot be written for ",
+      and_list(paste0("`", bad, "` (", shapes[bad], ")")),
+      ". Shapes that can be estimated: ", and_list(supported, "and"),
+      ". Either change the distribution, or simulate with estimate = FALSE and fit ",
+      "the model you want yourself.",
+      call. = FALSE
+    )
+  }
+
+  random
+}
+
+#' Rewrite an mixl utility script so the random coefficients vary by respondent
+#'
+#' Each random coefficient `b` becomes `b + sigma_b * draw_b`, wrapped according to
+#' its distribution. mixl treats any `draw_*` token as a standard normal draw held
+#' constant within a respondent, and assigns the draw dimensions in order of first
+#' appearance, so the token names only have to be distinct.
+#' @noRd
+build_mixed_script <- function(script, bcoeff, random = NULL) {
+  if (is.null(random)) random <- check_mixed_supported(bcoeff)
+
+  for (nm in random) {
+    spec <- as_dist_spec(bcoeff[[nm]], nm)
+    mixed <- dce_distributions[[spec[["dist"]]]]$mixed
+    index <- paste0("@", nm, " + @sigma_", nm, " * draw_", nm)
+    script <- gsub(paste0("@", nm), mixed$wrap(index), script, fixed = TRUE)
+  }
+
+  script
+}
+
+#' Start values for a mixed logit, warm-started from the multinomial logit fit
+#'
+#' A scale parameter must not start at zero: the draws are symmetric, so the
+#' gradient there is zero and the optimiser cannot move. For the lognormal shapes
+#' the location is on the log scale, so the multinomial estimate is logged first.
+#' @noRd
+mixed_start_values <- function(mnl_coefficients, beta_names, bcoeff, random) {
+  start <- stats::setNames(rep(0, length(beta_names)), beta_names)
+
+  for (nm in intersect(names(mnl_coefficients), beta_names)) {
+    start[[nm]] <- mnl_coefficients[[nm]]
+  }
+
+  for (nm in random) {
+    spec <- as_dist_spec(bcoeff[[nm]], nm)
+    mixed <- dce_distributions[[spec[["dist"]]]]$mixed
+    from_mnl <- if (nm %in% names(mnl_coefficients)) mnl_coefficients[[nm]] else NA_real_
+
+    if (nm %in% beta_names) {
+      start[[nm]] <- if (identical(mixed$location, "meanlog")) {
+        ## the multinomial estimate approximates the coefficient's mean, and
+        ## meanlog is roughly its log
+        if (is.finite(from_mnl) && abs(from_mnl) > 1e-8) log(abs(from_mnl)) else -1
+      } else if (is.finite(from_mnl)) {
+        from_mnl
+      } else {
+        0
+      }
+    }
+
+    sigma <- paste0("sigma_", nm)
+    if (sigma %in% beta_names) {
+      start[[sigma]] <- max(0.1, abs(start[[nm]]) / 2)
+    }
+  }
+
+  start[beta_names]
 }
 
 #' Draw from a triangular distribution via the inverse CDF

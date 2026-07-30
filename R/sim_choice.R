@@ -13,6 +13,30 @@
 #'   `chunks = 2` the results so far are written after run 50 and again after run
 #'   100. The scratch files go to the session's temporary directory and are
 #'   removed once everything has been read back.
+#' @param model Which model to estimate. `"mnl"`, the default, fits a multinomial
+#'   logit, which recovers the mean of each coefficient's distribution and says
+#'   nothing about its spread. `"mixed"` fits a mixed logit in which every random
+#'   entry of `bcoeff` gets its own respondent-level draw, so both the location and
+#'   the spread are estimated. A mixed logit is warm-started from the multinomial
+#'   fit, which is why it is noticeably slower than one model per run.
+#'
+#'   `"mixed"` needs at least one random coefficient, and only the shapes a mixed
+#'   logit can express are supported: `normal`, `lognormal` and `neg_lognormal`.
+#'   Note that the estimated parameters are then the distribution's own parameters
+#'   rather than its moments, so a `lognormal` reports `meanlog` and `sdlog`.
+#'   `truepar` follows suit.
+#' @param estimator Which model fitter to use. `"mixl"` by default, which handles
+#'   both `model` settings. Pass a function of your own to fit something else and
+#'   still get the simulation, aggregation and power machinery around it. See
+#'   [estimators] for the contract and a worked example.
+#' @param n_draws Number of draws per respondent for a mixed logit. Ignored for
+#'   `model = "mnl"`. 200 is enough to see whether a design works; use more for
+#'   results you intend to publish.
+#' @param seed Optional integer. Sets the random seed before anything is
+#'   simulated, so a script records how it was run. This also makes the parallel
+#'   path reproducible, because `furrr` derives its per-run streams from the
+#'   current state of the generator. Note that it changes the session's generator
+#'   state, exactly as calling [set.seed()] yourself would.
 #' @param resample Redraw which choice sets each respondent sees for every
 #'   simulation run. Only relevant with `sets_per_resp`. `TRUE` by default,
 #'   because the allocation is part of the data generating process: fix it and you
@@ -87,6 +111,9 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
                        designtype = NULL, destype = NULL, bcoeff,
                        decisiongroups = c(0, 1), manipulations = list(),
                        estimate = TRUE, chunks = 1,
+                       model = c("mnl", "mixed"),
+                       estimator = "mixl",
+                       n_draws = 200,
                        sets_per_resp = NULL,
                        sample_sets = c("balanced", "random", "with_replacement"),
                        resample = TRUE,
@@ -97,10 +124,12 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
                        keep_models = TRUE,
                        keep_utilities = TRUE,
                        workers = NULL,
+                       seed = NULL,
                        verbose = 1) {
   mode <- match.arg(mode)
   sample_sets <- match.arg(sample_sets)
   utility_transform_type <- match.arg(utility_transform_type)
+  model <- match.arg(model)
 
   #################################################
   ########## Input Validation Test ###############
@@ -109,7 +138,13 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   no_sim <- check_count(no_sim, "no_sim")
   respondents <- check_count(respondents, "respondents")
   chunks <- check_count(chunks, "chunks")
+  n_draws <- check_count(n_draws, "n_draws")
   verbose <- check_verbose(verbose)
+  estimator_fun <- resolve_estimator(estimator)
+
+  if (!is.null(seed)) {
+    set.seed(check_count(seed, "seed", min = -.Machine$integer.max))
+  }
 
   if (chunks > no_sim) {
     stop(
@@ -154,6 +189,22 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   )
 
   designname <- clean_design_name(designfile)
+
+  ## Say so before spending an hour on a design that cannot identify the model.
+  ## A collinear design still converges and still fills in the summary table, so
+  ## nothing later would tell you.
+  diagnosis <- tryCatch(
+    check_design(design, u = strip_compiled(u), bcoeff = bcoeff),
+    error = function(e) NULL
+  )
+  if (!is.null(diagnosis) && !isTRUE(diagnosis$identified)) {
+    warning(
+      "Design '", designname, "' cannot identify the model you asked for. ",
+      paste(diagnosis$problems, collapse = " "),
+      " Run check_design() on it for the details.",
+      call. = FALSE
+    )
+  }
 
   ## Whether the choice sets shown to a respondent are redrawn every run. With a
   ## blocked design there is nothing to redraw.
@@ -210,26 +261,44 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   mnl_U <- transform_utility(u, bcoeff, first_data, utility_transform_type)
   vmsg(verbose, 2, "\nTransformed utility function (type: ", utility_transform_type, "):\n", mnl_U)
 
-  ## A compiled mixl model cannot be sent to another process, so each worker
-  ## builds its own the first time it is asked and caches it after that.
-  estimate_one <- function(data) {
-    bits <- model_spec_for(mnl_U, data)
-    quiet_estimate(bits, data, verbose)
+  mixed_U <- NULL
+  random_params <- character(0)
+  if (identical(model, "mixed")) {
+    random_params <- check_mixed_supported(bcoeff)
+    mixed_U <- build_mixed_script(mnl_U, bcoeff, random_params)
+    vmsg(verbose, 2, "\nMixed logit utility function:\n", mixed_U)
+    vmsg(verbose, 1, "Estimating a mixed logit with ", n_draws, " draws, random: ",
+      and_list(random_params), ".")
   }
 
-  run_one <- function(i) estimate_one(simulate_one(i))
+  ## Everything the estimator needs, except the parts that depend on the run.
+  base_spec <- build_estimator_spec(
+    u = u, bcoeff = bcoeff, script = mnl_U, mixed_script = mixed_U,
+    random_params = random_params, model = model, n_draws = n_draws,
+    n_alt = length(u[[1]]), verbose = verbose
+  )
+
+  ## Nothing holding an external pointer, such as a compiled mixl model, survives
+  ## being sent to another process, so each worker builds its own the first time it
+  ## is asked and caches it after that. See ?estimators.
+  estimate_one <- function(data, run = 1L) {
+    res <- estimator_fun(data, spec_for_data(base_spec, data))
+    check_estimator_result(res, run)
+  }
+
+  run_one <- function(i) estimate_one(simulate_one(i), i)
 
   timer <- new_timer()
 
   if (chunks > 1) {
     output <- run_in_chunks(
-      no_sim = no_sim, chunks = chunks, first = estimate_one(first_data),
+      no_sim = no_sim, chunks = chunks, first = estimate_one(first_data, 1L),
       run_one = run_one, mode = mode, workers = workers,
       designname = designname, verbose = verbose
     )
   } else {
     output <- c(
-      list(estimate_one(first_data)),
+      list(estimate_one(first_data, 1L)),
       if (no_sim > 1) {
         switchmap(seq_len(no_sim)[-1], run_one, mode = mode, workers = workers)
       } else {
@@ -245,7 +314,8 @@ sim_choice <- function(designfile, no_sim = 10, respondents = 330, u,
   results <- collect_results(
     output = output, designfile = designfile, designname = designname,
     no_sim = no_sim, respondents = respondents, bcoeff = bcoeff,
-    keep_models = keep_models
+    keep_models = keep_models, model = model,
+    scale_params = if (length(random_params)) paste0("sigma_", random_params) else character(0)
   )
 
   vmsg_print(verbose, 1, "\nSummary table:", format_table(results[["summary"]]))
@@ -347,24 +417,37 @@ switchmap <- function(.x, .f, mode, workers = NULL, ..., .progress = FALSE) {
 #' @noRd
 .mixl_cache <- new.env(parent = emptyenv())
 
+#' How many compiled models to keep per process
+#'
+#' A mixed logit run needs two, the multinomial warm start and the mixed model
+#' itself. The objects are large, so nothing older is kept.
 #' @noRd
-model_spec_for <- function(mnl_U, data) {
-  key <- paste(mnl_U, nrow(data), paste(names(data), collapse = ","), sep = "|")
+.mixl_cache_size <- 2L
+
+#' @noRd
+model_spec_for <- function(script, data) {
+  key <- paste(script, nrow(data), paste(names(data), collapse = ","), sep = "|")
   hit <- .mixl_cache[[key]]
   if (!is.null(hit)) {
     return(hit)
   }
 
-  spec <- mixl::specify_model(utility_script = mnl_U, dataset = data, disable_multicore = TRUE)
+  spec <- mixl::specify_model(utility_script = script, dataset = data, disable_multicore = TRUE)
   bits <- list(
     spec = spec,
     start = stats::setNames(rep(0, length(spec$beta_names)), spec$beta_names),
-    availabilities = mixl::generate_default_availabilities(data, spec$num_utility_functions)
+    availabilities = design_availabilities(data, spec$num_utility_functions)
   )
 
-  ## Keep only the current model: designs and sample sizes change between calls
-  ## and the cached objects are large.
-  rm(list = ls(.mixl_cache), envir = .mixl_cache)
+  ## Evict the oldest entries: designs and sample sizes change between calls and
+  ## the cached objects are large.
+  existing <- ls(.mixl_cache)
+  if (length(existing) >= .mixl_cache_size) {
+    ages <- vapply(existing, function(k) .mixl_cache[[k]]$stamp %||% 0, numeric(1))
+    rm(list = existing[order(ages)][seq_len(length(existing) - .mixl_cache_size + 1L)],
+       envir = .mixl_cache)
+  }
+  bits$stamp <- as.numeric(Sys.time())
   assign(key, bits, envir = .mixl_cache)
   bits
 }
@@ -374,21 +457,25 @@ model_spec_for <- function(mnl_U, data) {
 #' mixl calls maxLik with print.level = 4 hard-coded, so the only way to keep the
 #' console usable is to capture the output.
 #' @noRd
-quiet_estimate <- function(bits, data, verbose) {
+quiet_estimate <- function(bits, data, verbose, n_draws = NULL) {
   run <- function() {
-    mixl::estimate(
+    args <- list(
       model_spec = bits$spec,
       start_values = bits$start,
       availabilities = bits$availabilities,
       data = data
     )
+    ## Only a mixed model takes draws, and passing nDraws to a model without any
+    ## draw dimensions is an error in mixl.
+    if (!is.null(n_draws) && isTRUE(bits$spec$is_mixed)) args$nDraws <- n_draws
+    do.call(mixl::estimate, args)
   }
   if (verbose >= 3) {
-    return(run())
+    return(suppressMessages(run()))
   }
-  model <- NULL
-  utils::capture.output(model <- run())
-  model
+  fitted <- NULL
+  utils::capture.output(suppressMessages(fitted <- run()))
+  fitted
 }
 
 
@@ -443,20 +530,26 @@ run_in_chunks <- function(no_sim, chunks, first, run_one, mode, workers,
 #' Pull coefficients, summaries, power and convergence out of the estimated models
 #' @noRd
 collect_results <- function(output, designfile, designname, no_sim, respondents,
-                            bcoeff, keep_models = TRUE) {
-  codes <- vapply(output, function(m) as.integer(m[["code"]] %||% NA_integer_), integer(1))
-  ## maxLik follows optim: 0 means converged, anything else is a problem.
-  reported_ok <- !is.na(codes) & codes == 0L
+                            bcoeff, keep_models = TRUE, model = "mnl",
+                            scale_params = character(0)) {
+  reported_ok <- vapply(output, function(r) isTRUE(r$converged), logical(1))
 
-  tables <- lapply(output, function(m) {
-    tryCatch(summary(m)[["coefTable"]][c(1, 8)], error = function(e) NULL)
+  tables <- lapply(output, function(r) {
+    if (length(r$coefficients) == 0) {
+      return(NULL)
+    }
+    data.frame(
+      est = unname(r$coefficients),
+      rob_pval0 = unname(r$pvalues[names(r$coefficients)]),
+      row.names = names(r$coefficients)
+    )
   })
 
   ## A separated logit walks off to a huge coefficient with a huge standard error
-  ## and still reports code 0, so the code alone is not enough. Such a run would
-  ## otherwise drag the mean of every summary with it.
+  ## and still reports success, so the convergence flag alone is not enough. Such a
+  ## run would otherwise drag the mean of every summary with it.
   usable <- vapply(tables, function(tab) {
-    !is.null(tab) && nrow(tab) > 0 && all(is.finite(as.matrix(tab)))
+    !is.null(tab) && nrow(tab) > 0 && all(is.finite(tab$est))
   }, logical(1))
 
   ok <- reported_ok & usable
@@ -496,7 +589,18 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
   }) %>%
     dplyr::bind_rows(.id = "run")
 
-  results <- if (isTRUE(keep_models)) output else list()
+  ## A mixed logit's scale parameters have no identified sign: the likelihood sees
+  ## only sigma * draw, and the draws are symmetric about zero, so +sigma and
+  ## -sigma fit identically. The optimiser lands on either. Reporting the absolute
+  ## value is what every mixed logit package does; leaving the sign in would drag
+  ## the mean of the summary towards zero for no reason.
+  for (sp in intersect(paste0("est_", scale_params), names(coefs))) {
+    coefs[[sp]] <- abs(coefs[[sp]])
+  }
+
+  ## The numbered slots hold the backend's own fitted object, so
+  ## result[[design]][[1]]$data still works with the default estimator.
+  results <- if (isTRUE(keep_models)) lapply(output, function(r) r$model) else list()
 
   results[["coefs"]] <- coefs
   results[["summary"]] <- describe_coefs(coefs[, -1, drop = FALSE])
@@ -509,7 +613,7 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
     runs = no_sim,
     converged = sum(ok),
     failed = sum(!ok),
-    codes = table(codes, useNA = "ifany"),
+    not_converged = sum(!reported_ok),
     unusable_estimates = sum(reported_ok & !usable)
   )
 
@@ -520,6 +624,7 @@ collect_results <- function(output, designfile, designname, no_sim, respondents,
   ## results from independent runs (e.g. designs simulated at different times).
   results[["bcoeff"]] <- bcoeff
   results[["designname"]] <- designname
+  results[["model"]] <- model
 
   results
 }

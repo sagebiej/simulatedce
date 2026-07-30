@@ -188,7 +188,17 @@ simulate_choices <- function(data, utility, setspp, bcoeff, decisiongroups = c(0
   for (k in seq_len(n_alt)) data[[ecols[k]]] <- -log(stats::rexp(nr))
   for (k in seq_len(n_alt)) data[[ucols[k]]] <- data[[vcols[k]]] + data[[ecols[k]]]
 
-  data$CHOICE <- max.col(as.matrix(data[, ucols, drop = FALSE]))
+  ## An alternative that was not offered cannot be chosen, however high its
+  ## utility came out. See ?availability.
+  total <- as.matrix(data[, ucols, drop = FALSE])
+  av <- availability_matrix(data, n_alt)
+  if (!is.null(av)) {
+    total[av == 0] <- -Inf
+    vmsg(verbose, 3, "Availability columns in use: ",
+         and_list(availability_columns(data)))
+  }
+
+  data$CHOICE <- max.col(total)
 
   if (!isTRUE(keep_utilities)) {
     data <- data[, setdiff(names(data), c(vcols, ecols, ucols)), drop = FALSE]

@@ -1,3 +1,70 @@
+# simulateDCE 0.5.0
+
+Six additions, all of them things the package could not do before.
+
+## New features
+
+* **`check_design()`** reports whether a design can identify the model you mean to
+  estimate. It centres every term within each choice situation, which is the
+  variation a logit can actually see, and reports the rank of that matrix, which
+  terms are collinear if it is short, how many distinct patterns of variation
+  there are, the correlations between terms, and how many choice situations offer
+  identical or dominated alternatives. With `u` supplied it uses the exact terms
+  your model implies, found by evaluating each utility function with one
+  coefficient set to 1 and the rest to 0, so interactions, transformations and
+  alternative-specific constants are handled without special cases.
+  `sim_all()` runs it and warns before spending an hour on a design that cannot
+  work. A collinear design still converges and still fills in a summary table, so
+  nothing else would have told you.
+* **Mixed logit estimation** with `model = "mixed"`. Every random entry of
+  `bcoeff` gets its own respondent-level draw, so the location and the spread are
+  both estimated rather than the multinomial logit's attenuated mean. Warm-started
+  from the multinomial fit. `normal`, `lognormal` and `neg_lognormal` are
+  supported; the bounded shapes cannot be written as a mixed logit and asking for
+  them is an error rather than a silent approximation. Note that a mixed logit
+  estimates a distribution's own parameters, so a lognormal reports `meanlog` and
+  `sdlog`, and `truepar` follows suit. `n_draws` sets the number of draws.
+* **Availability of alternatives.** Columns named `av1`, `av2` and so on, holding
+  0 where an alternative was not offered, are picked up automatically. An
+  unavailable alternative cannot be chosen when simulating however high its
+  utility comes out, and the availability matrix is passed to the model when
+  estimating so the probabilities are normalised over what was on offer. See
+  `?availability`, which also documents how to express a no-choice option.
+* **A pluggable estimator.** `estimator` accepts a function of your own, so any
+  model can go in the loop with the simulation, aggregation and power machinery
+  around it. The contract is four elements: `coefficients`, `pvalues`,
+  `converged` and `model`. `spec$model_matrix()` hands over each coefficient's
+  regressor per alternative, so a linear-in-parameters model needs about twenty
+  lines. See `?estimators` for a worked conditional logit, which agrees with the
+  default `mixl` backend to within a millionth on the same data.
+* **`power_curve()`** runs the same simulation at several sample sizes and returns
+  one tidy table of power, its standard error, and the estimates, per design and
+  per parameter. This is the answer to "how many respondents do I need".
+* **A `seed` argument** on `sim_all()` and `sim_choice()`, recorded in
+  `$arguments`, so a script says how it was run. It makes the parallel path
+  reproducible too, since `furrr` derives its per-run streams from the current
+  state of the generator.
+
+## Bug fixes
+
+* **A mixed logit's scale parameters were reported with whatever sign the
+  optimiser happened to find.** The likelihood sees only `sigma * draw` and the
+  draws are symmetric about zero, so `+sigma` and `-sigma` fit identically. Two
+  runs in twelve came back negative, which dragged the mean of the summary from
+  0.398 to 0.297 against a true 0.4. The absolute value is now reported, as every
+  mixed logit package does.
+* `summaryall` and the per-design `summary` gained a `median` column in 0.4.0;
+  `aggregateResults()` now puts it in the expected place in the column order.
+
+## Other changes
+
+* Dropped the unused `parallelly` entry from Suggests. It only ever appeared in
+  vignette prose, and `future` depends on it anyway.
+* New vignette, `estimators`, covering availability, mixed logit and writing your
+  own estimator. The getting-started vignette now opens with `check_design()` and
+  uses `power_curve()` for its sample-size table.
+* The test suite grew from 271 tests to 365.
+
 # simulateDCE 0.4.0
 
 This release makes random parameters usable end to end, fixes a set of defects that

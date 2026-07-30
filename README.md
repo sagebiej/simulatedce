@@ -99,26 +99,26 @@ sedrive <- sim_all(
 #>   blade                fixed            value = -0.07
 #>   bwarte               fixed            value = 0.02
 #> New names:
-#> Summary table: n mean median sd min max range se est_bpreis 10 -0.009 -0.009
-#> 0.002 -0.014 -0.006 0.008 0.001 est_blade 10 -0.045 -0.043 0.010 -0.061 -0.032
-#> 0.030 0.003 est_bwarte 10 0.015 0.017 0.005 0.006 0.021 0.015 0.002
-#> rob_pval0_bpreis 10 0.001 0.000 0.002 0.000 0.006 0.006 0.001 rob_pval0_blade
-#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.204 0.106
-#> 0.197 0.060 0.594 0.533 0.062
+#> Summary table: n mean median sd min max range se est_bpreis 10 -0.010 -0.010
+#> 0.002 -0.014 -0.007 0.007 0.001 est_blade 10 -0.050 -0.051 0.008 -0.059 -0.037
+#> 0.022 0.002 est_bwarte 10 0.010 0.013 0.009 -0.006 0.025 0.031 0.003
+#> rob_pval0_bpreis 10 0.000 0.000 0.001 0.000 0.003 0.003 0.000 rob_pval0_blade
+#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.371 0.245
+#> 0.327 0.014 0.972 0.957 0.103
 #> Power results:
 #> 
-#> FALSE TRUE 100 0
+#> FALSE TRUE 90 10
 #> New names:
-#> Summary table: n mean median sd min max range se est_bpreis 10 -0.010 -0.009
-#> 0.002 -0.013 -0.008 0.005 0.001 est_blade 10 -0.049 -0.048 0.005 -0.057 -0.043
-#> 0.013 0.002 est_bwarte 10 0.012 0.008 0.009 0.003 0.027 0.023 0.003
+#> Summary table: n mean median sd min max range se est_bpreis 10 -0.011 -0.011
+#> 0.002 -0.016 -0.008 0.007 0.001 est_blade 10 -0.050 -0.049 0.009 -0.069 -0.038
+#> 0.031 0.003 est_bwarte 10 0.018 0.021 0.015 -0.007 0.036 0.043 0.005
 #> rob_pval0_bpreis 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_blade
-#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.383 0.422
-#> 0.297 0.009 0.735 0.726 0.094
+#> 10 0.000 0.000 0.000 0.000 0.000 0.000 0.000 rob_pval0_bwarte 10 0.170 0.053
+#> 0.228 0.001 0.585 0.584 0.072
 #> Power results:
 #> 
-#> FALSE TRUE 70 30
-#> total time for simulation and estimation: 8.841 sec elapsed
+#> FALSE TRUE 50 50
+#> total time for simulation and estimation: 8.866 sec elapsed
 #> • `Choice situation` -> `Choice.situation`
 #> • `` -> `...10`
 ```
@@ -143,9 +143,9 @@ round(
   4
 )
 #>        truepar   small small_sd bayesian bay_sd
-#> bpreis   -0.01 -0.0102   0.0021  -0.0091 0.0025
-#> blade    -0.07 -0.0490   0.0049  -0.0452 0.0099
-#> bwarte    0.02  0.0116   0.0089   0.0152 0.0053
+#> bpreis   -0.01 -0.0109   0.0025  -0.0101 0.0021
+#> blade    -0.07 -0.0500   0.0094  -0.0499 0.0075
+#> bwarte    0.02  0.0179   0.0151   0.0104 0.0093
 ```
 
 Power is reported per design and per coefficient:
@@ -155,11 +155,11 @@ Power is reported per design and per coefficient:
 sedrive$powa_by_par
 #> $bayeffdesignconstr
 #> bpreis  blade bwarte 
-#>    100    100      0 
+#>    100    100     10 
 #> 
 #> $effconstrsmall
 #> bpreis  blade bwarte 
-#>    100    100     30
+#>    100    100     50
 ```
 
 ## Random parameters

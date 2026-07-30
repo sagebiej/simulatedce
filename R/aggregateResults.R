@@ -53,6 +53,9 @@ aggregateResults <- function(all_designs, fromfolder = NULL, print_plots = FALSE
 
   designname <- args[["designname"]]
   bcoeff <- args[["Beta values"]]
+  ## A mixed logit estimates the distribution's own parameters, so what counts as
+  ## the true value depends on which model was fitted.
+  model <- args[["Model"]] %||% "mnl"
 
   designs <- all_designs[intersect(designname, names(all_designs))]
   if (length(designs) == 0) {
@@ -79,7 +82,7 @@ aggregateResults <- function(all_designs, fromfolder = NULL, print_plots = FALSE
     dplyr::select(!dplyr::ends_with("vars")) %>%
     tibble::rownames_to_column("parname") %>%
     dplyr::mutate(parname = stringr::str_remove(.data$parname, "^est_")) %>%
-    dplyr::left_join(bcoeff_table(bcoeff), by = "parname") %>%
+    dplyr::left_join(bcoeff_table(bcoeff, model = model), by = "parname") %>%
     dplyr::relocate("parname", dplyr::ends_with(c(
       ".n", "truepar", "truesd", "mean", "median", "sd", "min", "max", "range", "se"
     )))
@@ -201,9 +204,12 @@ read_saved_designs <- function(fromfolder) {
 
   ## Rebuild the metadata aggregateResults() expects further down so that the
   ## fromfolder path behaves like the in-memory path used by sim_all().
+  model <- with_bcoeff[["model"]] %||% "mnl"
+
   designs[["arguments"]] <- list(
     "Beta values" = bcoeff,
-    "designname"  = unname(designname)
+    "designname"  = unname(designname),
+    "Model"       = model
   )
   designs[["arguements"]] <- designs[["arguments"]]
 
