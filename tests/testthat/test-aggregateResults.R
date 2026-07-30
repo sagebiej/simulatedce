@@ -112,3 +112,126 @@ test_that("aggregateResults(fromfolder) errors on a missing or empty folder", {
     "No '\\.qs' files"
   )
 })
+
+#── the in-memory path used by sim_all() ───────────────────────────────────────
+
+test_that("summaryall has one row per estimated quantity and a truepar per coefficient", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 3, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, utility_transform_type = "exact",
+    mode = "sequential", estimate = TRUE, verbose = 0
+  ))
+  sa <- res[["summaryall"]]
+
+  expect_s3_class(sa, "data.frame")
+  expect_true(all(c("parname", "truepar") %in% names(sa)))
+  # one row per coefficient plus one per robust p value
+  expect_equal(nrow(sa), 2 * length(bcoeff))
+  # the coefficient rows carry the true value, the p value rows do not
+  coef_rows <- !grepl("^rob_pval0_", sa$parname)
+  expect_false(any(is.na(sa$truepar[coef_rows])))
+  expect_setequal(sa$parname[coef_rows], c("bpreis", "blade", "bwarte"))
+})
+
+test_that("truepar matches the beta values that were fed in", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, utility_transform_type = "exact",
+    mode = "sequential", estimate = TRUE, verbose = 0
+  ))
+  sa <- res[["summaryall"]]
+  expect_equal(sa$truepar[sa$parname == "bpreis"], -0.01)
+  expect_equal(sa$truepar[sa$parname == "blade"],  -0.07)
+  expect_equal(sa$truepar[sa$parname == "bwarte"],  0.02)
+})
+
+test_that("one power entry and one graph per design and coefficient", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, utility_transform_type = "exact",
+    mode = "sequential", estimate = TRUE, verbose = 0
+  ))
+  ndesigns <- length(list.files(designpath))
+  expect_length(res[["powa"]], ndesigns)
+  expect_true(all(vapply(res[["powa"]], is.table, logical(1))))
+
+  expect_named(res[["graphs"]], names(bcoeff) |> stringr::str_remove_all("[._]"),
+               ignore.order = TRUE)
+  expect_true(all(vapply(res[["graphs"]], ggplot2::is_ggplot, logical(1))))
+})
+
+test_that("sim_all records its own arguments for later aggregation", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, utility_transform_type = "exact",
+    mode = "sequential", estimate = FALSE, verbose = 0
+  ))
+  args <- res[["arguements"]]
+  expect_equal(args[["Number Simulations"]], 2)
+  expect_equal(args[["Respondents"]], 60)
+  expect_equal(args[["Designpath"]], designpath)
+  expect_equal(args[["mode"]], "sequential")
+  expect_length(args[["designname"]], length(list.files(designpath)))
+})
+
+test_that("aggregateResults is not run when estimate is FALSE", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 20, designpath = designpath,
+    u = ul, bcoeff = bcoeff, utility_transform_type = "exact",
+    mode = "sequential", estimate = FALSE, verbose = 0
+  ))
+  expect_false("summaryall" %in% names(res))
+  expect_false("graphs" %in% names(res))
+})
+
+test_that("reshape_type is deprecated and ignored", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, mode = "sequential", estimate = TRUE, verbose = 0
+  ))
+  expect_message(
+    aggregateResults(all_designs = res, reshape_type = "nonsense"),
+    "deprecated and ignored"
+  )
+  # and the result is the same as without it
+  expect_equal(
+    suppressMessages(aggregateResults(res, reshape_type = "stats"))[["summaryall"]],
+    aggregateResults(res)[["summaryall"]]
+  )
+})
+
+test_that("the long estimates table has one row per run per design", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 3, resps = 60, designpath = designpath,
+    u = ul, bcoeff = bcoeff, mode = "sequential", estimate = TRUE, verbose = 0
+  ))
+  ndesigns <- length(res[["arguments"]][["designname"]])
+
+  expect_true("design" %in% names(res[["estimates"]]))
+  expect_equal(nrow(res[["estimates"]]), 3 * ndesigns)
+  expect_setequal(
+    setdiff(names(res[["estimates"]]), "design"),
+    names(res[["arguments"]][["Beta values"]])
+  )
+})
+
+test_that("aggregateResults refuses a list it cannot interpret", {
+  expect_error(aggregateResults(all_designs = list(a = 1)), "no `arguments` element")
+  expect_error(aggregateResults(all_designs = "nope"), "must be the list returned")
+})
+
+test_that("aggregateResults refuses results with no models in them", {
+  skip_on_cran()
+  res <- suppressMessages(sim_all(
+    nosim = 2, resps = 20, designpath = designpath,
+    u = ul, bcoeff = bcoeff, mode = "sequential", estimate = FALSE, verbose = 0
+  ))
+  expect_error(aggregateResults(all_designs = res), "estimate = TRUE")
+})

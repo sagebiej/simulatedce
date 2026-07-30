@@ -12,15 +12,19 @@ simulate_choices(
   decisiongroups = c(0, 1),
   manipulations = list(),
   preprocess_function = NULL,
+  keep_utilities = TRUE,
   verbose = 1
 )
 }
 \arguments{
-\item{data}{a dataframe that includes a design repeated for the number of observations}
+\item{data}{a dataframe that includes a design repeated for the number of
+observations, as returned by \code{\link[=createDataset]{createDataset()}}. It must have an \code{ID} column.}
 
-\item{utility}{a list with the utility functions, one utility function for each alternatives}
+\item{utility}{a list with the utility functions, one utility function for each
+alternative. See \code{\link[=sim_choice]{sim_choice()}} for the conventions.}
 
-\item{setspp}{Deprecated. Ignored and retained for backward compatibility.}
+\item{setspp}{Deprecated. Ignored and retained for backward compatibility.
+The number of choice sets per respondent is taken from \code{data}.}
 
 \item{bcoeff}{Named list of parameter specifications.
 Each element is either:
@@ -42,13 +46,30 @@ All values are negative. Useful for price coefficients.}
 draws from \eqn{U(\min, \max)}.}
 \item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
 draws from a triangular distribution with given bounds and mode.}
-}}
+\item{\code{"truncated_normal"}}{\code{mean}, \code{sd}, \code{min},
+\code{max}: draws from \eqn{N(\mu, \sigma)} restricted to
+\eqn{[\min, \max]}. Useful when a coefficient must keep its sign.}
+}
+Note that \code{meanlog} and \code{sdlog} describe the underlying normal,
+not the coefficient itself. Call \code{\link{bcoeff_moments}} to see the
+mean and standard deviation each specification implies.}
 
-\item{decisiongroups}{A vector showing how decision groups are numerically distributed}
+\item{decisiongroups}{A vector of cumulative shares showing how respondents are
+split between the utility functions in \code{utility}. It must start at 0 and end
+at 1. Whole respondents are assigned to a group, never part of a respondent.}
 
-\item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+\item{manipulations}{A named list of expressions altering columns before the
+utilities are computed, for example applying a factor to an attribute or
+changing a term for one group only.}
 
-\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
+\item{preprocess_function}{A function that reads in external data (e.g. GIS
+coordinates) to be merged with the simulated dataset. It must return either
+\code{NULL} or a data.frame with a column called \code{ID} used for matching.}
+
+\item{keep_utilities}{Keep the \code{V_}, \code{e_} and \code{U_} columns in the result.
+\code{TRUE} by default. Setting it to \code{FALSE} roughly halves the size of the
+simulated data, which matters when thousands of runs are held in memory. The
+estimation does not need these columns.}
 
 \item{verbose}{Integer controlling how much progress information is printed
 to the console (via \code{message()}). Levels are cumulative: each level
@@ -90,6 +111,6 @@ ut <- list(
     v2 = V.2 ~ 0
   )
 )
-simulate_choices(example_df, ut, setspp = 4, bcoeff = beta)
+simulate_choices(example_df, ut, bcoeff = beta)
 
 }

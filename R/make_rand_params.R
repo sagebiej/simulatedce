@@ -25,7 +25,13 @@
 #'       draws from \eqn{U(\min, \max)}.}
 #'     \item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
 #'       draws from a triangular distribution with given bounds and mode.}
+#'     \item{\code{"truncated_normal"}}{\code{mean}, \code{sd}, \code{min},
+#'       \code{max}: draws from \eqn{N(\mu, \sigma)} restricted to
+#'       \eqn{[\min, \max]}. Useful when a coefficient must keep its sign.}
 #'   }
+#'   Note that \code{meanlog} and \code{sdlog} describe the underlying normal,
+#'   not the coefficient itself. Call \code{\link{bcoeff_moments}} to see the
+#'   mean and standard deviation each specification implies.
 #'
 #' @param n_resp Positive integer. Number of respondents.
 #' @param respondent_ids Optional vector of length \code{n_resp} for the
@@ -33,6 +39,9 @@
 #'
 #' @return A data frame with \code{n_resp} rows and columns \code{ID} plus
 #'   one column per parameter in \code{bcoeff}.
+#'
+#' @seealso \code{\link{bcoeff_moments}} to inspect the implied moments of a
+#'   specification without drawing from it.
 #'
 #' @export
 #'
@@ -47,101 +56,128 @@
 #' head(draws)
 #'
 make_rand_params <- function(bcoeff, n_resp, respondent_ids = NULL) {
+  check_bcoeff_list(bcoeff)
 
-  # ── validate inputs ──────────────────────────────────────────────────────────
-  if (!is.list(bcoeff) || is.null(names(bcoeff)) || any(names(bcoeff) == ""))
-    stop("`bcoeff` must be a fully named list.")
-
-  if (!is.numeric(n_resp) || length(n_resp) != 1L ||
-      n_resp < 1 || n_resp != as.integer(n_resp))
-    stop("`n_resp` must be a single positive integer.")
+  if (!is.numeric(n_resp) || length(n_resp) != 1L || is.na(n_resp) ||
+    n_resp < 1 || n_resp != as.integer(n_resp)) {
+    stop(
+      "`n_resp` must be a single positive whole number, not ",
+      describe_value(n_resp), ".",
+      call. = FALSE
+    )
+  }
   n_resp <- as.integer(n_resp)
 
   if (!is.null(respondent_ids)) {
-    if (length(respondent_ids) != n_resp)
-      stop("`respondent_ids` must have length equal to `n_resp` (", n_resp, ").")
+    if (length(respondent_ids) != n_resp) {
+      stop(
+        "`respondent_ids` has ", length(respondent_ids), " element(s) but ",
+        "`n_resp` is ", n_resp, ". Supply one id per respondent, or leave ",
+        "`respondent_ids` empty to use 1:", n_resp, ".",
+        call. = FALSE
+      )
+    }
+    if (anyDuplicated(respondent_ids)) {
+      stop(
+        "`respondent_ids` must be unique: each respondent gets one draw. ",
+        "Duplicated: ",
+        paste(unique(respondent_ids[duplicated(respondent_ids)]), collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
   } else {
     respondent_ids <- seq_len(n_resp)
   }
 
-  supported <- c("normal", "lognormal", "neg_lognormal",
-                  "uniform", "triangular", "fixed")
-
   out <- data.frame(ID = respondent_ids)
 
   for (nm in names(bcoeff)) {
-    spec <- bcoeff[[nm]]
-
-    # 1. Standardize: If it's a scalar, wrap it into a list so the switch works
-    if (!is.list(spec)) {
-      spec <- list(dist = "fixed", value = spec)
-    }
-
-    if (!is.list(spec) || is.null(spec[["dist"]]))
-      stop(glue::glue(
-        "`bcoeff[['{nm}']]` must be a numeric scalar or a list with a `dist` element."
-      ))
-
-    dist <- spec[["dist"]]
-    if (!dist %in% supported)
-      stop(glue::glue(
-        "Unknown distribution '{dist}' for parameter '{nm}'. ",
-        "Supported: {paste(supported, collapse = ', ')}."
-      ))
-
-    out[[nm]] <- switch(dist,
-
-      "fixed" = {
-        rep(spec[["value"]], n_resp)
-        },
-
-      "normal" = {
-        check_moments(spec, nm, c("mean", "sd"))
-        stats::rnorm(n_resp, mean = spec[["mean"]], sd = spec[["sd"]])
-      },
-      "lognormal" = {
-        check_moments(spec, nm, c("meanlog", "sdlog"))
-        exp(stats::rnorm(n_resp, mean = spec[["meanlog"]], sd = spec[["sdlog"]]))
-      },
-      "neg_lognormal" = {
-        check_moments(spec, nm, c("meanlog", "sdlog"))
-        -exp(stats::rnorm(n_resp, mean = spec[["meanlog"]], sd = spec[["sdlog"]]))
-      },
-      "uniform" = {
-        check_moments(spec, nm, c("min", "max"))
-        stats::runif(n_resp, min = spec[["min"]], max = spec[["max"]])
-      },
-      "triangular" = {
-        check_moments(spec, nm, c("min", "max", "mode"))
-        draw_triangular(n_resp, spec[["min"]], spec[["max"]], spec[["mode"]])
-      }
-    )
+    spec <- as_dist_spec(bcoeff[[nm]], nm)
+    out[[nm]] <- draw_from_spec(spec, n_resp)
   }
 
   out
 }
 
-#' Check that required moment parameters are present
-#' @noRd
-check_moments <- function(spec, param_name, required) {
-  missing_args <- setdiff(required, names(spec))
-  if (length(missing_args) > 0)
-    stop(glue::glue(
-      "Parameter '{param_name}' (dist = '{spec$dist}') is missing required ",
-      "argument(s): {paste(missing_args, collapse = ', ')}."
-    ))
+
+#' Report the mean and standard deviation implied by a bcoeff list
+#'
+#' @description
+#' Shows what each entry of \code{bcoeff} means in the units of the coefficient
+#' itself. This is useful for the distributions that are parameterised on
+#' another scale: \code{lognormal} and \code{neg_lognormal} take
+#' \code{meanlog} and \code{sdlog}, which describe the underlying normal rather
+#' than the coefficient. The \code{mean} column is the value a multinomial logit
+#' should recover, and is what \code{\link{aggregateResults}} reports as
+#' \code{truepar}.
+#'
+#' @param bcoeff A named list of parameter specifications, as passed to
+#'   \code{\link{sim_all}}. See \code{\link{make_rand_params}}.
+#'
+#' @return A data frame with one row per parameter and the columns
+#'   \code{parameter}, \code{dist}, \code{mean} and \code{sd}.
+#'
+#' @export
+#'
+#' @examples
+#' bcoeff <- list(
+#'   bprice = list(dist = "neg_lognormal", meanlog = -3, sdlog = 0.5),
+#'   bqual  = list(dist = "triangular", min = 0, max = 1, mode = 0.2),
+#'   basc   = 0.4
+#' )
+#' bcoeff_moments(bcoeff)
+#'
+bcoeff_moments <- function(bcoeff) {
+  check_bcoeff_list(bcoeff)
+  nms <- names(bcoeff)
+  data.frame(
+    parameter = nms,
+    dist = vapply(nms, function(nm) as_dist_spec(bcoeff[[nm]], nm)[["dist"]], character(1)),
+    mean = vapply(nms, function(nm) spec_mean(bcoeff[[nm]], nm), numeric(1)),
+    sd   = vapply(nms, function(nm) spec_sd(bcoeff[[nm]], nm), numeric(1)),
+    row.names = NULL,
+    stringsAsFactors = FALSE
+  )
 }
 
-#' Draw from a triangular distribution via inverse CDF
+
+#' Validate the shape of a bcoeff list
+#'
+#' Checks only the container. Individual specifications are validated by
+#' `as_dist_spec()` when they are used, so the error can name the parameter.
 #' @noRd
-draw_triangular <- function(n, a, b, c) {
-  if (a >= b) stop("Triangular distribution requires min < max.")
-  if (c < a || c > b) stop("Triangular distribution requires min <= mode <= max.")
-  u <- stats::runif(n)
-  fc <- (c - a) / (b - a)
-  ifelse(
-    u < fc,
-    a + sqrt(u * (b - a) * (c - a)),
-    b - sqrt((1 - u) * (b - a) * (b - c))
-  )
+check_bcoeff_list <- function(bcoeff, arg = "bcoeff") {
+  if (!is.list(bcoeff)) {
+    stop(
+      "`", arg, "` must be a list of parameter values, not ",
+      describe_value(bcoeff), ". For example: ",
+      "list(bprice = -0.2, bqual = list(dist = \"normal\", mean = 1, sd = 0.5)).",
+      call. = FALSE
+    )
+  }
+  if (length(bcoeff) == 0) {
+    stop("`", arg, "` is empty. Give one entry per coefficient in your utility functions.",
+      call. = FALSE
+    )
+  }
+  nms <- names(bcoeff)
+  if (is.null(nms) || any(is.na(nms)) || any(!nzchar(nms))) {
+    unnamed <- if (is.null(nms)) seq_along(bcoeff) else which(is.na(nms) | !nzchar(nms))
+    stop(
+      "Every element of `", arg, "` needs a name matching a coefficient in your ",
+      "utility functions. Unnamed element(s) at position(s): ",
+      paste(unnamed, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(nms)) {
+    stop(
+      "`", arg, "` has duplicated names: ",
+      paste(unique(nms[duplicated(nms)]), collapse = ", "),
+      ". Each coefficient may appear only once.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }

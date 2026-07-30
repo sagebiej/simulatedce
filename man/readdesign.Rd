@@ -4,17 +4,29 @@
 \alias{readdesign}
 \title{Creates a dataframe with the design.}
 \usage{
-readdesign(design = designfile, designtype = NULL, destype = NULL)
+readdesign(design, designtype = NULL, destype = NULL, verbose = 1)
 }
 \arguments{
-\item{design}{The path to a design file}
+\item{design}{The path to a design file.}
 
-\item{designtype}{Is it a design created with ngene, spdesign or idefix. use 'ngene', 'spdesign' or 'idefix. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. Idefix objects should also be stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
+\item{designtype}{Which tool produced the design. One of \code{"ngene"},
+\code{"spdesign"}, \code{"idefix"} or \code{"matrix"}. Ngene designs should be stored as
+the standard \code{.ngd} output. \code{spdesign} should be the spdesign object stored
+as an RDS file. Idefix objects should also be stored as an RDS file. Use
+\code{"matrix"} for a design you built yourself and saved as a plain data frame,
+one row per choice situation. If \code{designtype} is not given it is detected
+from the file, which is helpful when a folder mixes designs from different
+tools.}
 
-\item{destype}{Deprecated. Use designtype instead.}
+\item{destype}{Deprecated. Use \code{designtype} instead.}
+
+\item{verbose}{Set to 0 to suppress the note saying which kind of design was
+detected. \code{\link[=sim_all]{sim_all()}} passes its own \code{verbose} down, so that note follows the
+verbosity of the whole simulation.}
 }
 \value{
-a dataframe
+A data frame with one row per choice situation, a \code{Choice.situation}
+column, and a \code{Block} column when the design is blocked.
 }
 \description{
 Creates a dataframe with the design.

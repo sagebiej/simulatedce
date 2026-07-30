@@ -1,0 +1,270 @@
+---
+title: "Random parameters"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random parameters}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(9081)
+```
+
+Assuming that every respondent shares the same coefficient is convenient and
+usually wrong. People differ in how much they care about price. In
+`simulateDCE` you say so by giving a coefficient a distribution instead of a
+number, and each simulated respondent draws their own value from it.
+
+This changes the data generating process, not the model you estimate. The package
+still fits a multinomial logit to the simulated data, so this is the tool for
+asking what happens to your MNL results when the truth is heterogeneous.
+
+## From a number to a distribution
+
+A fixed coefficient is a number. A random one is a list with a `dist` element and
+the arguments that distribution needs:
+
+```{r spec}
+design <- data.frame(
+  Choice.situation = 1:12,
+  Block            = rep(1:2, each = 6),
+  alt1.price       = rep(c(2, 4, 6), 4),
+  alt1.quality     = rep(c(0, 1), 6),
+  alt2.price       = rep(c(6, 4, 2), 4),
+  alt2.quality     = rep(c(1, 0), 6)
+)
+
+design_dir <- file.path(tempdir(), "rp_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "design.rds"))
+
+ul <- list(
+  u1 = list(
+    v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+    v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality
+  )
+)
+
+bcoeff <- list(
+  bprice   = list(dist = "normal", mean = -0.3, sd = 0.15),
+  bquality = 0.4
+)
+```
+
+Fixed and random coefficients mix freely. Here price varies across respondents
+and quality does not.
+
+## The distributions on offer
+
+| `dist` | Arguments | Support |
+|---|---|---|
+| `"normal"` | `mean`, `sd` | unbounded |
+| `"lognormal"` | `meanlog`, `sdlog` | strictly positive |
+| `"neg_lognormal"` | `meanlog`, `sdlog` | strictly negative |
+| `"uniform"` | `min`, `max` | bounded |
+| `"triangular"` | `min`, `max`, `mode` | bounded, peaked |
+| `"truncated_normal"` | `mean`, `sd`, `min`, `max` | bounded, either side may be infinite |
+| `"fixed"` | `value` | a constant; the same as giving a bare number |
+
+The bounded ones exist because sign matters. A normal price coefficient gives
+some respondents a positive one, meaning they prefer paying more. If that is not
+part of your story, use `"neg_lognormal"` or a `"truncated_normal"` capped at
+zero.
+
+### Watch the parameterisation
+
+`lognormal` and `neg_lognormal` take `meanlog` and `sdlog`, which describe the
+*underlying normal*, not the coefficient. `meanlog = 0` does not mean the
+coefficient averages zero. `bcoeff_moments()` translates any specification into
+the units of the coefficient itself:
+
+```{r moments}
+bcoeff_moments(list(
+  bnormal    = list(dist = "normal", mean = -0.3, sd = 0.15),
+  blognormal = list(dist = "lognormal", meanlog = 0, sdlog = 0.5),
+  bneglog    = list(dist = "neg_lognormal", meanlog = -1, sdlog = 0.4),
+  btriangle  = list(dist = "triangular", min = 0, max = 0.9, mode = 0.2),
+  btruncated = list(dist = "truncated_normal", mean = 0, sd = 0.3,
+                    min = -Inf, max = 0),
+  bfixed     = 0.4
+))
+```
+
+Run this before a long simulation. It is the quickest way to notice that the
+distribution you specified is not the one you had in mind.
+
+## Inspecting the draws
+
+`make_rand_params()` gives you the respondent-level draws on their own, without
+running a simulation:
+
+```{r draws}
+draws <- make_rand_params(bcoeff, n_resp = 500)
+head(draws, 3)
+
+round(c(mean = mean(draws$bprice), sd = sd(draws$bprice)), 3)
+
+# what share of respondents ended up with a positive price coefficient?
+mean(draws$bprice > 0)
+```
+
+A small share of respondents prefer paying more, because a normal distribution
+centred at $-0.3$ with a standard deviation of $0.15$ puts about 2% of its mass
+above zero. Whether that is acceptable is a modelling decision, and now it is one
+you can see rather than one you made by accident.
+
+## Running the simulation
+
+Nothing else changes:
+
+```{r run}
+result <- sim_all(
+  nosim      = 40,
+  resps      = 300,
+  designpath = design_dir,
+  u          = ul,
+  bcoeff     = bcoeff,
+  mode       = "sequential"
+)
+```
+
+The parameter summary now reports the distribution and its implied mean and
+standard deviation for the random coefficient, and a plain value for the fixed
+one.
+
+## What an MNL recovers from heterogeneous data
+
+The simulated respondents have their own price coefficients. The estimated model
+has one. What does that single number end up being?
+
+```{r recovery}
+sa <- result$summaryall
+coef_rows <- sa[!grepl("^rob_pval0_", sa$parname), ]
+
+round(
+  data.frame(
+    truepar  = coef_rows$truepar,
+    truesd   = coef_rows$truesd,
+    estimate = coef_rows$design.mean,
+    sd       = coef_rows$design.sd,
+    row.names = coef_rows$parname
+  ),
+  3
+)
+```
+
+Two columns describe the truth now. `truepar` is the mean of the mixing
+distribution and `truesd` is its spread, which is 0 for a fixed coefficient.
+
+The estimate lands close to `truepar` but slightly nearer zero. That attenuation
+is expected rather than a defect, and it grows with the heterogeneity you ignore.
+Holding the mean at $-0.3$ and raising only its spread:
+
+```{r attenuation}
+attenuation <- vapply(c(0, 0.15, 0.3, 0.6), function(s) {
+  set.seed(7)
+  spec <- if (s == 0) -0.3 else list(dist = "normal", mean = -0.3, sd = s)
+  res <- sim_all(
+    nosim = 40, resps = 400, designpath = design_dir, u = ul,
+    bcoeff = list(bprice = spec, bquality = 0.4),
+    mode = "sequential", verbose = 0
+  )
+  sa <- res$summaryall
+  price <- sa$design.mean[sa$parname == "bprice"]
+  qual  <- sa$design.mean[sa$parname == "bquality"]
+  c(bprice = price, bquality = qual, wtp_quality = qual / -price)
+}, numeric(3))
+
+colnames(attenuation) <- paste0("sd = ", c(0, 0.15, 0.3, 0.6))
+round(attenuation, 3)
+```
+
+Read the columns left to right. With no heterogeneity both coefficients are
+recovered. As the spread of the price coefficient grows, ignoring it inflates the
+unexplained part of utility and every coefficient shrinks towards zero, price most
+of all because price is the one that varies.
+
+The bottom row is the practical consequence. Willingness to pay for quality is the
+ratio of the two coefficients, and because they shrink by different amounts the
+ratio does not survive either: it drifts upward as heterogeneity rises. So this is
+not a nuisance you can divide away. If preferences are heterogeneous and you fit an
+MNL, both your coefficients and your WTP estimates are off, and this table is how
+you find out by how much before it matters.
+
+An MNL reports nothing at all about `truesd`. That is the information you give up
+by not estimating a mixed logit, and seeing the size of what you give up is the
+point of this exercise.
+
+`sd` in the earlier table is a third quantity again: how much the *estimate* moves
+between runs. Do not read it as heterogeneity.
+
+## Which distribution matters
+
+The same mean under different distributions does not give the same data. Here are
+three price specifications with a mean near $-0.3$:
+
+```{r compare}
+specs <- list(
+  normal    = list(dist = "normal", mean = -0.3, sd = 0.15),
+  neg_log   = list(dist = "neg_lognormal", meanlog = -1.31, sdlog = 0.45),
+  uniform   = list(dist = "uniform", min = -0.6, max = 0)
+)
+
+round(vapply(specs, function(s) {
+  set.seed(4)
+  res <- sim_all(
+    nosim = 30, resps = 300, designpath = design_dir, u = ul,
+    bcoeff = list(bprice = s, bquality = 0.4),
+    mode = "sequential", verbose = 0
+  )
+  sa <- res$summaryall
+  c(
+    true_mean   = bcoeff_moments(list(b = s))$mean,
+    estimate    = sa$design.mean[sa$parname == "bprice"],
+    sd_of_est   = sa$design.sd[sa$parname == "bprice"]
+  )
+}, numeric(3)), 3)
+```
+
+All three recover close to their own mean, which is the reassuring result. The
+spread of the estimates across runs differs, though, because a bounded
+distribution produces less extreme respondents than an unbounded one.
+
+## What is in the simulated data
+
+With random parameters, each respondent's draw appears as a column, so you can
+check the data generating process directly:
+
+```{r data}
+sim_only <- sim_all(
+  nosim = 1, resps = 100, designpath = design_dir, u = ul,
+  bcoeff = bcoeff, estimate = FALSE, mode = "sequential", verbose = 0
+)
+
+d <- sim_only$design[[1]]
+head(d[, c("ID", "task", "bprice", "bquality", "V_1", "V_2", "CHOICE")], 4)
+
+# one draw per respondent, constant across their choice tasks
+all(tapply(d$bprice, d$ID, function(x) length(unique(x))) == 1)
+```
+
+The draw is redrawn for every simulation run, so the heterogeneity is part of
+what is being simulated rather than a fixed feature of one dataset.
+
+## Notes and limits
+
+Draws are **independent across parameters**. There is no correlation structure, so
+a respondent who is price sensitive is not systematically also quality sensitive.
+If your story needs correlated preferences, this package does not express it yet.
+
+Draws are **pseudo-random**, not Halton or MLHS. That is deliberate: quasi-random
+sequences belong in the *estimation* of a mixed logit, where they approximate an
+integral. Here you are generating a population, and for that you want genuine
+randomness.
+
+The **model estimated is still an MNL**. To fit a mixed logit to these data, set
+`estimate = FALSE`, take the simulated datasets, and pass them to `mixl` or
+`apollo` yourself.

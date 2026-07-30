@@ -1,0 +1,222 @@
+---
+title: "Reading designs from Ngene, spdesign and idefix"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reading designs from Ngene, spdesign and idefix}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+```
+
+The other vignettes build small designs by hand so they run quickly. In practice
+your design comes out of design software. `readdesign()` turns any of the usual
+formats into the one data frame the rest of the package works with, and
+`sim_all()` calls it for you on every file in a folder.
+
+This vignette uses the real designs bundled with the package.
+
+## What a design looks like once it is read
+
+Whatever the source, you get one row per choice situation, a `Choice.situation`
+column, and a `Block` column when the design is blocked:
+
+```{r read-ngene}
+ngene_file <- system.file("extdata", "SE_DRIVE", "effconstrsmall.ngd",
+                          package = "simulateDCE")
+
+design <- readdesign(ngene_file, designtype = "ngene")
+
+dim(design)
+names(design)
+head(design[, 1:6], 4)
+```
+
+```{r blocks}
+table(design$Block)
+```
+
+Sixty choice situations in five blocks, so each respondent sees 12.
+
+## The four formats
+
+### Ngene
+
+Save the standard Ngene output with a `.ngd` extension. It is tab separated text,
+and `readdesign()` drops the `Design` column and any trailing empty columns Ngene
+writes.
+
+```{r ngene2}
+d <- readdesign(
+  system.file("extdata", "agora", "altscf_eff.ngd", package = "simulateDCE"),
+  designtype = "ngene"
+)
+c(situations = nrow(d), blocks = length(unique(d$Block)))
+```
+
+### spdesign
+
+Save the whole object returned by `spdesign::generate_design()` with `saveRDS()`.
+`readdesign()` takes the `design` element out of it:
+
+```{r spdesign}
+sp_file <- system.file("extdata", "ValuGaps", "des1.RDS", package = "simulateDCE")
+class(readRDS(sp_file))
+
+d <- readdesign(sp_file, designtype = "spdesign")
+head(d, 3)
+```
+
+If your design uses underscores in the attribute names, the first underscore
+becomes a dot, so `alt1_price` is read as `alt1.price`. That is the convention the
+utility functions expect.
+
+The priors you gave spdesign are stored in the object too, and
+`extract_b_values()` pulls them out in the form `bcoeff` wants:
+
+```{r priors}
+csa <- readRDS(system.file("extdata", "CSA", "linear", "BLIeff.RDS",
+                           package = "simulateDCE"))
+extract_b_values(csa$utility)
+```
+
+That is a convenient starting point for a simulation: simulate from the priors the
+design was optimised for, and you learn whether the design delivers on its own
+assumptions.
+
+### idefix
+
+Save the object returned by `idefix::Modfed()` or `idefix::CEA()` with `saveRDS()`.
+These store the design in long format with row names like `set1.alt1`, so
+`readdesign()` reshapes it to one row per choice situation and drops the
+`no.choice` rows and the `cte` columns:
+
+```{r idefix}
+d <- readdesign(
+  system.file("extdata", "Idefix_designs", "test_design2.RDS", package = "simulateDCE"),
+  designtype = "idefix"
+)
+dim(d)
+names(d)[1:5]
+```
+
+### A plain data frame
+
+If you built the design yourself, or exported it from something else, save it as a
+data frame with one row per choice situation and use `designtype = "matrix"`. This
+is what the other vignettes do.
+
+## Letting it guess
+
+Leave `designtype` out and the type is detected from the file:
+
+```{r guess}
+readdesign(ngene_file)                       |> dim()
+readdesign(sp_file)                          |> dim()
+```
+
+The rules are:
+
+| The file | Detected as |
+|---|---|
+| ends in `.ngd` | `ngene` |
+| an RDS whose object has class `spdesign` | `spdesign` |
+| an RDS holding a list with `design` plus `error`, `probs` or `set` row names | `idefix` |
+| an RDS holding a plain data frame | `matrix` |
+| an RDS holding a list with a `design` element and nothing idefix-like | `spdesign` |
+
+Every rule tests for something positive. Anything it cannot place produces an
+error naming what it found, rather than a guess:
+
+```{r guess-fail, error = TRUE}
+odd <- file.path(tempdir(), "odd.rds")
+saveRDS(list(a = 1, b = 2), odd)
+readdesign(odd)
+```
+
+Guessing is convenient when a folder mixes formats, since `sim_all()` reads
+everything in it. Naming the type explicitly is still better when you know it: it
+turns a wrong guess into an error rather than into a strange result.
+
+## Running over a folder
+
+`sim_all()` reads every matching file in `designpath` and simulates each one, so
+you can compare designs directly:
+
+```{r sim-all}
+designpath <- system.file("extdata", "SE_DRIVE", package = "simulateDCE")
+list.files(designpath)
+
+bcoeff <- list(bpreis = -0.01, blade = -0.07, bwarte = 0.02)
+
+ul <- list(
+  u1 = list(
+    v1 = V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3,
+    v2 = V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
+  )
+)
+
+result <- sim_all(
+  nosim = 20, resps = 200, designpath = designpath,
+  u = ul, bcoeff = bcoeff, mode = "sequential", verbose = 0
+)
+
+sa <- result$summaryall
+coef_rows <- !grepl("^rob_pval0_", sa$parname)
+
+round(
+  data.frame(
+    truepar    = sa$truepar[coef_rows],
+    small_mean = sa$effconstrsmall.mean[coef_rows],
+    small_sd   = sa$effconstrsmall.sd[coef_rows],
+    bay_mean   = sa$bayeffdesignconstr.mean[coef_rows],
+    bay_sd     = sa$bayeffdesignconstr.sd[coef_rows],
+    row.names  = sa$parname[coef_rows]
+  ),
+  4
+)
+```
+
+Both designs recover the coefficients. The `sd` columns are the comparison you
+came for: they say how precisely each design pins the parameters down at this
+sample size. Power says the same thing in the units a reviewer will ask about:
+
+```{r power}
+result$powa_by_par
+```
+
+Only files matching `pattern` are treated as designs, by default anything ending
+in `.ngd` or `.rds`. A stray note or plot in the folder is ignored rather than
+breaking the run. Widen `pattern` if your designs use a different extension.
+
+## Things worth checking
+
+**Are the blocks equal?** Every respondent must see the same number of choice
+situations, so blocks of different sizes are an error. Check with
+`table(design$Block)`.
+
+**Is the model identified?** With two alternatives, only the differences between
+them carry information:
+
+```{r identification}
+d <- readdesign(ngene_file, designtype = "ngene", verbose = 0)
+
+diffs <- with(d, data.frame(
+  x1 = alt1.x1 - alt2.x1,
+  x2 = alt1.x2 - alt2.x2,
+  x3 = alt1.x3 - alt2.x3
+))
+
+c(
+  rank        = qr(as.matrix(diffs))$rank,
+  attributes  = ncol(diffs),
+  largest_cor = round(max(abs(cor(diffs)[upper.tri(cor(diffs))])), 3)
+)
+```
+
+Rank equal to the number of attributes means all of them are identified. This is a
+sensible thing to run on any design before you spend a night simulating with it,
+including one that came from design software.

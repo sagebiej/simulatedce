@@ -4,12 +4,31 @@
 \alias{aggregateResults}
 \title{Aggregate Simulation Results}
 \usage{
-aggregateResults(all_designs, fromfolder = NULL)
+aggregateResults(
+  all_designs,
+  fromfolder = NULL,
+  print_plots = FALSE,
+  reshape_type = NULL
+)
 }
 \arguments{
-\item{all_designs}{A list of simulation results from sim_choice. Can contain different designs but need to have the common structure returned by simchoice. Ignored when \code{fromfolder} is supplied.}
+\item{all_designs}{A list of simulation results from \code{\link[=sim_choice]{sim_choice()}}. Can contain
+different designs but needs the common structure returned by \code{sim_choice()}.
+Ignored when \code{fromfolder} is supplied.}
 
-\item{fromfolder}{A folder from where to read simulations. If provided, the function reads all \code{.qs} files from the folder (each one a single design output saved by \code{sim_choice()}/\code{sim_all()} via \code{savefile}) and merges them. This is useful to combine results from independent runs, e.g. when you simulated three designs earlier and now want to add a fourth. Each saved file stores its own \code{designname} and \code{bcoeff}, so the folder is self-describing.}
+\item{fromfolder}{A folder from where to read simulations. If provided, the
+function reads all \code{.qs} files from the folder (each one a single design
+output saved by \code{\link[=sim_choice]{sim_choice()}} or \code{\link[=sim_all]{sim_all()}} via \code{savefile}) and merges them.
+This is useful to combine results from independent runs, e.g. when you
+simulated three designs earlier and now want to add a fourth. Each saved file
+stores its own \code{designname} and \code{bcoeff}, so the folder is self-describing.}
+
+\item{print_plots}{Draw the density plots as a side effect. \code{FALSE} by default:
+the plots are returned in \verb{$graphs} so you decide where they go. Printing
+them unasked created a stray \code{Rplots.pdf} in non-interactive sessions.}
+
+\item{reshape_type}{Deprecated and ignored. Results are no longer reshaped by
+splitting column names, so there is nothing left to choose.}
 }
 \value{
 A list with aggregated results including summary, coefficients, graphs, and power.

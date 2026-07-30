@@ -1,1 +1,3 @@
-utils::globalVariables(c("designfile", "destype", "Choice.situation", "Design", ".", "ID", ":=", "..density..", "sou_gis", "block", "Block", "row_id", "final_set", "parname", "id", "group"))
+## data.table's special symbols and the walrus used in := assignment cannot be
+## seen by R CMD check. Everything else now goes through .data or a quoted name.
+utils::globalVariables(c(".BY", ".SD", ".GRP", ":=", "est", "rob_pval0"))

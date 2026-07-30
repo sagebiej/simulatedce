@@ -23,7 +23,7 @@ notes <- "No Heuristics"
 resps <- 240 # number of respondents
 nosim <- 2 # number of simulations to run (about 500 is minimum)
 
-destype <- "spdesign"
+designtype <- "spdesign"
 
 bcoeff <- list(
   bx1 = -0.02,
@@ -43,7 +43,7 @@ ul <- list(u1 = list(
 savefile <- "testdir/file"
 
 csa <- simulateDCE::sim_all(
-  nosim = nosim, resps = resps, designtype = destype,
+  nosim = nosim, resps = resps, designtype = designtype,
   designpath = designpath, u = ul, bcoeff = bcoeff, utility_transform_type = "exact", savefile =
     NULL, mode = "sequential"
 )

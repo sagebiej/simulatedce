@@ -25,7 +25,7 @@ bcoeff <- list(
 )
 
 
-destype <- "spdesign"
+designtype <- "spdesign"
 
 
 # place your utility functions here
@@ -38,6 +38,6 @@ ul <- list(u1 = list(
 
 
 rbook <- simulateDCE::sim_all(
-  nosim = nosim, resps = resps, destype = destype,
+  nosim = nosim, resps = resps, designtype = designtype,
   designpath = designpath, u = ul, bcoeff = bcoeff, chunks = 4, utility_transform_type = "exact"
 )

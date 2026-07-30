@@ -77,7 +77,7 @@ test_that("fixed (numeric) gives identical values for all respondents", {
 
 test_that("error when bcoeff is unnamed", {
   expect_error(make_rand_params(list(list(dist = "normal", mean = 0, sd = 1)), 10),
-               "fully named")
+               "needs a name")
 })
 
 test_that("error for unknown distribution", {
@@ -98,7 +98,7 @@ test_that("error when parameter is list but lacks dist", {
 test_that("error when respondent_ids length mismatches", {
   bcoeff <- list(b = 1)
   expect_error(make_rand_params(bcoeff, 5, respondent_ids = 1:3),
-               "must have length equal to `n_resp`")
+               "one id per respondent")
 })
 
 # ── additional distribution and structure tests ───────────────────────────────
@@ -162,4 +162,85 @@ test_that("error for non-positive n_resp", {
   bcoeff <- list(b = 1)
   expect_error(make_rand_params(bcoeff, 0),  "n_resp")
   expect_error(make_rand_params(bcoeff, -5), "n_resp")
+})
+
+# ── triangular distribution ───────────────────────────────────────────────────
+
+test_that("triangular rejects min >= max and a mode outside the bounds", {
+  expect_error(make_rand_params(list(b = list(dist = "triangular", min = 5, max = 5, mode = 5)), 3),
+               "min < max")
+  expect_error(make_rand_params(list(b = list(dist = "triangular", min = 0, max = 1, mode = 2)), 3),
+               "min <= mode <= max")
+  expect_error(make_rand_params(list(b = list(dist = "triangular", min = 0, max = 1, mode = -1)), 3),
+               "min <= mode <= max")
+})
+
+test_that("triangular accepts a mode on the boundary", {
+  set.seed(515)
+  left  <- make_rand_params(list(b = list(dist = "triangular", min = 0, max = 10, mode = 0)), 2000)
+  right <- make_rand_params(list(b = list(dist = "triangular", min = 0, max = 10, mode = 10)), 2000)
+  expect_true(all(left$b >= 0 & left$b <= 10))
+  expect_true(all(right$b >= 0 & right$b <= 10))
+  # mode at the lower bound skews low, at the upper bound skews high
+  expect_lt(mean(left$b), mean(right$b))
+})
+
+test_that("triangular mean matches (min + max + mode) / 3", {
+  set.seed(616)
+  out <- make_rand_params(list(b = list(dist = "triangular", min = 0, max = 9, mode = 3)), 20000)
+  expect_equal(mean(out$b), (0 + 9 + 3) / 3, tolerance = 0.05)
+})
+
+# ── moment recovery for the remaining distributions ──────────────────────────
+
+test_that("neg_lognormal recovers the moments of the underlying normal", {
+  set.seed(717)
+  out <- make_rand_params(list(b = list(dist = "neg_lognormal", meanlog = -1, sdlog = 0.4)), 20000)
+  expect_equal(mean(log(-out$b)), -1,  tolerance = 0.05)
+  expect_equal(sd(log(-out$b)),    0.4, tolerance = 0.05)
+})
+
+test_that("normal with sd = 0 degenerates to the mean", {
+  out <- make_rand_params(list(b = list(dist = "normal", mean = 1.5, sd = 0)), 20)
+  expect_equal(unique(out$b), 1.5)
+})
+
+# ── independence and column layout ───────────────────────────────────────────
+
+test_that("draws are independent across parameters", {
+  # documents the current design: no correlation structure between parameters
+  set.seed(818)
+  out <- make_rand_params(list(
+    a = list(dist = "normal", mean = 0, sd = 1),
+    b = list(dist = "normal", mean = 0, sd = 1)
+  ), 5000)
+  expect_equal(cor(out$a, out$b), 0, tolerance = 0.05)
+})
+
+test_that("column order follows the order of bcoeff, not alphabetical", {
+  out <- make_rand_params(list(z = 1, a = 2, m = list(dist = "normal", mean = 0, sd = 1)), 3)
+  expect_equal(names(out), c("ID", "z", "a", "m"))
+})
+
+test_that("non-sequential respondent ids are carried through unchanged", {
+  ids <- c(7L, 3L, 11L)
+  out <- make_rand_params(list(b = list(dist = "normal", mean = 0, sd = 1)), 3,
+                          respondent_ids = ids)
+  expect_identical(out$ID, ids)
+})
+
+test_that("each respondent gets exactly one draw", {
+  set.seed(919)
+  out <- make_rand_params(list(b = list(dist = "normal", mean = 0, sd = 1)), 500)
+  expect_equal(nrow(out), 500)
+  expect_equal(anyDuplicated(out$ID), 0L)
+})
+
+test_that("an unnamed element in an otherwise named list is rejected", {
+  expect_error(make_rand_params(list(a = 1, 2), 5), "needs a name")
+})
+
+test_that("respondent_ids longer or shorter than n_resp is rejected", {
+  expect_error(make_rand_params(list(b = 1), 3, respondent_ids = 1:5), "one id per respondent")
+  expect_error(make_rand_params(list(b = 1), 5, respondent_ids = 1:3), "one id per respondent")
 })

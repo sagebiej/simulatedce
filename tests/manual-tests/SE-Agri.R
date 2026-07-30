@@ -5,7 +5,7 @@ devtools::load_all()
 
 designpath <- system.file("extdata", "SE_AGRI", package = "simulateDCE")
 
-destype <- "ngene"
+designtype <- "ngene"
 resps <- 360 # number of respondents
 nosim <- 2 # number of simulations to run (about 500 is minimum)
 
@@ -45,6 +45,6 @@ ul <- list(
 )
 
 seagri <- sim_all(
-  nosim = nosim, resps = resps, designtype = destype,
+  nosim = nosim, resps = resps, designtype = designtype,
   designpath = designpath, u = ul, bcoeff = bcoeff, manipulations = manipulations, utility_transform_type = "exact"
 )

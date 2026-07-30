@@ -1,12 +1,21 @@
-#' Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
-#' update
+#' Run a simulation over every design in a folder
+#'
+#' Wrapper around [sim_choice()] that reads every design file in `designpath`,
+#' simulates and optionally estimates choices for each, and aggregates the
+#' results so the designs can be compared.
+#'
 #' @param nosim Number of runs or simulations. For testing use 2 but once you go serious, use at least 200, for better results use 2000.
 #' @param resps Number of respondents you want to simulate
 #' @inheritParams readdesign
-#' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
-#' @param reshape_type Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.
 #' @inheritParams sim_choice
 #' @inheritParams simulate_choices
+#' @inheritParams createDataset
+#' @param designpath The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"
+#' @param pattern Regular expression picking the design files out of `designpath`,
+#'   matched without regard to case. By default any `.ngd` or `.rds` file. Widen it
+#'   if your designs use a different extension. Anything in the folder that does
+#'   not match is ignored, so a stray note or plot no longer breaks the run.
+#' @param reshape_type Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.
 #' @return A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 #' @export
 #'
@@ -56,9 +65,8 @@
 #'   bcoeff = bcoeff,
 #'   decisiongroups = decisiongroups,
 #'   manipulations = manipulations,
-#'   utility_transform_type = "exact",
 #'   mode = "sequential",
-#'   estimate=FALSE
+#'   estimate = FALSE
 #' )
 #'
 sim_all <- function(nosim = 2,
@@ -66,131 +74,153 @@ sim_all <- function(nosim = 2,
                     designtype = NULL,
                     destype = NULL,
                     designpath,
+                    pattern = "\\.(ngd|rds)$",
                     u,
                     bcoeff,
                     decisiongroups = c(0, 1),
                     manipulations = list(),
                     estimate = TRUE,
                     chunks = 1,
-                    utility_transform_type = "simple",
+                    sets_per_resp = NULL,
+                    sample_sets = c("balanced", "random", "with_replacement"),
+                    resample = TRUE,
+                    utility_transform_type = c("exact", "simple"),
                     reshape_type = "auto",
                     mode = c("parallel", "sequential"),
                     preprocess_function = NULL,
                     savefile = NULL,
+                    keep_models = TRUE,
+                    keep_utilities = TRUE,
+                    workers = NULL,
                     verbose = 1) {
   #################################################
   ########## Input Validation Test ###############
   #################################################
   mode <- match.arg(mode)
+  sample_sets <- match.arg(sample_sets)
+  utility_transform_type <- match.arg(utility_transform_type)
+  verbose <- check_verbose(verbose)
+
   ########### validate the utility function ########
-  if (missing(u) || !(is.list(u) && any(sapply(u, is.list)))) {
+  if (missing(u)) {
     stop(
-      " 'u' must be provided and must be a list containing at least one list element (list of lists)."
+      "`u` must be provided and must be a list containing at least one list ",
+      "element: one inner list of utility functions per decision group. For ",
+      "example u = list(u1 = list(v1 = V.1 ~ b1 * alt1.x, v2 = V.2 ~ 0)).",
+      call. = FALSE
     )
   }
+  if (!(is.list(u) && any(vapply(u, is.list, logical(1))))) {
+    stop(
+      "`u` must be provided and must be a list containing at least one list ",
+      "element, not ", describe_value(u),
+      ". Even with a single decision group the utility functions go in an inner ",
+      "list: u = list(u1 = list(v1 = V.1 ~ ..., v2 = V.2 ~ ...)).",
+      call. = FALSE
+    )
+  }
+  check_utility_list(u, arg = "u")
 
   ########## validate the bcoeff list ################
-  # Check if bcoeff is provided
   if (missing(bcoeff)) {
-    stop("Argument 'bcoeff' is required.")
+    stop(
+      "`bcoeff` is required: one entry per coefficient used in `u`, either a ",
+      "number for a fixed coefficient or a list like ",
+      "list(dist = \"normal\", mean = -0.2, sd = 0.1) for a random one.",
+      call. = FALSE
+    )
   }
+  check_bcoeff_list(bcoeff)
 
+  nosim <- check_count(nosim, "nosim")
+  chunks <- check_count(chunks, "chunks")
 
   if (nosim < chunks) {
     stop(
-      "You cannot have more chunks than runs. The number of chunks tells us how often we save the simulation results on disk. Maximum one per run."
+      "`chunks` is ", chunks, " but `nosim` is ", nosim,
+      ". The number of chunks says how often results are written to disk, which ",
+      "can happen at most once per run.",
+      call. = FALSE
     )
   }
 
-  # Check if bcoeff is a list
-  if (!is.list(bcoeff)) {
-    stop("Argument 'bcoeff' must be a list.")
-  }
+  check_decisiongroups(decisiongroups, u, arg = "decisiongroups")
 
-  if (length(u) != length(decisiongroups) - 1) {
-    stop("Number of decision groups must equal number of utility functions!")
-  }
-  if (!is.vector(decisiongroups)) {
-    stop("Decision groups must be a vector.")
-  }
-
-  # Check if decisiongroups starts with 0
-  if (decisiongroups[1] != 0) {
-    stop("Decision groups must start with 0.")
-  }
-
-  # Check if decisiongroups ends with 1
-  if (utils::tail(decisiongroups, 1) != 1) {
-    stop("Decision groups must end with 1.")
-  }
-
-
-  # Check if values in bcoeff are numeric scalars or valid random distribution specs
-  valid_coeff <- sapply(bcoeff, function(x) {
-    is.numeric(x) || (is.list(x) && "dist" %in% names(x))
-  })
-  if (!all(valid_coeff)) {
-    stop("Values in 'bcoeff' must be numeric or a distribution spec list with a 'dist' element.")
-  }
-
-  # Summarise parameter specifications for the user
-  param_lines <- vapply(names(bcoeff), function(nm) {
-    spec <- bcoeff[[nm]]
-    if (is.numeric(spec)) {
-      sprintf("  %-20s fixed       (value = %g)", nm, spec)
-    } else {
-      dist <- spec$dist
-      detail <- switch(dist,
-        normal       = sprintf("mean = %g, sd = %g",      spec$mean,    spec$sd),
-        lognormal    = sprintf("meanlog = %g, sdlog = %g", spec$meanlog, spec$sdlog),
-        neg_lognormal = sprintf("meanlog = %g, sdlog = %g", spec$meanlog, spec$sdlog),
-        uniform      = sprintf("min = %g, max = %g",      spec$min,     spec$max),
-        triangular   = sprintf("lower = %g, upper = %g, mode = %g", spec$lower, spec$upper, spec$mode),
-        sprintf("(see spec)")
-      )
-      sprintf("  %-20s %-12s (%s)", nm, dist, detail)
-    }
-  }, character(1))
-
-  vmsg(verbose, 1,
-    "\nParameter specification:\n",
-    paste(param_lines, collapse = "\n"), "\n"
-  )
+  ## Validate each coefficient specification, so a typo is reported with the name
+  ## of the parameter it belongs to rather than failing later inside the draw.
+  for (nm in names(bcoeff)) as_dist_spec(bcoeff[[nm]], nm)
 
   #### check that all the coefficients in utility function have a corresponding value in bcoeff ####
-  # Extract coefficients from utility function starting with "b"
-  coeff_names_ul <- unique(unlist(lapply(u, function(u) {
-    formula_strings <- unlist(u)
-    coef_names <- unique(unlist(lapply(formula_strings, function(f) {
-      # Parse the formula to extract coefficient names
+  coeff_names_ul <- unique(unlist(lapply(u, function(group) {
+    unlist(lapply(group, function(f) {
       all_vars <- all.vars(stats::as.formula(f))
-      coef_vars <- all_vars[grep("^b", all_vars)]
-      return(coef_vars)
-    })))
-    return(coef_names)
+      all_vars[grep("^b", all_vars)]
+    }))
   })))
 
-  # Check if all utility function coefficients starting with "b" are covered in bcoeff list
-  missing_coeffs <- coeff_names_ul[!(coeff_names_ul %in% names(bcoeff))]
+  missing_coeffs <- setdiff(coeff_names_ul, names(bcoeff))
   if (length(missing_coeffs) > 0) {
-    stop(paste(
-      "Missing coefficients in 'bcoeff':",
-      paste(missing_coeffs, collapse = ", "),
-      ". Perhaps there is a typo?"
-    ))
-  }
-  ########## validate resps #####################
-  if (missing(resps) ||
-    !(is.integer(resps) ||
-      (is.numeric(resps) && identical(trunc(resps), resps)))) {
     stop(
-      " 'resps' must be provided and must be an integer indicating  the number of respondents per run."
+      "These coefficients appear in `u` but not in `bcoeff`: ",
+      and_list(paste0("`", missing_coeffs, "`")),
+      ". Add them to `bcoeff`, or check for a typo.",
+      if (length(names(bcoeff))) {
+        paste0(" `bcoeff` currently has ", and_list(paste0("`", names(bcoeff), "`")), ".")
+      } else {
+        ""
+      },
+      call. = FALSE
     )
   }
+
+  ## Only report the specification once everything about it checks out.
+  vmsg(verbose, 1,
+    "\nParameter specification:\n",
+    paste(
+      vapply(names(bcoeff), function(nm) describe_spec(bcoeff[[nm]], nm), character(1)),
+      collapse = "\n"
+    ),
+    "\n"
+  )
+
+  unused_coeffs <- setdiff(names(bcoeff), coeff_names_ul)
+  if (length(unused_coeffs) > 0) {
+    warning(
+      "These coefficients are in `bcoeff` but never used in `u`: ",
+      and_list(paste0("`", unused_coeffs, "`")),
+      ". They will have no effect. Note that only names starting with \"b\" are ",
+      "recognised as coefficients.",
+      call. = FALSE
+    )
+  }
+
+  ########## validate resps #####################
+  if (missing(resps)) {
+    stop("`resps` is required: the number of respondents to simulate per run.",
+      call. = FALSE
+    )
+  }
+  resps <- check_count(resps, "resps")
+
   ########## validate designpath ################
+  if (missing(designpath)) {
+    stop("`designpath` is required: the folder holding your design file(s).", call. = FALSE)
+  }
+  if (!is.character(designpath) || length(designpath) != 1L) {
+    stop(
+      "`designpath` must be a single folder path, not ", describe_value(designpath), ".",
+      call. = FALSE
+    )
+  }
   if (!dir.exists(designpath)) {
     stop(
-      " The folder where your designs are stored does not exist. \n Check if designpath is correctly specified"
+      "The folder where your designs are stored does not exist: '", designpath, "'. ",
+      if (file.exists(designpath)) {
+        "That path is a file. Use readdesign() and sim_choice() for a single design."
+      } else {
+        paste0("Working directory is '", getwd(), "'.")
+      },
+      call. = FALSE
     )
   }
 
@@ -198,22 +228,61 @@ sim_all <- function(nosim = 2,
   ########## End Validation Tests #################
   #################################################
 
-
-  bcoeff_result <- modify_bcoeff_names(bcoeff)
+  bcoeff_result <- modify_bcoeff_names(bcoeff, verbose = verbose)
   bcoeff <- bcoeff_result$bcoeff
 
+  designfile <- list.files(designpath, full.names = TRUE, pattern = pattern, ignore.case = TRUE)
+  designfile <- designfile[!dir.exists(designfile)]
 
+  if (length(designfile) == 0) {
+    present <- list.files(designpath)
+    stop(
+      "No design files matching '", pattern, "' in '", designpath, "'. ",
+      if (length(present)) {
+        paste0(
+          "The folder holds ", and_list(paste0("'", utils::head(present, 8), "'")),
+          if (length(present) > 8) ", ..." else "",
+          ". Adjust `pattern` if your designs use another extension."
+        )
+      } else {
+        "The folder is empty."
+      },
+      call. = FALSE
+    )
+  }
 
-  designfile <- list.files(designpath, full.names = T)
-  designname <- stringr::str_remove_all(list.files(designpath, full.names = F), "(.ngd|_|.RDS)") ## Make sure designnames to not contain file ending and "_", as the may cause issues when replace
+  designname <- vapply(designfile, clean_design_name, character(1), USE.NAMES = FALSE)
 
+  if (anyDuplicated(designname)) {
+    dupes <- unique(designname[duplicated(designname)])
+    stop(
+      "Two or more designs end up with the same name once the file extension is ",
+      "dropped: ", and_list(paste0("'", dupes, "'")),
+      ". Results are labelled by that name, so please rename the files.",
+      call. = FALSE
+    )
+  }
+
+  ## Start the workers once for all designs rather than once per design, and hand
+  ## the caller's plan back untouched afterwards.
+  if (identical(mode, "parallel")) {
+    oldplan <- future::plan()
+    on.exit(future::plan(oldplan), add = TRUE)
+    if (inherits(oldplan, "sequential")) {
+      if (!is.null(workers)) {
+        future::plan("multisession", workers = workers)
+      } else {
+        future::plan("multisession")
+      }
+    }
+    vmsg(verbose, 2, "Running in parallel on ", future::nbrOfWorkers(), " worker(s).")
+  }
 
   tictoc::tic("total time for simulation and estimation")
 
-  if (is.null(savefile)) {
-    all_designs <- purrr::map(
-      designfile,
-      sim_choice,
+  run_design <- function(file) {
+    sim_choice(
+      designfile = file,
       no_sim = nosim,
       respondents = resps,
       designtype = designtype,
@@ -224,48 +293,52 @@ sim_all <- function(nosim = 2,
       manipulations = manipulations,
       estimate = estimate,
       chunks = chunks,
-      utility_transform_type = utility_transform_type,
-      mode = mode,
-      preprocess_function = preprocess_function,
-      savefile = NULL,
-      verbose = verbose
-    ) %>% ## iterate simulation over all designs
-      stats::setNames(designname)
-  } else {
-    purrr::walk(
-      designfile,
-      sim_choice,
-      no_sim = nosim,
-      respondents = resps,
-      designtype = designtype,
-      destype = destype,
-      u = u,
-      bcoeff = bcoeff,
-      decisiongroups = decisiongroups,
-      manipulations = manipulations,
-      estimate = estimate,
-      chunks = chunks,
+      sets_per_resp = sets_per_resp,
+      sample_sets = sample_sets,
+      resample = resample,
       utility_transform_type = utility_transform_type,
       mode = mode,
       preprocess_function = preprocess_function,
       savefile = savefile,
+      keep_models = keep_models,
+      keep_utilities = keep_utilities,
+      workers = workers,
       verbose = verbose
     )
-    gc()
-
-    all_designs <- purrr::map(list.files(dirname(savefile), full.names = TRUE), qs2::qs_read) %>%
-      stats::setNames(designname)
   }
 
-  time <- tictoc::toc()
+  if (is.null(savefile)) {
+    all_designs <- stats::setNames(purrr::map(designfile, run_design), designname)
+  } else {
+    purrr::walk(designfile, run_design)
+    gc()
 
-  vmsg(verbose, 1, paste(utils::capture.output(print(time)), collapse = "\n"))
+    ## Read back exactly the files this run wrote, matched to their design by
+    ## name. Reading whatever happened to be in the folder broke as soon as it
+    ## held anything else.
+    saved <- file.path(
+      dirname(savefile),
+      paste0(basename(savefile), "_", designname, ".qs")
+    )
+    found <- file.exists(saved)
+    if (!all(found)) {
+      stop(
+        "Expected saved result(s) missing after the run: ",
+        and_list(paste0("'", basename(saved[!found]), "'")),
+        " in '", dirname(savefile), "'.",
+        call. = FALSE
+      )
+    }
+    all_designs <- stats::setNames(purrr::map(saved, qs2::qs_read), designname)
+  }
 
+  time <- tictoc::toc(quiet = TRUE)
+  vmsg(verbose, 1, time[["callback_msg"]])
 
   all_designs[["time"]] <- time
-  all_designs[["arguements"]] <- list(
+  all_designs[["arguments"]] <- list(
     "Beta values" = bcoeff,
-    "Utility functions" = u,
+    "Utility functions" = strip_compiled(u),
     "Decision groups" = decisiongroups,
     "Manipulation of vars" = manipulations,
     "Number Simulations" = nosim,
@@ -273,16 +346,16 @@ sim_all <- function(nosim = 2,
     "Designpath" = designpath,
     "Reshape Type" = reshape_type,
     "mode" = mode,
-    "designname" = designname
+    "designname" = designname,
+    "Sets per respondent" = sets_per_resp,
+    "Set sampling" = if (is.null(sets_per_resp)) "blocks" else sample_sets
   )
+  ## Kept for backward compatibility: this element used to be misspelled.
+  all_designs[["arguements"]] <- all_designs[["arguments"]]
 
-  if (estimate == TRUE) {
-    all_designs <- simulateDCE::aggregateResults(all_designs = all_designs)
+  if (isTRUE(estimate)) {
+    all_designs <- aggregateResults(all_designs = all_designs)
   }
 
-
-
-
-
-  return(all_designs)
+  all_designs
 }

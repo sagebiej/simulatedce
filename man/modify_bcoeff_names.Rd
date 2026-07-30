@@ -4,11 +4,15 @@
 \alias{modify_bcoeff_names}
 \title{Modify bcoeff Names}
 \usage{
-modify_bcoeff_names(bcoeff)
+modify_bcoeff_names(bcoeff, verbose = 3)
 }
 \arguments{
 \item{bcoeff}{A named list of beta coefficients. The names of this list are
 the coefficients used in the utility function.}
+
+\item{verbose}{Integer verbosity level. The "already cleaned" note is only
+emitted at level 3, because on the normal path \code{sim_all()} and
+\code{sim_choice()} both clean the same list.}
 }
 \value{
 A list containing:

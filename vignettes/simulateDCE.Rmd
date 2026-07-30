@@ -1,0 +1,221 @@
+---
+title: "Getting started with simulateDCE"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with simulateDCE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(5432)
+```
+
+You have a choice experiment design and a hypothesis about how people will
+respond to it. Before you go to the field, you want to know whether that design
+and your planned sample size can actually recover the effects you care about.
+That is what this package is for: you write down the data generating process,
+it simulates respondents who behave that way, estimates your model on the
+simulated data many times over, and reports how the estimates behave.
+
+This vignette walks through one complete simulation. Later vignettes cover
+individual features:
+
+| Vignette | Covers |
+|---|---|
+| `vignette("design-files")` | Reading designs from Ngene, spdesign and idefix |
+| `vignette("random-parameters")` | Coefficients that vary across respondents |
+| `vignette("decision-groups")` | Subgroups that follow different decision rules |
+| `vignette("manipulations")` | Changing attributes before utilities are computed |
+| `vignette("unblocked-designs")` | Drawing choice sets at random per respondent |
+| `vignette("results")` | What comes back, and how to work with it |
+
+## A design to simulate from
+
+Normally you would read a design produced by Ngene, spdesign or idefix. To keep
+this vignette self-contained and quick, I build a small one by hand. It is an
+ordinary data frame with one row per choice situation.
+
+```{r design}
+design <- data.frame(
+  Choice.situation = 1:12,
+  Block            = rep(1:2, each = 6),
+  alt1.price       = rep(c(2, 4, 6), 4),
+  alt1.quality     = rep(c(0, 1), 6),
+  alt2.price       = rep(c(6, 4, 2), 4),
+  alt2.quality     = rep(c(1, 0), 6)
+)
+
+design
+```
+
+Two conventions matter. `Choice.situation` numbers the rows. Attributes are
+named `alt<k>.<attribute>`, so the utility functions can refer to them. The
+`Block` column splits the 12 choice situations into 2 blocks of 6, so each
+respondent answers 6 choice tasks rather than all 12.
+
+`sim_all()` reads designs from a folder, so save it to one:
+
+```{r folder}
+design_dir <- file.path(tempdir(), "my_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "efficient.rds"))
+```
+
+## The data generating process
+
+Two pieces describe how your simulated respondents behave.
+
+**The utility functions.** One formula per alternative, wrapped in a list. The
+outer list holds one entry per decision group, so with a single group you still
+need the inner list. Name the left hand sides `V.1`, `V.2`, and so on, in order.
+
+```{r utility}
+ul <- list(
+  u1 = list(
+    v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+    v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality
+  )
+)
+```
+
+**The coefficients.** One entry per parameter in the utility functions. Names
+must start with a lower case `b`, because that is how the package tells
+coefficients apart from attributes.
+
+```{r bcoeff}
+bcoeff <- list(
+  bprice   = -0.15,
+  bquality =  0.15
+)
+```
+
+That is the whole story: everyone weights price at $-0.15$ and quality at $0.15$,
+adds a random draw from a standard Gumbel distribution to each alternative, and
+picks whichever alternative comes out highest. This is exactly the multinomial
+logit model, so it is a data generating process an MNL should be able to
+recover. Price varies over a range of 4 and quality over a range of 1, so price
+does far more work here than the equal coefficients suggest. That asymmetry turns
+out to matter below.
+
+## Running the simulation
+
+```{r run}
+result <- sim_all(
+  nosim      = 40,
+  resps      = 180,
+  designpath = design_dir,
+  u          = ul,
+  bcoeff     = bcoeff,
+  mode       = "sequential"
+)
+```
+
+`nosim` is how many times the whole experiment is repeated. Forty is enough to
+see something here; for a result you would report, use several hundred. `resps`
+is the sample size you are testing.
+
+The parameter summary at the top repeats what you asked for, which is worth
+reading: it is the cheapest way to catch a coefficient you meant to set
+differently. The summary table then reports, across the 30 runs, the mean of each
+estimate, how much it varied, and its range. The power line says in what share of
+runs every coefficient came out significant at 5%.
+
+## Reading the result
+
+The comparison table across designs lives in `summaryall`. It holds one row per
+estimated coefficient and one per robust p value, so it is easier to read a
+column at a time:
+
+```{r summary}
+sa <- result$summaryall
+coef_rows <- sa[!grepl("^rob_pval0_", sa$parname), ]
+
+round(
+  data.frame(
+    truepar  = coef_rows$truepar,
+    estimate = coef_rows$efficient.mean,
+    sd       = coef_rows$efficient.sd,
+    min      = coef_rows$efficient.min,
+    max      = coef_rows$efficient.max,
+    row.names = coef_rows$parname
+  ),
+  3
+)
+```
+
+`truepar` is the value you put in, and `estimate` is the average across the runs.
+They should be close, and the difference tells you about bias. `sd` is how much
+the estimate moves from one run to the next, which is the sampling variability you
+would face with this design and this sample size. Note how much wider the range is
+for quality than for price.
+
+Power is reported per design:
+
+```{r power}
+result$powa
+
+result$powa_by_par
+```
+
+`powa` is joint power: the share of runs in which *every* coefficient was
+significant. `powa_by_par` breaks it down, which is usually what you want, since
+one weak attribute drags joint power down while everything else is fine. That is
+exactly what happens here, and it is the whole reason to look at both.
+
+## Is the sample size enough?
+
+The reason to simulate is to answer that question before collecting data. Run the
+same design at several sample sizes and compare:
+
+```{r power-curve}
+power_at <- function(n) {
+  set.seed(11)
+  res <- sim_all(
+    nosim = 40, resps = n, designpath = design_dir,
+    u = ul, bcoeff = bcoeff, mode = "sequential", verbose = 0
+  )
+  res$powa_by_par$efficient
+}
+
+sizes <- c(60, 120, 240, 480)
+curve <- t(vapply(sizes, power_at, numeric(2)))
+dimnames(curve) <- list(paste0("n = ", sizes), c("bprice", "bquality"))
+curve
+```
+
+Price is already detected in nearly every run at 60 respondents. Quality needs
+several hundred, because it varies over a range of 1 against price's range of 4.
+Two attributes with identical coefficients can therefore need very different
+sample sizes, and only the simulation tells you which. If your design has to
+support a claim about quality, this table is the argument for the sample size you
+ask a funder to pay for.
+
+With 40 runs these percentages are themselves noisy, roughly plus or minus 8
+points. Raise `nosim` before you rely on them.
+
+## Where to go next
+
+Set `estimate = FALSE` if you only want simulated datasets and intend to estimate
+elsewhere, for instance with `apollo` or `mixl` directly:
+
+```{r no-estimate}
+sim_only <- sim_all(
+  nosim = 2, resps = 60, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, estimate = FALSE,
+  mode = "sequential", verbose = 0
+)
+
+head(sim_only$efficient[[1]], 4)
+```
+
+Each run is one data frame. `V_1` and `V_2` are the deterministic utilities,
+`e_1` and `e_2` the Gumbel draws, `U_1` and `U_2` their sums, and `CHOICE` the
+alternative with the highest total utility. Having the true utilities alongside
+the simulated choice is what makes this useful for teaching.
+
+From here, `vignette("random-parameters")` relaxes the assumption that everyone
+shares the same coefficients, and `vignette("results")` goes through the rest of
+the output.

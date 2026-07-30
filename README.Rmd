@@ -52,20 +52,17 @@ devtools::install_git('https://github.com/sagebiej/simulateDCE', ref = "devel")
 
 ## Example
 
-This is a basic example for a simulation:
+This is a basic example for a simulation. Two designs are read from a folder, and
+70% of the simulated respondents follow full random utility maximisation while the
+remaining 30% look only at price.
 
 ```{r example}
-rm(list = ls())
 library(simulateDCE)
-library(rlang)
-library(formula.tools)
-
 
 designpath <- system.file("extdata", "SE_DRIVE", package = "simulateDCE")
 
 resps <- 120 # number of respondents
-nosim <- 4 # number of simulations to run (about 500 is minimum)
-
+nosim <- 10 # number of simulations to run (about 500 is minimum)
 
 decisiongroups <- c(0, 0.7, 1)
 
@@ -76,33 +73,105 @@ bcoeff <- list(
   bwarte = 0.02
 )
 
+# rescale two attributes before the utilities are computed
 manipulations <- list(
-  alt1.x2 = expr(alt1.x2 / 10),
-  alt1.x3 = expr(alt1.x3 / 10),
-  alt2.x2 = expr(alt2.x2 / 10),
-  alt2.x3 = expr(alt2.x3 / 10)
+  alt1.x2 = rlang::expr(alt1.x2 / 10),
+  alt1.x3 = rlang::expr(alt1.x3 / 10),
+  alt2.x2 = rlang::expr(alt2.x2 / 10),
+  alt2.x3 = rlang::expr(alt2.x3 / 10)
 )
 
-
-# place your utility functions here
+# place your utility functions here, one list per decision group
 ul <- list(
-  u1 =
-
-    list(
-      v1 = V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3,
-      v2 = V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
-    ),
+  u1 = list(
+    v1 = V.1 ~ bpreis * alt1.x1 + blade * alt1.x2 + bwarte * alt1.x3,
+    v2 = V.2 ~ bpreis * alt2.x1 + blade * alt2.x2 + bwarte * alt2.x3
+  ),
   u2 = list(
     v1 = V.1 ~ bpreis * alt1.x1,
     v2 = V.2 ~ bpreis * alt2.x1
   )
 )
 
-
-destype <- "ngene"
-
 sedrive <- sim_all(
-  nosim = nosim, resps = resps, destype = destype,
-  designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups
+  nosim = nosim, resps = resps, designtype = "ngene",
+  designpath = designpath, u = ul, bcoeff = bcoeff,
+  decisiongroups = decisiongroups, manipulations = manipulations,
+  mode = "sequential"
 )
 ```
+
+The estimates, the true values and the variability across runs are collected for
+every design side by side:
+
+```{r results}
+sa <- sedrive$summaryall
+coef_rows <- !grepl("^rob_pval0_", sa$parname)
+
+round(
+  data.frame(
+    truepar   = sa$truepar[coef_rows],
+    small     = sa$effconstrsmall.mean[coef_rows],
+    small_sd  = sa$effconstrsmall.sd[coef_rows],
+    bayesian  = sa$bayeffdesignconstr.mean[coef_rows],
+    bay_sd    = sa$bayeffdesignconstr.sd[coef_rows],
+    row.names = sa$parname[coef_rows]
+  ),
+  4
+)
+```
+
+Power is reported per design and per coefficient:
+
+```{r power}
+sedrive$powa_by_par
+```
+
+## Random parameters
+
+A coefficient can be a distribution instead of a number, so every simulated
+respondent draws their own value:
+
+```{r random-params}
+bcoeff_mixed <- list(
+  bpreis = list(dist = "neg_lognormal", meanlog = -4.6, sdlog = 0.4),
+  blade  = list(dist = "normal", mean = -0.07, sd = 0.03),
+  bwarte = 0.02
+)
+
+# what those specifications mean in the units of the coefficient
+bcoeff_moments(bcoeff_mixed)
+```
+
+Pass it to `sim_all()` exactly as before. See
+`vignette("random-parameters", package = "simulateDCE")`.
+
+## Designs without blocks
+
+If your design has no `Block` column, say how many choice sets each respondent
+should see and they are drawn at random:
+
+```{r unblocked}
+design <- data.frame(
+  Choice.situation = 1:20,
+  alt1.x1 = rep(c(1, 2, 3, 4, 5), 4),
+  alt2.x1 = rep(c(5, 4, 3, 2, 1), 4)
+)
+
+drawn <- draw_sets(design, respondents = 100, sets_per_resp = 5)
+
+# each respondent sees 5 distinct sets, and the design is used evenly
+table(table(drawn$Choice.situation))
+```
+
+## Vignettes
+
+| Vignette | Covers |
+|---|---|
+| `simulateDCE` | Getting started, one complete simulation |
+| `design-files` | Reading designs from Ngene, spdesign and idefix |
+| `random-parameters` | Coefficients that vary across respondents |
+| `decision-groups` | Subgroups following different decision rules |
+| `manipulations` | Changing attributes before utilities are computed |
+| `unblocked-designs` | Drawing choice sets at random per respondent |
+| `results` | The output, and running large simulations |

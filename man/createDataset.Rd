@@ -4,41 +4,65 @@
 \alias{createDataset}
 \title{Create a Dataset for Choice Experiment Analysis}
 \usage{
-createDataset(design, respondents)
+createDataset(
+  design,
+  respondents,
+  sets_per_resp = NULL,
+  sample_sets = c("balanced", "random", "with_replacement")
+)
 }
 \arguments{
-\item{design}{A data frame containing the design matrix for the choice experiment.
-It should include at least the columns \code{Choice.situation} and optionally \code{Block}.}
+\item{design}{A data frame containing the design matrix for the choice
+experiment, one row per choice situation. It should include the column
+\code{Choice.situation} and optionally \code{Block}. Use \code{\link[=readdesign]{readdesign()}} to produce it.}
 
 \item{respondents}{The number of respondents to generate data for.}
+
+\item{sets_per_resp}{Number of choice sets each respondent should see. Leave
+as \code{NULL} to use the design's own \code{Block} column, which is the usual case.
+When given, blocks are not used: each respondent instead receives a random
+draw of \code{sets_per_resp} choice sets from the design. See \code{\link[=draw_sets]{draw_sets()}}.}
+
+\item{sample_sets}{How the random draw is taken when \code{sets_per_resp} is
+given. See \code{\link[=draw_sets]{draw_sets()}}. Ignored otherwise.}
 }
 \value{
 A data frame containing the augmented design matrix with additional columns:
 \describe{
 \item{ID}{A unique identifier for each respondent.}
-\item{Choice.situation}{The original choice situations, replicated for respondents.}
+\item{task}{The position of the choice set in that respondent's sequence, 1 to \code{sets_per_resp}.}
+\item{Choice.situation}{Which row of the design was shown.}
+\item{Block}{The block the respondent was assigned to, 1 if the design is not blocked.}
 \item{Other columns}{All original columns in the input \code{design} are retained.}
 }
 }
 \description{
-This function takes a design matrix and generates a dataset for use in choice experiments.
-It handles blocks, replicates the design for the number of respondents, and assigns respondent IDs.
+This function takes a design matrix and generates a dataset for use in choice
+experiments. It either hands out the blocks of a blocked design, or draws a
+random subset of choice sets for each respondent.
 }
 \details{
-The function performs the following steps:
-\itemize{
-\item Checks if the \code{Block} column exists in the input design. If absent, it creates a single block.
-\item Calculates the number of choice sets and blocks, and determines the number of sets per block.
-\item Replicates the design to account for the specified number of respondents per block.
-\item Assigns respondent IDs based on the number of respondents and blocks.
-}
+With a blocked design, respondents are assigned to blocks in rotation:
+respondent 1 gets the first block, respondent 2 the second, and so on,
+wrapping around. The number of respondents does not have to be a multiple of
+the number of blocks; any remainder is spread over the first blocks.
 }
 \examples{
-# Example usage:
+# A blocked design: each respondent sees one block
 design <- data.frame(
-  Choice.situation = rep(1:12),
+  Choice.situation = 1:12,
+  Block = rep(1:3, each = 4),
   Attribute1 = rnorm(12),
   Attribute2 = sample(1:3, 12, replace = TRUE)
 )
-result <- createDataset(design, 10)
+result <- createDataset(design, 9)
+table(result$ID, result$Block)
+
+# An unblocked design: draw 4 of the 12 sets per respondent
+unblocked <- design[, setdiff(names(design), "Block")]
+drawn <- createDataset(unblocked, respondents = 9, sets_per_resp = 4)
+table(drawn$Choice.situation)
+}
+\seealso{
+\code{\link[=draw_sets]{draw_sets()}} for the random allocation used when \code{sets_per_resp} is given.
 }

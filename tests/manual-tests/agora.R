@@ -41,12 +41,12 @@ ul <- list(
     )
 )
 
-destype <- "ngene"
+designtype <- "ngene"
 
 tictoc::tic("Total length Agora")
 
 agora <- simulateDCE::sim_all(
-  nosim = nosim, resps = resps, designtype = destype,
+  nosim = nosim, resps = resps, designtype = designtype,
   designpath = designpath, u = ul, bcoeff = bcoeff, utility_transform_type = "exact", mode = "parallel"
 )
 

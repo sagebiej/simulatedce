@@ -27,7 +27,13 @@ All values are negative. Useful for price coefficients.}
 draws from \eqn{U(\min, \max)}.}
 \item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
 draws from a triangular distribution with given bounds and mode.}
-}}
+\item{\code{"truncated_normal"}}{\code{mean}, \code{sd}, \code{min},
+\code{max}: draws from \eqn{N(\mu, \sigma)} restricted to
+\eqn{[\min, \max]}. Useful when a coefficient must keep its sign.}
+}
+Note that \code{meanlog} and \code{sdlog} describe the underlying normal,
+not the coefficient itself. Call \code{\link{bcoeff_moments}} to see the
+mean and standard deviation each specification implies.}
 
 \item{n_resp}{Positive integer. Number of respondents.}
 
@@ -53,4 +59,8 @@ set.seed(42)
 draws <- make_rand_params(bcoeff, n_resp = 100)
 head(draws)
 
+}
+\seealso{
+\code{\link{bcoeff_moments}} to inspect the implied moments of a
+specification without drawing from it.
 }

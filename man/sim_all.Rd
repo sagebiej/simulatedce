@@ -2,8 +2,7 @@
 % Please edit documentation in R/sim_all.R
 \name{sim_all}
 \alias{sim_all}
-\title{Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
-update}
+\title{Run a simulation over every design in a folder}
 \usage{
 sim_all(
   nosim = 2,
@@ -11,17 +10,24 @@ sim_all(
   designtype = NULL,
   destype = NULL,
   designpath,
+  pattern = "\\\\.(ngd|rds)$",
   u,
   bcoeff,
   decisiongroups = c(0, 1),
   manipulations = list(),
   estimate = TRUE,
   chunks = 1,
-  utility_transform_type = "simple",
+  sets_per_resp = NULL,
+  sample_sets = c("balanced", "random", "with_replacement"),
+  resample = TRUE,
+  utility_transform_type = c("exact", "simple"),
   reshape_type = "auto",
   mode = c("parallel", "sequential"),
   preprocess_function = NULL,
   savefile = NULL,
+  keep_models = TRUE,
+  keep_utilities = TRUE,
+  workers = NULL,
   verbose = 1
 )
 }
@@ -30,11 +36,23 @@ sim_all(
 
 \item{resps}{Number of respondents you want to simulate}
 
-\item{designtype}{Is it a design created with ngene, spdesign or idefix. use 'ngene', 'spdesign' or 'idefix. Ngene designs should be stored as the standard .ngd output. spdesign should be the spdesign object stored as an RDS file. Idefix objects should also be stored as an RDS file. If designtype is not specified, I try to guess what it is. This is especially helpful if you want to carry out a simulation for both spdesign designs and ngene designs at the same time.}
+\item{designtype}{Which tool produced the design. One of \code{"ngene"},
+\code{"spdesign"}, \code{"idefix"} or \code{"matrix"}. Ngene designs should be stored as
+the standard \code{.ngd} output. \code{spdesign} should be the spdesign object stored
+as an RDS file. Idefix objects should also be stored as an RDS file. Use
+\code{"matrix"} for a design you built yourself and saved as a plain data frame,
+one row per choice situation. If \code{designtype} is not given it is detected
+from the file, which is helpful when a folder mixes designs from different
+tools.}
 
-\item{destype}{Deprecated. Use designtype instead.}
+\item{destype}{Deprecated. Use \code{designtype} instead.}
 
 \item{designpath}{The path to the folder where the designs are stored. For example "c:/myfancydec/Designs"}
+
+\item{pattern}{Regular expression picking the design files out of \code{designpath},
+matched without regard to case. By default any \code{.ngd} or \code{.rds} file. Widen it
+if your designs use a different extension. Anything in the folder that does
+not match is ignored, so a stray note or plot no longer breaks the run.}
 
 \item{u}{A list with utility functions. The list can incorporate as many decision rule groups as you want. However, each group must be in a list in this list. If you just use one group (the normal),  this  group still  has to be in a list in  the u list. As a convention name beta coefficients starting with a lower case "b"}
 
@@ -58,48 +76,105 @@ All values are negative. Useful for price coefficients.}
 draws from \eqn{U(\min, \max)}.}
 \item{\code{"triangular"}}{\code{min}, \code{max}, \code{mode}:
 draws from a triangular distribution with given bounds and mode.}
-}}
+\item{\code{"truncated_normal"}}{\code{mean}, \code{sd}, \code{min},
+\code{max}: draws from \eqn{N(\mu, \sigma)} restricted to
+\eqn{[\min, \max]}. Useful when a coefficient must keep its sign.}
+}
+Note that \code{meanlog} and \code{sdlog} describe the underlying normal,
+not the coefficient itself. Call \code{\link{bcoeff_moments}} to see the
+mean and standard deviation each specification implies.}
 
-\item{decisiongroups}{A vector showing how decision groups are numerically distributed}
+\item{decisiongroups}{A vector of cumulative shares showing how respondents are
+split between the utility functions in \code{utility}. It must start at 0 and end
+at 1. Whole respondents are assigned to a group, never part of a respondent.}
 
-\item{manipulations}{A variable to alter terms of the utility functions examples may be applying a factor or applying changes to terms selectively for different groups}
+\item{manipulations}{A named list of expressions altering columns before the
+utilities are computed, for example applying a factor to an attribute or
+changing a term for one group only.}
 
-\item{estimate}{If TRUE models will be estimated. If false only a dataset will be simulated. Default is TRUE}
+\item{estimate}{If TRUE models will be estimated. If FALSE only a dataset will be simulated. Default is TRUE}
 
-\item{chunks}{The number of chunks determines how often results should be stored on disk as a safety measure to not loose simulations if models have already been estimated. For example, if no_sim is 100 and chunks = 2, the data will be saved on disk after 50 and after 100 runs.}
+\item{chunks}{How often results should be written to disk while estimating, as
+a safety measure against losing a long run. With \code{no_sim = 100} and
+\code{chunks = 2} the results so far are written after run 50 and again after run
+100. The scratch files go to the session's temporary directory and are
+removed once everything has been read back.}
 
-\item{utility_transform_type}{How the utility function you entered is transformed to the utility function required for mixl. You can use the classic way (simple) where parameters have to start with "b" and variables with "alt" or the more flexible (but potentially error prone) way (exact) where parameters and variables are matched exactly what how the are called in the dataset and in the bcoeff list. Default is "simple". In the long run, simple will be deleted, as exact should be downwards compatible.}
+\item{sets_per_resp}{Number of choice sets each respondent should see. Leave
+as \code{NULL} to use the design's own \code{Block} column, which is the usual case.
+When given, blocks are not used: each respondent instead receives a random
+draw of \code{sets_per_resp} choice sets from the design. See \code{\link[=draw_sets]{draw_sets()}}.}
+
+\item{sample_sets}{How the random draw is taken when \code{sets_per_resp} is
+given. See \code{\link[=draw_sets]{draw_sets()}}. Ignored otherwise.}
+
+\item{resample}{Redraw which choice sets each respondent sees for every
+simulation run. Only relevant with \code{sets_per_resp}. \code{TRUE} by default,
+because the allocation is part of the data generating process: fix it and you
+measure the performance of one particular allocation rather than of the
+design. Ignored for blocked designs, where the blocks are fixed anyway.}
+
+\item{utility_transform_type}{How the utility function you entered is
+transformed into the utility function mixl needs. \code{"exact"}, the default,
+matches parameter and variable names exactly as they appear in the dataset
+and in \code{bcoeff}. \code{"simple"} is the older approach, where parameters have to
+start with "b" and variables with "alt"; it is deprecated and will be
+removed.}
 
 \item{reshape_type}{Must be "auto", "stats" to use the reshape from the stats package or tidyr to use pivot longer. Default is auto and should not bother you. Only change it once you face an error at this position and you may be lucky that it works then.}
 
-\item{mode}{Set to "parallel" if parts should be run in parallel mode}
+\item{mode}{\code{"parallel"} to spread the runs over several R processes,
+\code{"sequential"} to run them one after another in this process. Starting eight
+worker processes and shipping the data to them costs on the order of ten
+seconds, so parallel only pays off once the work itself takes longer than
+that. As a rule of thumb, use it when a sequential run would take more than
+about half a minute. On a small three-coefficient model, 8 workers were 1.35
+times faster at 200 runs of 1000 respondents and 1.6 times faster at 500 runs
+of 300 respondents, but slower than sequential at 200 runs of 300. Bigger
+models shift the balance further towards parallel, since the fixed startup
+cost stays the same. Time your own case rather than assuming.
 
-\item{preprocess_function}{= NULL You can supply a function that reads in external data (e.g. GIS coordinates) that will be merged with the simulated dataset. Make sure the the function outputs a data.frame that has a variable called ID which is used for matching.}
+Both modes are reproducible from a seed, but they do not produce the \emph{same}
+numbers: parallel runs draw from separate L'Ecuyer streams rather than from
+this session's stream. Parallel results do not depend on how many workers you
+use, so a rerun on a different machine still reproduces. Do not compare a
+sequential run against a parallel one and expect them to agree run for run;
+compare their summaries, which converge as \code{no_sim} grows.}
+
+\item{preprocess_function}{A function that reads in external data (e.g. GIS
+coordinates) to be merged with the simulated dataset. It must return either
+\code{NULL} or a data.frame with a column called \code{ID} used for matching.}
 
 \item{savefile}{Indicate a path if you want to store the results after each design simulation locally. This is useful in case you fear that your computer crashes}
 
-\item{verbose}{Integer controlling how much progress information is printed
-to the console (via \code{message()}). Levels are cumulative: each level
-also prints everything emitted by the levels below it.
-\describe{
-\item{\code{0}}{Silent. No progress messages are emitted.}
-\item{\code{1}}{Key results only: the parameter specification summary and
-total run time, plus the final summary and power tables when models are
-estimated.}
-\item{\code{2}}{Adds informational progress: the true and transformed
-utility functions, per-chunk progress, notification that a preprocess
-function ran, and the paths where results are saved.}
-\item{\code{3}}{Adds low-level debugging detail: step-by-step timings and
-internal state checks (e.g. dataset creation and decision-group setup).}
-}
-Defaults to \code{1}.}
+\item{keep_models}{Keep the full estimated model object for every run. \code{TRUE}
+by default, so \code{result[[design]][[1]]$data} still gets you the first run's
+data. Each object carries its own copy of that data, which is what dominates
+memory in a long run: 60 runs of 300 respondents came to 23 MB with the models
+kept and 0.08 MB without. Set it to \code{FALSE} to keep only the coefficients,
+summary, power and convergence results, which is all \code{aggregateResults()}
+needs.}
+
+\item{keep_utilities}{Keep the \code{V_}, \code{e_} and \code{U_} columns in the result.
+\code{TRUE} by default. Setting it to \code{FALSE} roughly halves the size of the
+simulated data, which matters when thousands of runs are held in memory. The
+estimation does not need these columns.}
+
+\item{workers}{Number of parallel workers. Defaults to whatever \code{future}
+picks for this machine, which respects \code{SLURM_CPUS_PER_TASK} on a cluster.
+Ignored in sequential mode.}
+
+\item{verbose}{Set to 0 to suppress the note saying which kind of design was
+detected. \code{\link[=sim_all]{sim_all()}} passes its own \code{verbose} down, so that note follows the
+verbosity of the whole simulation.}
 }
 \value{
 A list, with all information on the simulation. This list an be easily processed by the user and in the rmarkdown template.
 }
 \description{
-Is a wrapper for sim_choice executing the simulation over all designs stored in a specific folder
-update
+Wrapper around \code{\link[=sim_choice]{sim_choice()}} that reads every design file in \code{designpath},
+simulates and optionally estimates choices for each, and aggregates the
+results so the designs can be compared.
 }
 \examples{
 library(rlang)
@@ -147,9 +222,8 @@ sedrive <- sim_all(
   bcoeff = bcoeff,
   decisiongroups = decisiongroups,
   manipulations = manipulations,
-  utility_transform_type = "exact",
   mode = "sequential",
-  estimate=FALSE
+  estimate = FALSE
 )
 
 }

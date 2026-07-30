@@ -1,6 +1,6 @@
 Package: simulateDCE
 Title: Simulate Data for Discrete Choice Experiments 
-Version: 0.3.2
+Version: 0.4.0
 Authors@R: 
     person(given = "Julian", family = "Sagebiel", email = "julian.sagebiel@idiv.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0253-6875"))
@@ -9,33 +9,32 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports: 
+Imports:
+    compiler,
+    data.table,
     dplyr (>= 1.1.4),
-    evd,
     formula.tools,
+    furrr,
+    future,
     ggplot2,
-    kableExtra,
+    glue,
     magrittr,
     mixl,
-    psych,
     purrr,
+    qs2,
     readr,
-    rmarkdown,
+    rlang,
     stats,
-    utils,
     stringr,
     tibble,
     tictoc,
     tidyr,
-    future,
-    furrr,
-    qs2,
-    data.table,
-    glue
+    utils
 Suggests:
     knitr,
+    parallelly,
+    rmarkdown,
     testthat (>= 3.0.0),
-    rlang,
     withr
 Config/testthat/edition: 3
 Depends: 

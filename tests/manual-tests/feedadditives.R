@@ -9,7 +9,7 @@ notes <- "Three heuristics"
 
 resps <- 396 # number of respondents
 nosim <- 2 # number of simulations to run (about 500 is minimum)
-destype <- "ngene"
+designtype <- "ngene"
 
 # betacoefficients should not include "-"
 bcoeff <- list(
@@ -51,6 +51,6 @@ ul <- list(
 )
 
 feedadditives <- sim_all(
-  nosim = nosim, resps = resps, designtype = destype,
+  nosim = nosim, resps = resps, designtype = designtype,
   designpath = designpath, u = ul, bcoeff = bcoeff, decisiongroups = decisiongroups
 )

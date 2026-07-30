@@ -9,3 +9,9 @@
 ^\.github$
 ^\.positai$
 ^\.claude$
+^\.DS_Store$
+^\.RData$
+^\.Rhistory$
+^Rplots\.pdf$
+^tests/manual-tests$
+^.*\.DS_Store$

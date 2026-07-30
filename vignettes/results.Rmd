@@ -1,0 +1,310 @@
+---
+title: "Working with the results, and running big simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with the results, and running big simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(4004)
+```
+
+`sim_all()` returns a large nested list. This vignette says what is in it, and then
+covers the arguments that matter once a simulation stops being a five second
+demonstration: parallel processing, memory, saving partial results, and merging
+runs done at different times.
+
+## A run to look at
+
+```{r run}
+set.seed(4004)
+
+profiles <- expand.grid(price = c(2, 4, 6, 8), quality = c(0, 1))
+alt1 <- profiles[rep(seq_len(nrow(profiles)), 2), ]
+n <- nrow(alt1)
+repeat {
+  partner <- sample(n)
+  if (all(rowSums(abs(alt1 - alt1[partner, ])) > 0)) break
+}
+
+design <- data.frame(
+  Choice.situation = seq_len(n),
+  Block            = rep(1:2, each = n / 2),
+  alt1.price = alt1$price, alt1.quality = alt1$quality,
+  alt2.price = alt1$price[partner], alt2.quality = alt1$quality[partner]
+)
+
+design_dir <- file.path(tempdir(), "res_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "designA.rds"))
+saveRDS(design[nrow(design):1, ], file.path(design_dir, "designB.rds"))
+
+ul <- list(u1 = list(
+  v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+  v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality
+))
+bcoeff <- list(bprice = -0.25, bquality = 0.4)
+
+result <- sim_all(
+  nosim = 30, resps = 200, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, mode = "sequential", verbose = 0
+)
+```
+
+## What is in the result
+
+```{r structure}
+names(result)
+```
+
+The first entries are named after your design files. Everything after them is
+about the run as a whole. (`arguements` is a misspelling that used to be the only
+name for `arguments`; both are there so old scripts keep working.)
+
+### Per design
+
+`result[["designA"]]` holds that design's own results. The estimated models sit in
+unnamed slots, so the named ones are the summaries:
+
+```{r per-design}
+nm <- names(result$designA)
+nm[nzchar(nm)]
+
+# and one unnamed slot per run
+sum(!nzchar(nm))
+```
+
+- **`coefs`** one row per run, with an `est_` column per coefficient and a
+  `rob_pval0_` column per robust p value.
+- **`summary`** those columns summarised over the runs.
+- **`power`** the share of runs in which every coefficient was significant.
+- **`power_by_par`** the same per coefficient.
+- **`convergence`** how many models converged, and why the rest did not.
+- **`metainfo`**, **`bcoeff`**, **`designname`** what the run was, so a saved file
+  describes itself.
+
+The unnamed slots are the estimated model objects, one per run:
+
+```{r models}
+class(result$designA[[1]])
+
+# the first run's simulated data is inside its model
+head(result$designA[[1]]$data[, c("ID", "task", "CHOICE")], 3)
+```
+
+### Across designs
+
+```{r across}
+head(result$estimates, 3)
+```
+
+`estimates` is the long table behind the plots: one row per run per design, with a
+`design` column. It is the thing to use for any comparison you want to make
+yourself.
+
+```{r summaryall}
+sa <- result$summaryall
+coef_rows <- !grepl("^rob_pval0_", sa$parname)
+
+round(
+  data.frame(
+    truepar = sa$truepar[coef_rows],
+    A_mean  = sa$designA.mean[coef_rows],
+    A_sd    = sa$designA.sd[coef_rows],
+    B_mean  = sa$designB.mean[coef_rows],
+    B_sd    = sa$designB.sd[coef_rows],
+    row.names = sa$parname[coef_rows]
+  ),
+  4
+)
+```
+
+`summaryall` also carries a `median` column per design. If the mean and the median
+disagree for a coefficient, one run has gone somewhere strange, and `min`, `max` and
+`range` will show you where.
+
+`graphs` holds one density plot per coefficient, comparing the designs. They are
+returned rather than drawn, so you decide where they go:
+
+```{r graphs, fig.width = 6, fig.height = 3.5}
+names(result$graphs)
+
+result$graphs$bprice
+```
+
+## Convergence
+
+Worth a glance on every real run:
+
+```{r convergence}
+result$convergence$designA
+```
+
+A model that does not converge is left out of the summaries, and `sim_all()` warns
+when that happens. Non-finite estimates count as failures too, because a separated
+logit can report success while a coefficient has run off to several hundred. If
+`failed` is more than a handful, the usual cause is a design that cannot identify
+the model rather than anything about the sample size.
+
+## Simulating without estimating
+
+```{r no-estimate}
+datasets <- sim_all(
+  nosim = 3, resps = 100, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, estimate = FALSE,
+  mode = "sequential", verbose = 0
+)
+
+length(datasets$designA)
+names(datasets$designA[[1]])
+```
+
+Each run is a data frame carrying the design, the deterministic utilities `V_k`,
+the Gumbel draws `e_k`, their sums `U_k`, and `CHOICE`. Use this when you want to
+estimate with `apollo`, a mixed logit, or anything else the package does not fit
+itself.
+
+## Running something big
+
+### Parallel processing
+
+`mode = "parallel"` spreads the runs over several R processes. Starting eight of
+them and shipping the data across costs on the order of ten seconds, which has to
+be earned back. On the small three-coefficient model used above:
+
+| Runs | Respondents | Sequential | 8 workers | Speedup |
+|---|---|---|---|---|
+| 100 | 300 | 6.5 s | 12.6 s | 0.5 |
+| 200 | 300 | 12.8 s | 15.0 s | 0.9 |
+| 200 | 1000 | 29.3 s | 21.7 s | 1.4 |
+| 500 | 300 | 32.0 s | 20.4 s | 1.6 |
+
+The rule of thumb is to use parallel when a sequential run would take more than
+about half a minute, and not before. Bigger models shift the balance further
+towards parallel, because the startup cost stays the same while the work grows, so
+a mixed logit or a model with a dozen coefficients benefits much sooner than this
+table suggests. Time your own case rather than assuming.
+
+One thing to know about reproducibility. Both modes reproduce from a seed, but they
+do not produce the *same* numbers, because parallel runs draw from separate
+L'Ecuyer streams rather than from this session's stream. What parallel results do
+not depend on is how many workers you use, so a rerun on a different allocation
+still reproduces. So set a seed and stick to one mode; do not expect a sequential
+run and a parallel run to agree run for run.
+
+`workers` sets the number of processes. Leave it out and `future` picks, which on a
+cluster means it reads `SLURM_CPUS_PER_TASK` and does the right thing. If you have
+already set up a `future` plan yourself, `sim_all()` uses it and hands it back
+untouched.
+
+### Memory
+
+Every estimated model carries its own copy of the simulated data, and with
+thousands of runs that is what fills the memory rather than anything else. Sixty
+runs of 300 respondents came to 23 MB with the models kept and 0.08 MB without.
+Dropping the models is what does the work; dropping the utility columns on its own
+only saved about a quarter.
+
+```{r lean}
+lean <- sim_all(
+  nosim = 20, resps = 200, designpath = design_dir,
+  u = ul, bcoeff = bcoeff,
+  keep_models = FALSE, keep_utilities = FALSE,
+  mode = "sequential", verbose = 0
+)
+
+c(
+  full_MB = round(as.numeric(object.size(result)) / 1024^2, 1),
+  lean_MB = round(as.numeric(object.size(lean)) / 1024^2, 1)
+)
+
+# everything the comparison needs is still there
+names(lean$designA)
+```
+
+`keep_models = FALSE` drops the model objects and keeps the coefficients, summary,
+power and convergence results, which is all `aggregateResults()` uses.
+`keep_utilities = FALSE` drops the `V_`, `e_` and `U_` columns from the simulated
+data, which the estimation does not need either. Use both for long runs, and leave
+them on when you want to look at the data.
+
+### Writing results to disk as you go
+
+Two arguments guard against losing a long run.
+
+`chunks` writes what has been estimated so far to a scratch file every so often.
+With `nosim = 1000` and `chunks = 10` that happens every 100 runs. The scratch
+files live in the session's temporary directory and are cleaned up at the end.
+
+`savefile` writes one file per design as each design finishes:
+
+```{r savefile}
+save_dir <- file.path(tempdir(), "saved")
+
+invisible(sim_all(
+  nosim = 20, resps = 150, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, savefile = file.path(save_dir, "run"),
+  mode = "sequential", verbose = 0
+))
+
+list.files(save_dir)
+```
+
+## Merging runs from different times
+
+This is what `savefile` is really for. Simulate three designs today, add a fourth
+next month, and put the results together:
+
+```{r merge}
+# a fourth design arrives later
+later <- design
+later$alt1.price <- later$alt1.price + 1
+saveRDS(later, file.path(design_dir, "designC.rds"))
+
+invisible(sim_all(
+  nosim = 20, resps = 150, designpath = design_dir,
+  pattern = "designC\\.rds$",
+  u = ul, bcoeff = bcoeff, savefile = file.path(save_dir, "run"),
+  mode = "sequential", verbose = 0
+))
+
+list.files(save_dir)
+
+merged <- aggregateResults(fromfolder = save_dir)
+
+unique(merged$estimates$design)
+names(merged$powa)
+```
+
+Each saved file records its own `designname` and `bcoeff`, so the folder describes
+itself and `aggregateResults()` needs nothing else. Note the `pattern` argument
+above, which restricted the second run to the new design rather than redoing all
+three.
+
+## On a cluster
+
+A few things that matter on SLURM specifically.
+
+Set `--cpus-per-task` and leave `workers` alone. `future` reads
+`SLURM_CPUS_PER_TASK` through `parallelly::availableCores()`, so the number of
+processes matches what you were allocated.
+
+Stop the linear algebra libraries from oversubscribing on top of that:
+
+```
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+```
+
+Set a seed in the script, not on the command line, so the run is reproducible from
+the script alone. Parallel results do not depend on the worker count, so a rerun on
+a different allocation still reproduces.
+
+Use `keep_models = FALSE` and `savefile` for anything long. The memory limit that
+usually bites is per core, not total, so a run that fits comfortably on your laptop
+can fail on a node with more cores and less memory each.

@@ -1,0 +1,232 @@
+---
+title: "Unblocked designs and random choice sets"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Unblocked designs and random choice sets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(6180)
+```
+
+A blocked design decides in advance which choice sets go together. Block 1 is
+these eight tasks, block 2 is those eight, and every respondent gets one block.
+
+Sometimes you do not want that. You have a design with 40 choice situations, you
+want each respondent to answer 8, and you would rather draw those 8 at random for
+each person than commit to five fixed blocks. Set `sets_per_resp` and the package
+does that.
+
+## The basic idea
+
+```{r design}
+set.seed(6180)
+
+# 10 profiles, each used 4 times, gives 40 choice situations
+profiles <- expand.grid(price = c(2, 4, 6, 8, 10), quality = c(0, 1))
+alt1 <- profiles[rep(seq_len(nrow(profiles)), 4), ]
+n <- nrow(alt1)
+
+# pair each profile with a different one
+repeat {
+  partner <- sample(n)
+  if (all(rowSums(abs(alt1 - alt1[partner, ])) > 0)) break
+}
+
+design <- data.frame(
+  Choice.situation = seq_len(n),
+  alt1.price       = alt1$price,
+  alt1.quality     = alt1$quality,
+  alt2.price       = alt1$price[partner],
+  alt2.quality     = alt1$quality[partner]
+)
+
+# no Block column: blocks and random draws are alternatives, not partners
+"Block" %in% names(design)
+
+nrow(design)
+```
+
+```{r draw}
+allocation <- draw_sets(design, respondents = 100, sets_per_resp = 8)
+
+head(allocation[, c("ID", "task", "Choice.situation", "alt1.price")], 10)
+```
+
+Each respondent gets 8 rows. `task` numbers them 1 to 8 in the order they were
+shown, and `Choice.situation` records which row of the design that was. Keeping
+both matters: `task` is the choice occasion your panel model needs, and
+`Choice.situation` is what tells you which set was actually seen.
+
+```{r shape}
+c(rows = nrow(allocation), respondents = length(unique(allocation$ID)))
+
+# every respondent sees 8 distinct sets, never the same one twice
+all(table(allocation$ID) == 8)
+all(tapply(allocation$Choice.situation, allocation$ID, anyDuplicated) == 0)
+```
+
+## Three ways to draw
+
+The `sample_sets` argument (`scheme` in `draw_sets()`) picks between three
+schemes.
+
+**`"balanced"`**, the default. Sets are handed out least-used first, with ties
+broken at random. Every choice situation ends up appearing in the sample about
+equally often, and the counts never differ by more than one:
+
+```{r balanced}
+balanced <- draw_sets(design, respondents = 100, sets_per_resp = 8,
+                      scheme = "balanced")
+table(table(balanced$Choice.situation))
+```
+
+**`"random"`**. Each respondent's sets are drawn independently. Simple, and what
+most people picture, but how often each set appears is now itself random:
+
+```{r random}
+random <- draw_sets(design, respondents = 100, sets_per_resp = 8,
+                    scheme = "random")
+range(table(random$Choice.situation))
+```
+
+**`"with_replacement"`**. Needed only when `sets_per_resp` exceeds the number of
+sets in the design, since then a respondent has to see something twice.
+
+Balance matters because your design was optimised as a whole. If the realised
+sample happens to use one choice situation twice as often as another, you are no
+longer running the design you chose, and the extra variability shows up in your
+estimates for no good reason. `"balanced"` keeps that noise out while leaving the
+allocation genuinely random from any individual respondent's point of view.
+
+## Redrawing every run
+
+Here is the part that matters most, and it is easy to get wrong.
+
+Which sets a respondent saw is part of the data generating process, not a fixed
+property of the design. So `sim_all()` redraws the allocation for every simulation
+run by default. If you drew it once and reused it, you would be measuring how one
+particular lucky or unlucky allocation performs, and your standard deviations
+across runs would be too small.
+
+```{r resample}
+design_dir <- file.path(tempdir(), "ub_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "unblocked.rds"))
+
+ul <- list(
+  u1 = list(
+    v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+    v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality
+  )
+)
+bcoeff <- list(bprice = -0.2, bquality = 0.5)
+
+drawn_sets <- function(resample) {
+  set.seed(31)
+  res <- sim_all(
+    nosim = 3, resps = 60, designpath = design_dir, u = ul, bcoeff = bcoeff,
+    sets_per_resp = 8, resample = resample,
+    estimate = FALSE, mode = "sequential", verbose = 0
+  )
+  vapply(res$unblocked, function(d) d$Choice_situation[1:5], numeric(5))
+}
+
+# default: a different allocation in each run
+drawn_sets(resample = TRUE)
+
+# held fixed
+drawn_sets(resample = FALSE)
+```
+
+Set `resample = FALSE` only when you deliberately want to hold the allocation
+constant, for instance to isolate the effect of something else.
+
+## Does it cost you anything?
+
+Random allocation adds a source of variation that blocking removes, so it is fair
+to ask what you pay for it. Compare the same design used three ways:
+
+```{r compare}
+blocked <- design
+blocked$Block <- rep(1:5, each = 8)
+
+blocked_dir <- file.path(tempdir(), "blk_designs")
+dir.create(blocked_dir, showWarnings = FALSE)
+saveRDS(blocked, file.path(blocked_dir, "blocked.rds"))
+
+compare <- function(path, ...) {
+  set.seed(77)
+  res <- sim_all(
+    nosim = 60, resps = 100, designpath = path, u = ul, bcoeff = bcoeff,
+    estimate = TRUE, mode = "sequential", verbose = 0, ...
+  )
+  nm <- res$arguments$designname
+  sa <- res$summaryall
+  c(
+    price_mean = sa[[paste0(nm, ".mean")]][sa$parname == "bprice"],
+    price_sd   = sa[[paste0(nm, ".sd")]][sa$parname == "bprice"],
+    qual_mean  = sa[[paste0(nm, ".mean")]][sa$parname == "bquality"],
+    qual_sd    = sa[[paste0(nm, ".sd")]][sa$parname == "bquality"]
+  )
+}
+
+round(cbind(
+  blocked  = compare(blocked_dir),
+  balanced = compare(design_dir, sets_per_resp = 8),
+  random   = compare(design_dir, sets_per_resp = 8, sample_sets = "random")
+), 4)
+```
+
+All three recover the true coefficients, which is the first thing to check: random
+allocation does not bias anything.
+
+The standard deviations across runs are what to compare next. Blocking and balanced
+drawing come out essentially the same. Independent random drawing is noticeably
+noisier for the price coefficient, because how often each choice situation gets used
+now varies from run to run on top of every other source of variation. For the
+quality coefficient the three are indistinguishable here. With 60 runs these
+standard deviations are themselves uncertain, so treat a small difference as noise
+and a large one as real.
+
+The practical summary is that `"balanced"` costs you essentially nothing and buys
+you the freedom not to block. `"random"` can cost you precision for no benefit, and
+exists mainly because it is what people expect the words "at random" to mean.
+
+## Rules and errors
+
+**Blocked designs are refused.** A `Block` column already says which sets belong
+together, so drawing on top of it would undo the blocking:
+
+```{r blocked-error, error = TRUE}
+draw_sets(blocked, respondents = 20, sets_per_resp = 4)
+```
+
+Drop the column if you want random allocation instead.
+
+**Asking for too many sets is refused**, with the way out named:
+
+```{r too-many, error = TRUE}
+draw_sets(design, respondents = 20, sets_per_resp = 50)
+```
+
+## Checking the realised allocation
+
+Two things are worth a glance after any run that uses `sets_per_resp`:
+
+```{r checks}
+d <- draw_sets(design, respondents = 100, sets_per_resp = 8)
+
+# how evenly the design was used
+summary(as.vector(table(d$Choice.situation)))
+
+# nobody saw the same set twice
+all(tapply(d$Choice.situation, d$ID, anyDuplicated) == 0)
+```
+
+If the first is lopsided you are not running the design you think you are. The
+second should always hold unless you asked for `"with_replacement"`.

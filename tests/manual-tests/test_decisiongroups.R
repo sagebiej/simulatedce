@@ -4,7 +4,7 @@ devtools::load_all()
 library(dplyr)
 designpath <- system.file("extdata", "spdesigns", "designs", package = "simulateDCE")
 
-destype <- "spdesign"
+designtype <- "spdesign"
 resps <- 4000 # number of respondents
 nosim <- 2 # number of simulations to run (about 500 is minimum)
 

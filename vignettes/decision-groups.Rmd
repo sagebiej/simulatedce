@@ -1,0 +1,263 @@
+---
+title: "Decision groups and heuristics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Decision groups and heuristics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(2210)
+```
+
+Random utility maximisation says respondents weigh up every attribute and pick
+the best alternative. Plenty of them do something else. Some ignore an attribute
+entirely. Some look only at price. Some always take the status quo. Decision
+groups let you simulate a sample where different people follow different rules,
+then see what your model makes of it.
+
+The question this answers is uncomfortable and worth asking: if a third of my
+respondents ignore the attribute my paper is about, will I notice?
+
+## How it works
+
+Two arguments work together.
+
+`u` is a list of lists. Each inner list is one decision rule, written as a full
+set of utility functions. `decisiongroups` is a vector of cumulative shares
+saying how the sample splits between them. It starts at 0, ends at 1, and needs
+one more element than there are groups.
+
+```
+decisiongroups = c(0, 1)          one group, everybody
+decisiongroups = c(0, 0.7, 1)     70% follow u1, 30% follow u2
+decisiongroups = c(0, 0.5, 0.8, 1) 50% u1, 30% u2, 20% u3
+```
+
+Whole respondents are assigned to a group. A respondent never answers some of
+their choice tasks under one rule and the rest under another.
+
+## A sample with attribute non-attendance
+
+Three attributes this time, so I build the design from the full factorial and pair
+each profile with a randomly chosen other one:
+
+```{r design}
+set.seed(4711)
+
+profiles <- expand.grid(price = c(2, 4, 6, 8), quality = c(0, 1), origin = c(0, 1))
+n <- nrow(profiles)
+partner <- sample(n)
+
+design <- data.frame(
+  Choice.situation = seq_len(n),
+  Block            = rep(1:2, each = n / 2),
+  alt1.price       = profiles$price,
+  alt1.quality     = profiles$quality,
+  alt1.origin      = profiles$origin,
+  alt2.price       = profiles$price[partner],
+  alt2.quality     = profiles$quality[partner],
+  alt2.origin      = profiles$origin[partner]
+)
+
+design_dir <- file.path(tempdir(), "dg_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "design.rds"))
+
+bcoeff <- list(bprice = -0.3, bquality = 0.5, borigin = 0.4)
+```
+
+With two alternatives, what a logit can identify comes from the *differences*
+between them, so it is worth checking those before simulating anything:
+
+```{r check-design}
+diffs <- with(design, data.frame(
+  price   = alt1.price - alt2.price,
+  quality = alt1.quality - alt2.quality,
+  origin  = alt1.origin - alt2.origin
+))
+
+c(
+  rank              = qr(as.matrix(diffs))$rank,   # must equal the number of attributes
+  distinct_patterns = nrow(unique(diffs)),
+  largest_cor       = max(abs(cor(diffs)[upper.tri(cor(diffs))]))
+)
+```
+
+Rank 3 for 3 attributes means all three are identified. A dozen distinct
+difference patterns and modest correlations mean they are identified comfortably
+rather than only just. A design whose attribute differences are collinear, or that
+offers only a handful of patterns, produces nonsense estimates and the occasional
+run that walks off to infinity while still reporting successful convergence. That
+is worth 30 seconds of checking, whether the design came from Ngene or from your
+own head.
+
+The first rule is ordinary RUM over all three attributes. The second ignores
+origin: the term is simply absent from the utility functions.
+
+```{r groups}
+ul <- list(
+  # attends to everything
+  rum = list(
+    v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality + borigin * alt1.origin,
+    v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality + borigin * alt2.origin
+  ),
+  # ignores origin
+  ignores_origin = list(
+    v1 = V.1 ~ bprice * alt1.price + bquality * alt1.quality,
+    v2 = V.2 ~ bprice * alt2.price + bquality * alt2.quality
+  )
+)
+```
+
+Note that both groups use the same `bcoeff`. A group differs by which terms
+appear in its utility function, not by having its own coefficient values. If you
+want a group with a different price sensitivity, give it a different coefficient
+name and add that name to `bcoeff`.
+
+## What non-attendance does to the estimates
+
+```{r run}
+share_ignoring <- c(0, 0.25, 0.5, 0.75)
+
+result <- vapply(share_ignoring, function(share) {
+  set.seed(88)
+  dg <- if (share == 0) c(0, 1) else c(0, 1 - share, 1)
+  u  <- if (share == 0) ul["rum"] else ul
+
+  res <- sim_all(
+    nosim = 40, resps = 300, designpath = design_dir,
+    u = u, bcoeff = bcoeff, decisiongroups = dg,
+    mode = "sequential", verbose = 0
+  )
+  sa <- res$summaryall
+  est <- function(p) sa$design.mean[sa$parname == p]
+  c(bprice = est("bprice"), bquality = est("bquality"), borigin = est("borigin"))
+}, numeric(3))
+
+colnames(result) <- paste0(100 * share_ignoring, "% ignore origin")
+round(result, 3)
+```
+
+The origin coefficient collapses almost exactly in proportion to the share of
+respondents who attend to it: three quarters of $0.4$, then half, then a quarter.
+The estimate is an average over people who care and people who do not. The other
+two coefficients are barely touched, because non-attendance is specific to one
+attribute.
+
+That is the trap. A halved `borigin` looks exactly like a real preference that is
+weaker than you thought. Nothing in the output says "half your sample was not
+reading this attribute". Simulating the heuristic first is what tells you what
+size of estimate is consistent with what share of non-attendance.
+
+## Power under a heuristic
+
+The same thing shows up as lost power:
+
+```{r power}
+power <- vapply(share_ignoring, function(share) {
+  set.seed(88)
+  dg <- if (share == 0) c(0, 1) else c(0, 1 - share, 1)
+  u  <- if (share == 0) ul["rum"] else ul
+
+  res <- sim_all(
+    nosim = 40, resps = 300, designpath = design_dir,
+    u = u, bcoeff = bcoeff, decisiongroups = dg,
+    mode = "sequential", verbose = 0
+  )
+  res$powa_by_par$design
+}, numeric(3))
+
+colnames(power) <- paste0(100 * share_ignoring, "%")
+power
+```
+
+If you are powering a study on the origin attribute and you suspect
+non-attendance, this table is the honest basis for the sample size you ask for.
+
+## Other heuristics
+
+The mechanism is general. Anything you can write as a utility function is a
+decision rule.
+
+**Price only.** Drop every other term:
+
+```{r lexicographic}
+ul_price_only <- list(
+  rum = ul$rum,
+  price_only = list(
+    v1 = V.1 ~ bprice * alt1.price,
+    v2 = V.2 ~ bprice * alt2.price
+  )
+)
+```
+
+**A stronger weight on one attribute.** Multiply the term, or introduce a
+separate coefficient:
+
+```{r stronger}
+bcoeff_two <- c(bcoeff, list(bprice_sensitive = -0.9))
+
+ul_sensitive <- list(
+  normal = ul$rum,
+  sensitive = list(
+    v1 = V.1 ~ bprice_sensitive * alt1.price + bquality * alt1.quality + borigin * alt1.origin,
+    v2 = V.2 ~ bprice_sensitive * alt2.price + bquality * alt2.quality + borigin * alt2.origin
+  )
+)
+```
+
+**Random choice.** Give every alternative the same utility, so only the Gumbel
+error decides:
+
+```{r random}
+ul_random <- list(
+  rum = ul$rum,
+  coin_flip = list(v1 = V.1 ~ 0, v2 = V.2 ~ 0)
+)
+
+set.seed(3)
+res <- sim_all(
+  nosim = 20, resps = 300, designpath = design_dir,
+  u = ul_random, bcoeff = bcoeff, decisiongroups = c(0, 0.8, 1),
+  mode = "sequential", verbose = 0
+)
+sa <- res$summaryall
+round(sa$design.mean[!grepl("^rob_pval0_", sa$parname)], 3)
+```
+
+With 20% of the sample choosing at random, all three coefficients shrink by
+roughly the same proportion. That is the signature of noise, and it is different
+from non-attendance, which pulls one coefficient down and leaves the others where
+they were. If a real dataset gives you one suspiciously small coefficient, that
+points at non-attendance; if everything is uniformly small, that points at noise.
+Simulating both patterns first is how you learn to tell them apart.
+
+## Checking the split
+
+Set `estimate = FALSE` to see the group assignment itself:
+
+```{r check}
+sim_only <- sim_all(
+  nosim = 1, resps = 300, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, decisiongroups = c(0, 0.7, 1),
+  estimate = FALSE, mode = "sequential", verbose = 0
+)
+
+d <- sim_only$design[[1]]
+
+# respondents per group, not rows per group
+table(d$group[match(unique(d$ID), d$ID)])
+
+# nobody straddles two groups
+all(tapply(d$group, d$ID, function(x) length(unique(x))) == 1)
+```
+
+The `group` column is part of the simulated data, so it also gives you a
+benchmark: you know the true class membership, which is exactly what a latent
+class model has to recover. Simulating with known groups and then fitting a
+latent class model to the result is a good way to find out how well that model
+can do on your design.

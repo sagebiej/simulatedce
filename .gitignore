@@ -8,3 +8,8 @@ inst/doc
 tests/testthat/Rplots.pdf
 testdir/
 .positai
+
+# editor and session detritus
+.DS_Store
+.RData
+Rplots.pdf

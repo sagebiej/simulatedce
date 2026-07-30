@@ -1,0 +1,272 @@
+---
+title: "Manipulating attributes before the utilities are computed"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Manipulating attributes before the utilities are computed}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(simulateDCE)
+set.seed(1177)
+```
+
+Your design file holds whatever the design software produced. That is not always
+the scale you want to simulate on. Ngene might have written waiting time in
+minutes when your prior is per hour, or the utility you have in mind might need a
+term that is not a column at all. The `manipulations` argument changes columns
+after the design has been expanded to respondents and before any utility is
+computed, without you touching the design file.
+
+## A design to work with
+
+```{r design}
+set.seed(1177)
+
+profiles <- expand.grid(cost = c(200, 400, 600), wait = c(30, 60, 90))
+alt1 <- profiles[rep(seq_len(nrow(profiles)), 2), ]
+n <- nrow(alt1)
+
+repeat {
+  partner <- sample(n)
+  if (all(rowSums(abs(alt1 - alt1[partner, ])) > 0)) break
+}
+
+design <- data.frame(
+  Choice.situation = seq_len(n),
+  Block            = rep(1:2, each = n / 2),
+  alt1.cost        = alt1$cost,
+  alt1.wait        = alt1$wait,
+  alt2.cost        = alt1$cost[partner],
+  alt2.wait        = alt1$wait[partner]
+)
+
+design_dir <- file.path(tempdir(), "man_designs")
+dir.create(design_dir, showWarnings = FALSE)
+saveRDS(design, file.path(design_dir, "design.rds"))
+
+head(design, 4)
+```
+
+Cost is in euros, waiting time in minutes.
+
+## Rescaling
+
+Suppose your priors are per hundred euros and per hour. Pass a named list of
+expressions built with `rlang::expr()`. The name is the column to create or
+replace, the expression says how.
+
+```{r manip}
+manipulations <- list(
+  alt1.cost = rlang::expr(alt1.cost / 100),
+  alt2.cost = rlang::expr(alt2.cost / 100),
+  alt1.wait = rlang::expr(alt1.wait / 60),
+  alt2.wait = rlang::expr(alt2.wait / 60)
+)
+
+ul <- list(
+  u1 = list(
+    v1 = V.1 ~ bcost * alt1.cost + bwait * alt1.wait,
+    v2 = V.2 ~ bcost * alt2.cost + bwait * alt2.wait
+  )
+)
+
+bcoeff <- list(bcost = -0.4, bwait = -0.5)
+```
+
+```{r run}
+result <- sim_all(
+  nosim = 30, resps = 200, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, manipulations = manipulations,
+  mode = "sequential", verbose = 0
+)
+
+sa <- result$summaryall
+round(
+  data.frame(
+    truepar  = sa$truepar,
+    estimate = sa$design.mean,
+    row.names = sa$parname
+  )[1:2, ],
+  3
+)
+```
+
+The coefficients are recovered on the rescaled attributes, because the
+manipulation ran before the utilities were computed. The simulated data carries the
+rescaled values too:
+
+```{r data}
+sim_only <- sim_all(
+  nosim = 1, resps = 20, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, manipulations = manipulations,
+  estimate = FALSE, mode = "sequential", verbose = 0
+)
+
+head(sim_only$design[[1]][, c("ID", "Choice_situation", "alt1_cost", "alt1_wait")], 4)
+```
+
+Cost is in hundreds and waiting time in hours. Note that by this point the column
+names have had their dots turned into underscores, because that is what the
+estimation needs. Inside `manipulations` you still write the dotted names, since
+manipulations run before that rename.
+
+## Why not just edit the design file?
+
+You could, and sometimes you should. `manipulations` earns its place when:
+
+- **The design file is not yours to change.** It came from a colleague, or it is
+  the published design for a study you are replicating.
+- **You want to compare scalings.** Running the same design at several
+  transformations is one line of code rather than several files.
+- **The transformation is part of the question.** Whether respondents react to
+  cost or to log cost is a research question, not a correction.
+
+## Creating new columns
+
+Manipulations are not limited to rewriting existing columns. Anything computable
+from the data is fair game, which is how you get interaction terms into a
+simulation:
+
+```{r new-columns}
+ul_int <- list(
+  u1 = list(
+    v1 = V.1 ~ bcost * alt1.cost + bwait * alt1.wait + bboth * alt1.both,
+    v2 = V.2 ~ bcost * alt2.cost + bwait * alt2.wait + bboth * alt2.both
+  )
+)
+
+manip_int <- c(manipulations, list(
+  alt1.both = rlang::expr(alt1.cost * alt1.wait),
+  alt2.both = rlang::expr(alt2.cost * alt2.wait)
+))
+
+res <- sim_all(
+  nosim = 20, resps = 250, designpath = design_dir,
+  u = ul_int, bcoeff = c(bcoeff, list(bboth = 0.1)),
+  manipulations = manip_int,
+  mode = "sequential", verbose = 0
+)
+
+sa <- res$summaryall
+round(
+  data.frame(
+    truepar  = sa$truepar,
+    estimate = sa$design.mean,
+    row.names = sa$parname
+  )[1:3, ],
+  3
+)
+```
+
+The interaction is created *after* cost and wait have been rescaled, because it
+comes later in the list. Order matters, and the next section returns to that.
+
+### A word on identification
+
+Not every column you can compute is a column you can estimate. A term that is a
+linear function of the ones already there leaves the model unidentified, and no
+sample size fixes it. The classic trap is a dummy for "the cheaper alternative" in
+a design where the two alternatives mirror each other: being cheaper then follows
+deterministically from the cost difference, and every run fails.
+
+The check is cheap. Build the matrix of attribute differences, including your new
+column, and look at its rank:
+
+```{r identification}
+diffs <- with(design, data.frame(
+  cost = alt1.cost - alt2.cost,
+  wait = alt1.wait - alt2.wait,
+  both = (alt1.cost / 100 * alt1.wait / 60) - (alt2.cost / 100 * alt2.wait / 60)
+))
+
+c(rank = qr(as.matrix(diffs))$rank, terms = ncol(diffs))
+```
+
+Rank 3 for 3 terms means the interaction adds information rather than repeating
+what is already there. If the rank came out lower, `sim_all()` would tell you that
+no model produced usable estimates and point you here.
+
+## Non-linear transformations
+
+A common question is whether a linear cost term is good enough. Simulate from a log
+specification to find out what the world would look like if it were not:
+
+```{r nonlinear}
+manip_log <- list(
+  alt1.cost = rlang::expr(log(alt1.cost)),
+  alt2.cost = rlang::expr(log(alt2.cost)),
+  alt1.wait = rlang::expr(alt1.wait / 60),
+  alt2.wait = rlang::expr(alt2.wait / 60)
+)
+
+res_log <- sim_all(
+  nosim = 20, resps = 200, designpath = design_dir,
+  u = ul, bcoeff = list(bcost = -2, bwait = -0.5),
+  manipulations = manip_log,
+  mode = "sequential", verbose = 0
+)
+
+sa <- res_log$summaryall
+round(
+  data.frame(
+    truepar  = sa$truepar[1:2],
+    estimate = sa$design.mean[1:2],
+    row.names = sa$parname[1:2]
+  ),
+  3
+)
+```
+
+Because the manipulation is applied before the utility, `bcost` here is the
+coefficient on log cost, and it is recovered. To study *misspecification* instead,
+simulate with the log manipulation, set `estimate = FALSE`, and fit the linear model
+to the resulting data yourself.
+
+## Manipulations run per respondent
+
+Internally the manipulations are applied grouped by respondent, so expressions that
+aggregate over a respondent's own choice tasks do what you would hope:
+
+```{r grouped}
+manip_grouped <- list(
+  alt1.cost_rel = rlang::expr(alt1.cost / mean(alt1.cost))
+)
+
+d <- sim_all(
+  nosim = 1, resps = 10, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, manipulations = manip_grouped,
+  estimate = FALSE, mode = "sequential", verbose = 0
+)$design[[1]]
+
+head(d[, c("ID", "alt1_cost", "alt1_cost_rel")], 5)
+```
+
+`mean(alt1.cost)` is the mean over that respondent's own choice sets, not over the
+whole sample. That is what you want for anything reference-dependent, and worth
+knowing before you write an expression that assumes otherwise.
+
+## Order matters
+
+Manipulations are applied in the order you list them, and later ones see the
+results of earlier ones:
+
+```{r order}
+sequential_manip <- list(
+  alt1.cost    = rlang::expr(alt1.cost / 100),
+  alt1.cost_sq = rlang::expr(alt1.cost^2) # squares the already divided value
+)
+
+d <- sim_all(
+  nosim = 1, resps = 5, designpath = design_dir,
+  u = ul, bcoeff = bcoeff, manipulations = sequential_manip,
+  estimate = FALSE, mode = "sequential", verbose = 0
+)$design[[1]]
+
+unique(d[, c("alt1_cost", "alt1_cost_sq")])
+```
+
+`alt1_cost_sq` is the square of 2, 4 and 6, not of 200, 400 and 600. If you want
+the square of the original, compute it before you rescale.
